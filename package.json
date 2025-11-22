@@ -22,7 +22,7 @@
 		"lint:fix": "eslint --fix .",
 		"format": "prettier --write .",
 		"type-check": "bun run tsc --noEmit",
-		"prepare": "husky install"
+		"prepare": "husky"
 	},
 	"keywords": [
 		"mcp",
@@ -38,18 +38,18 @@
 		"doc": "docs"
 	},
 	"devDependencies": {
-		"@eslint/js": "9.17.0",
+		"@eslint/js": "9.39.1",
 		"@modelcontextprotocol/sdk": "0.7.0",
 		"@types/node": "22.10.1",
 		"@vitest/ui": "2.1.8",
-		"eslint": "9.17.0",
+		"eslint": "9.39.1",
 		"eslint-config-prettier": "10.1.8",
 		"eslint-plugin-prettier": "5.2.1",
 		"husky": "9.1.7",
 		"lint-staged": "15.2.11",
 		"prettier": "3.4.2",
-		"typescript": "5.7.2",
-		"typescript-eslint": "8.18.0",
+		"typescript": "5.9.3",
+		"typescript-eslint": "8.47.0",
 		"vitest": "2.1.8"
 	},
 	"lint-staged": {
