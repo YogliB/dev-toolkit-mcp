@@ -47,11 +47,11 @@ When one layer changes, related layers are notified:
 
 ```typescript
 // Memory decision logged
-memory:decision:log({
-  title: "Session-based Authentication",
-  relatedRules: ["auth-token-handling"],
-  relatedDocs: ["docs/architecture/authentication.md"]
-})
+memory: decision: log({
+	title: 'Session-based Authentication',
+	relatedRules: ['auth-token-handling'],
+	relatedDocs: ['docs/architecture/authentication.md'],
+});
 
 // Triggers:
 // 1. Rule system: Check if new rule should be created
@@ -222,17 +222,20 @@ You are working on a project with comprehensive context management.
 ## Active Rules (2 always-active, 1 contextual)
 
 ### TypeScript Standards (priority: 8)
+
 - Use explicit types for all function parameters and return values
 - Never use `any` - prefer `unknown` for dynamic types
 - Enable `strict` mode in tsconfig.json
 
 ### Authentication Token Handling (priority: 10) [SECURITY]
+
 - Never store tokens in localStorage (XSS vulnerable)
 - Use httpOnly cookies for session tokens
 - Include secure, sameSite flags
 - See Decision #47 for rationale
 
-### React Hooks Patterns (contextual: src/components/**/*.tsx)
+### React Hooks Patterns (contextual: src/components/\*_/_.tsx)
+
 - Prefix custom hooks with `use`
 - Return objects, not arrays
 - Wrap callbacks in useCallback for children
@@ -244,6 +247,7 @@ You are working on a project with comprehensive context management.
 **Files in Focus:** src/auth/session.ts, src/middleware/auth.ts
 
 **Active Blockers:**
+
 - Redis connection configuration (High severity, since 2024-03-19)
 - Waiting on DevOps for Redis instance
 - Workaround: Using in-memory store for local development
@@ -251,12 +255,14 @@ You are working on a project with comprehensive context management.
 ## Recent Decisions
 
 ### Decision #47: Session-based Authentication over JWT (2024-03-18)
+
 **Impact:** High  
 **Rationale:** Security requirement for instant token revocation. Team familiar with sessions.  
 **Trade-offs:** Redis dependency vs. instant logout capability  
 **Related:** Rule `auth-token-handling`, Doc `docs/architecture/authentication.md`
 
 ### Decision #46: REST API over GraphQL (2024-03-15)
+
 **Impact:** High  
 **Rationale:** Team experience, simpler tooling, straightforward caching  
 **Related:** Doc `docs/api/rest-design.md`
@@ -278,14 +284,17 @@ You are working on a project with comprehensive context management.
 **Progress:** 7/9 tasks completed (78%)
 
 **Completed:**
+
 - ✅ Research OAuth providers
 - ✅ Design session architecture
 - ✅ Integrate Passport.js
 
 **In Progress:**
+
 - 🔄 Implement SessionManager class (current)
 
 **Next Up:**
+
 - ⏳ OAuth callback routes
 - ⏳ Integration tests (blocked until SessionManager complete)
 
@@ -299,82 +308,82 @@ You are working on a project with comprehensive context management.
 ### Workflow 1: Starting a New Feature
 
 **Step 1: Create Plan**
+
 ```typescript
-await callTool("plan:create", {
-  name: "User Profile Management",
-  description: "Allow users to view and edit their profiles",
-  size: "medium",
-  targetCompletion: "2024-04-15",
-  milestones: [
-    {
-      name: "Design",
-      tasks: [
-        "Design profile data model",
-        "Create API specification"
-      ]
-    },
-    {
-      name: "Implementation",
-      tasks: [
-        "Implement backend endpoints",
-        "Create frontend components",
-        "Add validation"
-      ]
-    },
-    {
-      name: "Testing",
-      tasks: [
-        "Write unit tests",
-        "Write integration tests"
-      ]
-    }
-  ]
+await callTool('plan:create', {
+	name: 'User Profile Management',
+	description: 'Allow users to view and edit their profiles',
+	size: 'medium',
+	targetCompletion: '2024-04-15',
+	milestones: [
+		{
+			name: 'Design',
+			tasks: ['Design profile data model', 'Create API specification'],
+		},
+		{
+			name: 'Implementation',
+			tasks: [
+				'Implement backend endpoints',
+				'Create frontend components',
+				'Add validation',
+			],
+		},
+		{
+			name: 'Testing',
+			tasks: ['Write unit tests', 'Write integration tests'],
+		},
+	],
 });
 ```
 
 **Step 2: Update Active Context**
+
 ```typescript
-await callTool("memory:context:set", {
-  focus: "Starting user profile management feature",
-  task: {
-    planId: "feature-124",
-    taskId: "task-500",
-    description: "Design profile data model"
-  },
-  notes: "Need to consider privacy settings and avatar storage"
+await callTool('memory:context:set', {
+	focus: 'Starting user profile management feature',
+	task: {
+		planId: 'feature-124',
+		taskId: 'task-500',
+		description: 'Design profile data model',
+	},
+	notes: 'Need to consider privacy settings and avatar storage',
 });
 ```
 
 **Step 3: Check Related Rules**
+
 ```typescript
-await callTool("rules:list", {
-  tags: ["data-model", "privacy"],
-  active: true
+await callTool('rules:list', {
+	tags: ['data-model', 'privacy'],
+	active: true,
 });
 
 // If no relevant rules exist, consider creating one
 ```
 
 **Step 4: Review Related Documentation**
+
 ```typescript
-await callTool("doc:search", {
-  query: "user data model",
-  type: "architecture"
+await callTool('doc:search', {
+	query: 'user data model',
+	type: 'architecture',
 });
 ```
 
 **Step 5: Work on Task**
+
 ```typescript
 // Agent works on the task, creating files, writing code
 // DevFlow monitors file changes, test execution, commits
 ```
 
 **Step 6: Complete Task**
+
 ```typescript
-await callTool("plan:task:update", {
-  planId: "feature-124",
-  taskId: "task-500",
-  status: "completed"
+await callTool('plan:task:update', {
+	planId: 'feature-124',
+	taskId: 'task-500',
+	status: 'completed',
 });
 
 // Automatically:
@@ -387,64 +396,71 @@ await callTool("plan:task:update", {
 ### Workflow 2: Making an Architectural Decision
 
 **Step 1: Identify Decision Point**
+
 ```typescript
 // Agent recognizes a choice needs to be made
 // Example: "Should we use Redis or Memcached for caching?"
 ```
 
 **Step 2: Research Options**
+
 ```typescript
 // Check existing documentation
-await callTool("doc:search", {
-  query: "caching strategy",
-  type: "architecture"
+await callTool('doc:search', {
+	query: 'caching strategy',
+	type: 'architecture',
 });
 
 // Check if similar decision was made before
-await callTool("memory:recall", {
-  query: "cache Redis Memcached",
-  sources: ["decisions"]
+await callTool('memory:recall', {
+	query: 'cache Redis Memcached',
+	sources: ['decisions'],
 });
 ```
 
 **Step 3: Log Decision**
+
 ```typescript
-await callTool("memory:decision:log", {
-  title: "Redis for Caching Over Memcached",
-  context: "Need distributed caching for session data and API responses",
-  decision: "Use Redis as primary caching layer",
-  rationale: "Redis already deployed for sessions. Supports more data structures. Team familiar.",
-  alternatives: [
-    {
-      name: "Memcached",
-      pros: ["Simpler", "Slightly faster for simple key-value"],
-      cons: ["Another dependency", "Limited data structures", "No persistence"],
-      whyRejected: "Redis already in use, no benefit to adding Memcached"
-    }
-  ],
-  consequences: {
-    positive: [
-      "Single caching solution",
-      "Rich data structures available",
-      "Persistence if needed"
-    ],
-    negative: [
-      "Slightly higher memory usage"
-    ]
-  },
-  impact: "medium",
-  tags: ["caching", "infrastructure"],
-  relatedDocs: ["docs/architecture/caching.md"]
+await callTool('memory:decision:log', {
+	title: 'Redis for Caching Over Memcached',
+	context: 'Need distributed caching for session data and API responses',
+	decision: 'Use Redis as primary caching layer',
+	rationale:
+		'Redis already deployed for sessions. Supports more data structures. Team familiar.',
+	alternatives: [
+		{
+			name: 'Memcached',
+			pros: ['Simpler', 'Slightly faster for simple key-value'],
+			cons: [
+				'Another dependency',
+				'Limited data structures',
+				'No persistence',
+			],
+			whyRejected: 'Redis already in use, no benefit to adding Memcached',
+		},
+	],
+	consequences: {
+		positive: [
+			'Single caching solution',
+			'Rich data structures available',
+			'Persistence if needed',
+		],
+		negative: ['Slightly higher memory usage'],
+	},
+	impact: 'medium',
+	tags: ['caching', 'infrastructure'],
+	relatedDocs: ['docs/architecture/caching.md'],
 });
 ```
 
 **Step 4: Create Rule (if needed)**
+
 ```typescript
-await callTool("rules:create", {
-  name: "Caching Implementation",
-  type: "always",
-  priority: 7,
-  content: `# Caching Implementation
+await callTool('rules:create', {
+	name: 'Caching Implementation',
+	type: 'always',
+	priority: 7,
+	content: `# Caching Implementation
 
 ## Cache Storage
 - Use Redis for all caching (sessions, API responses, computed data)
@@ -458,41 +474,44 @@ await callTool("rules:create", {
 - Set TTL on all cache entries
 - Default: 1 hour (3600 seconds)
 - Adjust based on data volatility`,
-  linkedDecisions: ["decision-48"],
-  tags: ["caching", "redis"]
+	linkedDecisions: ['decision-48'],
+	tags: ['caching', 'redis'],
 });
 ```
 
 **Step 5: Update Documentation**
+
 ```typescript
-await callTool("doc:create", {
-  type: "architecture",
-  title: "Caching Strategy",
-  category: "infrastructure",
-  metadata: {
-    related: {
-      decisions: ["decision-48"],
-      rules: ["caching-implementation"]
-    }
-  }
+await callTool('doc:create', {
+	type: 'architecture',
+	title: 'Caching Strategy',
+	category: 'infrastructure',
+	metadata: {
+		related: {
+			decisions: ['decision-48'],
+			rules: ['caching-implementation'],
+		},
+	},
 });
 
 // Then fill in the architecture doc with details
 ```
 
 **Step 6: Link to Current Plan (if applicable)**
+
 ```typescript
 // If this decision was made during feature work
-await callTool("plan:task:update", {
-  planId: "feature-124",
-  taskId: "task-501",
-  notes: "Made caching decision (decision-48). Using Redis for all caching."
+await callTool('plan:task:update', {
+	planId: 'feature-124',
+	taskId: 'task-501',
+	notes: 'Made caching decision (decision-48). Using Redis for all caching.',
 });
 ```
 
 ### Workflow 3: Code Review / Quality Check
 
 **Step 1: Validate Against Rules**
+
 ```typescript
 await callTool("rules:validate", {
   filePath: "src/api/users.ts"
@@ -514,6 +533,7 @@ await callTool("rules:validate", {
 ```
 
 **Step 2: Check Test Coverage**
+
 ```typescript
 await callTool("plan:task:validate", {
   planId: "feature-124",
@@ -535,115 +555,124 @@ await callTool("plan:task:validate", {
 ```
 
 **Step 3: Verify Documentation Updated**
+
 ```typescript
 // Check if modified files have corresponding docs
-await callTool("doc:consistency:check", {
-  paths: ["src/api/users.ts"]
+await callTool('doc:consistency:check', {
+	paths: ['src/api/users.ts'],
 });
 
 // Returns:
 {
-  issues: [
-    {
-      type: "stale-documentation",
-      file: "src/api/users.ts",
-      doc: "docs/api/users.md",
-      issue: "File modified but doc not updated in 45 days"
-    }
-  ]
+	issues: [
+		{
+			type: 'stale-documentation',
+			file: 'src/api/users.ts',
+			doc: 'docs/api/users.md',
+			issue: 'File modified but doc not updated in 45 days',
+		},
+	];
 }
 ```
 
 **Step 4: Update Documentation**
+
 ```typescript
-await callTool("doc:update", {
-  path: "docs/api/users.md",
-  section: {
-    heading: "Update Profile Endpoint",
-    content: "New endpoint documentation..."
-  }
+await callTool('doc:update', {
+	path: 'docs/api/users.md',
+	section: {
+		heading: 'Update Profile Endpoint',
+		content: 'New endpoint documentation...',
+	},
 });
 ```
 
 **Step 5: Log Change in Memory**
+
 ```typescript
-await callTool("memory:change:log", {
-  summary: "Added user profile update endpoint",
-  filesChanged: ["src/api/users.ts"],
-  relatedPlan: "feature-124"
+await callTool('memory:change:log', {
+	summary: 'Added user profile update endpoint',
+	filesChanged: ['src/api/users.ts'],
+	relatedPlan: 'feature-124',
 });
 ```
 
 ### Workflow 4: Debugging / Issue Resolution
 
 **Step 1: Add Blocker**
+
 ```typescript
-await callTool("memory:blocker:add", {
-  title: "Redis connection timeout in production",
-  severity: "critical",
-  impact: "All authenticated requests failing",
-  waitingOn: "DevOps team investigation"
+await callTool('memory:blocker:add', {
+	title: 'Redis connection timeout in production',
+	severity: 'critical',
+	impact: 'All authenticated requests failing',
+	waitingOn: 'DevOps team investigation',
 });
 ```
 
 **Step 2: Research Previous Solutions**
+
 ```typescript
 // Search memory for similar issues
-await callTool("memory:recall", {
-  query: "Redis connection timeout",
-  sources: ["active", "progress", "decisions"]
+await callTool('memory:recall', {
+	query: 'Redis connection timeout',
+	sources: ['active', 'progress', 'decisions'],
 });
 
 // Search documentation
-await callTool("doc:search", {
-  query: "Redis connection troubleshooting"
+await callTool('doc:search', {
+	query: 'Redis connection troubleshooting',
 });
 ```
 
 **Step 3: Update Current Task**
+
 ```typescript
-await callTool("plan:task:update", {
-  planId: "feature-123",
-  taskId: "task-461",
-  status: "blocked",
-  blocker: "Production Redis connection issues preventing deployment"
+await callTool('plan:task:update', {
+	planId: 'feature-123',
+	taskId: 'task-461',
+	status: 'blocked',
+	blocker: 'Production Redis connection issues preventing deployment',
 });
 ```
 
 **Step 4: Document Solution (when resolved)**
+
 ```typescript
 // Resolve blocker
-await callTool("memory:blocker:resolve", {
-  blockerId: "blocker-15",
-  resolution: "DevOps increased Redis connection pool size from 10 to 50. Timeout increased from 5s to 30s."
+await callTool('memory:blocker:resolve', {
+	blockerId: 'blocker-15',
+	resolution:
+		'DevOps increased Redis connection pool size from 10 to 50. Timeout increased from 5s to 30s.',
 });
 
 // Update documentation
-await callTool("doc:update", {
-  path: "docs/guides/deployment.md",
-  section: {
-    heading: "Redis Configuration",
-    content: `## Production Redis Settings
+await callTool('doc:update', {
+	path: 'docs/guides/deployment.md',
+	section: {
+		heading: 'Redis Configuration',
+		content: `## Production Redis Settings
 
 **Connection Pool Size:** 50 connections
 **Timeout:** 30 seconds
 **Retry Strategy:** Exponential backoff (1s, 2s, 4s, 8s, 15s)
 
-These settings handle production load of 1000 req/sec.`
-  }
+These settings handle production load of 1000 req/sec.`,
+	},
 });
 
 // Unblock task
-await callTool("plan:task:update", {
-  planId: "feature-123",
-  taskId: "task-461",
-  status: "in_progress"
+await callTool('plan:task:update', {
+	planId: 'feature-123',
+	taskId: 'task-461',
+	status: 'in_progress',
 });
 ```
 
 ### Workflow 5: Onboarding New Team Member
 
 **Step 1: Initialize DevFlow**
+
 ```typescript
 // New developer clones repo
 // DevFlow auto-loads context on first conversation
@@ -652,13 +681,14 @@ await callTool("plan:task:update", {
 ```
 
 **Step 2: Provide Onboarding Prompt**
+
 ```typescript
 // Using prompt primitive
-await callPrompt("onboarding_summary");
+await callPrompt('onboarding_summary');
 
 // Returns:
 {
-  prompt: `# Welcome to the Project!
+	prompt: `# Welcome to the Project!
 
 ## Project Overview
 [From projectContext.md]
@@ -680,35 +710,37 @@ await callPrompt("onboarding_summary");
 ## Current Focus
 [From activeContext.md - what the team is working on now]
 
-Let me know if you need clarification on any of these areas!`
+Let me know if you need clarification on any of these areas!`;
 }
 ```
 
 **Step 3: Answer Questions Using Context**
+
 ```typescript
 // New developer: "Why are we using sessions instead of JWT?"
 
 // Agent searches memory
-await callTool("memory:recall", {
-  query: "sessions JWT authentication decision",
-  sources: ["decisions"]
+await callTool('memory:recall', {
+	query: 'sessions JWT authentication decision',
+	sources: ['decisions'],
 });
 
 // Finds decision-47, provides detailed answer with rationale
 ```
 
 **Step 4: Assign First Task**
+
 ```typescript
 // Find good starter task
-await callTool("plan:metrics", {
-  includeVelocity: true
+await callTool('plan:metrics', {
+	includeVelocity: true,
 });
 
 // Identify low-complexity task with clear criteria
-await callTool("plan:task:update", {
-  planId: "feature-124",
-  taskId: "task-505",
-  assignee: "newdev"
+await callTool('plan:task:update', {
+	planId: 'feature-124',
+	taskId: 'task-505',
+	assignee: 'newdev',
 });
 ```
 
@@ -860,14 +892,17 @@ const cache = new Map();
 cache.set('unified-context', context, { ttl: 300000 });
 
 // Cache individual resources until file changes
-watchFiles([
-  '.devflow/rules/**/*.mdc',
-  '.devflow/memory/*.md',
-  'docs/**/*.md',
-  '.devflow/plans/**/*.json'
-], (changedFile) => {
-  cache.invalidate(changedFile);
-});
+watchFiles(
+	[
+		'.devflow/rules/**/*.mdc',
+		'.devflow/memory/*.md',
+		'docs/**/*.md',
+		'.devflow/plans/**/*.json',
+	],
+	(changedFile) => {
+		cache.invalidate(changedFile);
+	},
+);
 ```
 
 ### Incremental Updates
@@ -877,12 +912,12 @@ watchFiles([
 
 // File change detected
 onFileChange('.devflow/memory/activeContext.md', async () => {
-  // Only update memory portion of unified context
-  const memoryContext = await loadMemoryContext();
-  unifiedContext.memory = memoryContext;
-  
-  // Notify subscribers
-  emit('context-updated', { layer: 'memory' });
+	// Only update memory portion of unified context
+	const memoryContext = await loadMemoryContext();
+	unifiedContext.memory = memoryContext;
+
+	// Notify subscribers
+	emit('context-updated', { layer: 'memory' });
 });
 ```
 
@@ -891,22 +926,24 @@ onFileChange('.devflow/memory/activeContext.md', async () => {
 ### 1. Maintain Bidirectional Links
 
 **Always link in both directions:**
+
 ```typescript
 // When creating a rule from a decision
-rules:create({
-  linkedDecisions: ["decision-47"]
+rules: create({
+	linkedDecisions: ['decision-47'],
 });
 
 // Also update the decision
-memory:decision:update({
-  decisionId: "decision-47",
-  relatedRules: ["auth-token-handling"]
+memory: decision: update({
+	decisionId: 'decision-47',
+	relatedRules: ['auth-token-handling'],
 });
 ```
 
 ### 2. Use Consistent IDs
 
 **Follow ID conventions:**
+
 - Rules: `kebab-case` (e.g., `auth-token-handling`)
 - Decisions: `decision-{number}` (e.g., `decision-47`)
 - Plans: `feature-{number}` (e.g., `feature-123`)
@@ -916,6 +953,7 @@ memory:decision:update({
 ### 3. Regular Consistency Checks
 
 **Schedule validation:**
+
 ```bash
 # Daily cron job
 0 9 * * * devflow sync:validate --report
@@ -928,6 +966,7 @@ devflow sync:validate --fail-on-errors
 ### 4. Update All Affected Layers
 
 **When making changes, update all relevant layers:**
+
 ```typescript
 // Architectural decision made
 1. memory:decision:log(...)
@@ -939,16 +978,17 @@ devflow sync:validate --fail-on-errors
 ### 5. Use Templates for Consistency
 
 **Leverage templates for common workflows:**
+
 ```typescript
 // Feature planning template
-await callPrompt("plan_feature", {
-  featureName: "User Profile Management",
-  size: "medium"
+await callPrompt('plan_feature', {
+	featureName: 'User Profile Management',
+	size: 'medium',
 });
 
 // Decision logging template
-await callPrompt("decision_template", {
-  decisionContext: "Need to choose caching solution"
+await callPrompt('decision_template', {
+	decisionContext: 'Need to choose caching solution',
 });
 ```
 
@@ -959,11 +999,13 @@ await callPrompt("decision_template", {
 **Symptom:** Links between layers not working
 
 **Diagnosis:**
+
 ```bash
 devflow sync:validate --verbose
 ```
 
 **Fix:**
+
 ```bash
 devflow sync:fix --auto-fix
 ```
@@ -973,6 +1015,7 @@ devflow sync:fix --auto-fix
 **Symptom:** Agent doesn't see recent changes
 
 **Diagnosis:**
+
 ```bash
 # Check if files changed recently
 ls -lt .devflow/memory/
@@ -984,6 +1027,7 @@ devflow cache:status
 ```
 
 **Fix:**
+
 ```bash
 # Clear cache
 devflow cache:clear
@@ -997,25 +1041,27 @@ devflow context:rebuild
 **Symptom:** Rule says one thing, decision says another
 
 **Diagnosis:**
+
 ```bash
 devflow sync:validate --check-conflicts
 ```
 
 **Fix:**
+
 ```typescript
 // Update rule to match decision
-rules:update({
-  ruleId: "auth-patterns",
-  content: "Updated content matching decision-47"
+rules: update({
+	ruleId: 'auth-patterns',
+	content: 'Updated content matching decision-47',
 });
 
 // Or update decision to clarify
-memory:decision:update({
-  decisionId: "decision-47",
-  implementationNotes: "See rule 'auth-patterns' for enforcement details"
+memory: decision: update({
+	decisionId: 'decision-47',
+	implementationNotes: "See rule 'auth-patterns' for enforcement details",
 });
 ```
 
 ---
 
-**Next:** [06-MCP-PRIMITIVES.md](./06-MCP-PRIMITIVES.md) - Complete reference of tools, resources, and prompts
+**Next:** [MCP Primitives](./MCP-PRIMITIVES.md) - Complete reference of tools, resources, and prompts

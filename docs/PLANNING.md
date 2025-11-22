@@ -1,4 +1,4 @@
-# Layer 4: Planning & Validation
+# Planning Layer
 
 **Feature planning with task decomposition, dependency management, and automatic execution validation.**
 
@@ -9,19 +9,24 @@ The Planning layer transforms feature planning from manual tracking into an inte
 ## Design Principles
 
 ### 1. Automatic Validation
+
 Tasks are validated by monitoring:
+
 - File changes since task started
 - Test execution and results
 - Git commits referencing task IDs
 - Linting and type-checking status
 
 ### 2. Dependency Management
+
 Tasks declare dependencies and cannot be marked complete until dependencies are satisfied.
 
 ### 3. Complexity Scoring
+
 Tasks rated 1-10 for effort estimation and velocity tracking.
 
 ### 4. Milestone Grouping
+
 Tasks organized into deliverable milestones with progress tracking.
 
 ## File Structure
@@ -50,195 +55,209 @@ Tasks organized into deliverable milestones with progress tracking.
 
 ```json
 {
-  "id": "feature-123",
-  "name": "OAuth Authentication",
-  "description": "Implement OAuth authentication with Google and GitHub providers",
-  "status": "in_progress",
-  "size": "medium",
-  "created": "2024-03-01T10:00:00Z",
-  "started": "2024-03-10T09:00:00Z",
-  "targetCompletion": "2024-03-25T17:00:00Z",
-  "actualCompletion": null,
-  "milestones": [
-    {
-      "id": "milestone-1",
-      "name": "Research & Design",
-      "status": "completed",
-      "tasks": ["task-456", "task-457"],
-      "completedAt": "2024-03-12T16:00:00Z"
-    },
-    {
-      "id": "milestone-2",
-      "name": "Implementation",
-      "status": "in_progress",
-      "tasks": ["task-458", "task-459", "task-460"],
-      "completedAt": null
-    },
-    {
-      "id": "milestone-3",
-      "name": "Testing & Deployment",
-      "status": "not_started",
-      "tasks": ["task-461", "task-462"],
-      "completedAt": null
-    }
-  ],
-  "tasks": [
-    {
-      "id": "task-456",
-      "title": "Research OAuth providers and flows",
-      "description": "Evaluate Google, GitHub, and Facebook OAuth implementations. Document recommended flow.",
-      "status": "completed",
-      "complexity": 3,
-      "dependencies": [],
-      "milestone": "milestone-1",
-      "assignee": "yogev",
-      "created": "2024-03-01T10:00:00Z",
-      "started": "2024-03-10T09:00:00Z",
-      "completed": "2024-03-11T15:30:00Z",
-      "validation": {
-        "method": "manual",
-        "confidence": 1.0,
-        "evidence": {
-          "filesChanged": ["docs/research/oauth-providers.md"],
-          "commits": ["a1b2c3d"],
-          "notes": "Research document reviewed and approved"
-        }
-      }
-    },
-    {
-      "id": "task-457",
-      "title": "Design session architecture",
-      "description": "Design how sessions will be stored, managed, and invalidated. Document in architecture docs.",
-      "status": "completed",
-      "complexity": 5,
-      "dependencies": ["task-456"],
-      "milestone": "milestone-1",
-      "assignee": "yogev",
-      "created": "2024-03-01T10:00:00Z",
-      "started": "2024-03-11T16:00:00Z",
-      "completed": "2024-03-12T16:00:00Z",
-      "validation": {
-        "method": "automatic",
-        "confidence": 0.95,
-        "evidence": {
-          "filesChanged": [
-            "docs/architecture/authentication.md",
-            ".devflow/memory/decisionLog.md"
-          ],
-          "commits": ["d4e5f6g"],
-          "decisionLogged": "decision-47",
-          "testsAdded": false,
-          "lintPassed": true
-        }
-      }
-    },
-    {
-      "id": "task-458",
-      "title": "Implement SessionManager class",
-      "description": "Create SessionManager with Redis integration for session CRUD operations.",
-      "status": "in_progress",
-      "complexity": 7,
-      "dependencies": ["task-457"],
-      "milestone": "milestone-2",
-      "assignee": "yogev",
-      "created": "2024-03-01T10:00:00Z",
-      "started": "2024-03-20T09:00:00Z",
-      "completed": null,
-      "validation": {
-        "method": "automatic",
-        "confidence": 0.6,
-        "evidence": {
-          "filesChanged": ["src/auth/session.ts"],
-          "commits": [],
-          "testsAdded": true,
-          "testsPassed": false,
-          "lintPassed": true,
-          "typeCheckPassed": true,
-          "blockers": ["Tests failing due to Redis mock issues"]
-        }
-      },
-      "validationCriteria": {
-        "requiredFiles": ["src/auth/session.ts", "src/auth/session.test.ts"],
-        "requiredTests": ["session creation", "session retrieval", "session deletion", "session expiration"],
-        "mustPassLint": true,
-        "mustPassTypeCheck": true,
-        "mustPassTests": true,
-        "coverageThreshold": 0.8
-      }
-    }
-  ],
-  "metrics": {
-    "totalTasks": 7,
-    "completedTasks": 2,
-    "inProgressTasks": 1,
-    "blockedTasks": 0,
-    "notStartedTasks": 4,
-    "totalComplexity": 35,
-    "completedComplexity": 8,
-    "averageConfidence": 0.85,
-    "estimatedDaysRemaining": 3.5,
-    "velocityPoints": 2.3
-  },
-  "relatedResources": {
-    "decisions": ["decision-47"],
-    "rules": ["auth-token-handling"],
-    "documentation": [
-      "docs/architecture/authentication.md",
-      "docs/api/authentication.md"
-    ]
-  }
+	"id": "feature-123",
+	"name": "OAuth Authentication",
+	"description": "Implement OAuth authentication with Google and GitHub providers",
+	"status": "in_progress",
+	"size": "medium",
+	"created": "2024-03-01T10:00:00Z",
+	"started": "2024-03-10T09:00:00Z",
+	"targetCompletion": "2024-03-25T17:00:00Z",
+	"actualCompletion": null,
+	"milestones": [
+		{
+			"id": "milestone-1",
+			"name": "Research & Design",
+			"status": "completed",
+			"tasks": ["task-456", "task-457"],
+			"completedAt": "2024-03-12T16:00:00Z"
+		},
+		{
+			"id": "milestone-2",
+			"name": "Implementation",
+			"status": "in_progress",
+			"tasks": ["task-458", "task-459", "task-460"],
+			"completedAt": null
+		},
+		{
+			"id": "milestone-3",
+			"name": "Testing & Deployment",
+			"status": "not_started",
+			"tasks": ["task-461", "task-462"],
+			"completedAt": null
+		}
+	],
+	"tasks": [
+		{
+			"id": "task-456",
+			"title": "Research OAuth providers and flows",
+			"description": "Evaluate Google, GitHub, and Facebook OAuth implementations. Document recommended flow.",
+			"status": "completed",
+			"complexity": 3,
+			"dependencies": [],
+			"milestone": "milestone-1",
+			"assignee": "yogev",
+			"created": "2024-03-01T10:00:00Z",
+			"started": "2024-03-10T09:00:00Z",
+			"completed": "2024-03-11T15:30:00Z",
+			"validation": {
+				"method": "manual",
+				"confidence": 1.0,
+				"evidence": {
+					"filesChanged": ["docs/research/oauth-providers.md"],
+					"commits": ["a1b2c3d"],
+					"notes": "Research document reviewed and approved"
+				}
+			}
+		},
+		{
+			"id": "task-457",
+			"title": "Design session architecture",
+			"description": "Design how sessions will be stored, managed, and invalidated. Document in architecture docs.",
+			"status": "completed",
+			"complexity": 5,
+			"dependencies": ["task-456"],
+			"milestone": "milestone-1",
+			"assignee": "yogev",
+			"created": "2024-03-01T10:00:00Z",
+			"started": "2024-03-11T16:00:00Z",
+			"completed": "2024-03-12T16:00:00Z",
+			"validation": {
+				"method": "automatic",
+				"confidence": 0.95,
+				"evidence": {
+					"filesChanged": [
+						"docs/architecture/authentication.md",
+						".devflow/memory/decisionLog.md"
+					],
+					"commits": ["d4e5f6g"],
+					"decisionLogged": "decision-47",
+					"testsAdded": false,
+					"lintPassed": true
+				}
+			}
+		},
+		{
+			"id": "task-458",
+			"title": "Implement SessionManager class",
+			"description": "Create SessionManager with Redis integration for session CRUD operations.",
+			"status": "in_progress",
+			"complexity": 7,
+			"dependencies": ["task-457"],
+			"milestone": "milestone-2",
+			"assignee": "yogev",
+			"created": "2024-03-01T10:00:00Z",
+			"started": "2024-03-20T09:00:00Z",
+			"completed": null,
+			"validation": {
+				"method": "automatic",
+				"confidence": 0.6,
+				"evidence": {
+					"filesChanged": ["src/auth/session.ts"],
+					"commits": [],
+					"testsAdded": true,
+					"testsPassed": false,
+					"lintPassed": true,
+					"typeCheckPassed": true,
+					"blockers": ["Tests failing due to Redis mock issues"]
+				}
+			},
+			"validationCriteria": {
+				"requiredFiles": [
+					"src/auth/session.ts",
+					"src/auth/session.test.ts"
+				],
+				"requiredTests": [
+					"session creation",
+					"session retrieval",
+					"session deletion",
+					"session expiration"
+				],
+				"mustPassLint": true,
+				"mustPassTypeCheck": true,
+				"mustPassTests": true,
+				"coverageThreshold": 0.8
+			}
+		}
+	],
+	"metrics": {
+		"totalTasks": 7,
+		"completedTasks": 2,
+		"inProgressTasks": 1,
+		"blockedTasks": 0,
+		"notStartedTasks": 4,
+		"totalComplexity": 35,
+		"completedComplexity": 8,
+		"averageConfidence": 0.85,
+		"estimatedDaysRemaining": 3.5,
+		"velocityPoints": 2.3
+	},
+	"relatedResources": {
+		"decisions": ["decision-47"],
+		"rules": ["auth-token-handling"],
+		"documentation": [
+			"docs/architecture/authentication.md",
+			"docs/api/authentication.md"
+		]
+	}
 }
 ```
 
 ## Task Complexity Scale
 
-| Level | Effort | Description | Examples |
-|-------|--------|-------------|----------|
-| 1 | 15-30min | Trivial change | Fix typo, update config value |
-| 2 | 30min-1hr | Simple task | Add logging, simple validation |
-| 3 | 1-2hrs | Small feature | Create simple component, add endpoint |
-| 4 | 2-4hrs | Moderate task | Implement service class, add middleware |
-| 5 | 4-8hrs | Standard feature | Full CRUD operations, complex component |
-| 6 | 1 day | Large task | Integration with third-party service |
-| 7 | 1-2 days | Complex feature | Authentication system, file upload |
-| 8 | 2-3 days | Very complex | Search implementation, caching layer |
-| 9 | 3-5 days | Major feature | Admin dashboard, reporting system |
-| 10 | 5+ days | Epic-level | Complete subsystem, major refactor |
+| Level | Effort    | Description      | Examples                                |
+| ----- | --------- | ---------------- | --------------------------------------- |
+| 1     | 15-30min  | Trivial change   | Fix typo, update config value           |
+| 2     | 30min-1hr | Simple task      | Add logging, simple validation          |
+| 3     | 1-2hrs    | Small feature    | Create simple component, add endpoint   |
+| 4     | 2-4hrs    | Moderate task    | Implement service class, add middleware |
+| 5     | 4-8hrs    | Standard feature | Full CRUD operations, complex component |
+| 6     | 1 day     | Large task       | Integration with third-party service    |
+| 7     | 1-2 days  | Complex feature  | Authentication system, file upload      |
+| 8     | 2-3 days  | Very complex     | Search implementation, caching layer    |
+| 9     | 3-5 days  | Major feature    | Admin dashboard, reporting system       |
+| 10    | 5+ days   | Epic-level       | Complete subsystem, major refactor      |
 
 ## MCP Primitives
 
 ### Resources
 
 #### `devflow://plans/active`
+
 **Auto-loaded at session start** - provides active plan summaries.
 
 **Response Format:**
+
 ```json
 {
-  "uri": "devflow://plans/active",
-  "mimeType": "text/markdown",
-  "text": "# Active Plans\n\n## OAuth Authentication (feature-123)\n**Progress:** 2/7 tasks (29%)\n**Status:** In progress\n**Next:** Implement SessionManager class\n\n## User Profile Management (feature-124)\n**Progress:** 0/5 tasks (0%)\n**Status:** Not started\n**Blocked:** Waiting for OAuth completion"
+	"uri": "devflow://plans/active",
+	"mimeType": "text/markdown",
+	"text": "# Active Plans\n\n## OAuth Authentication (feature-123)\n**Progress:** 2/7 tasks (29%)\n**Status:** In progress\n**Next:** Implement SessionManager class\n\n## User Profile Management (feature-124)\n**Progress:** 0/5 tasks (0%)\n**Status:** Not started\n**Blocked:** Waiting for OAuth completion"
 }
 ```
 
 #### `devflow://plans/{plan-id}`
+
 **Individual plan retrieval** - full plan data.
 
 **Response Format:**
+
 ```json
 {
-  "uri": "devflow://plans/feature-123",
-  "mimeType": "application/json",
-  "text": "{\"id\":\"feature-123\",\"name\":\"OAuth Authentication\",...}"
+	"uri": "devflow://plans/feature-123",
+	"mimeType": "application/json",
+	"text": "{\"id\":\"feature-123\",\"name\":\"OAuth Authentication\",...}"
 }
 ```
 
 ### Tools
 
 #### `plan:create`
+
 **Create new feature plan.**
 
 **Parameters:**
+
 ```typescript
 {
   name: string;                      // "OAuth Authentication"
@@ -256,6 +275,7 @@ Tasks organized into deliverable milestones with progress tracking.
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -267,45 +287,46 @@ Tasks organized into deliverable milestones with progress tracking.
 ```
 
 **Example:**
+
 ```typescript
-await callTool("plan:create", {
-  name: "OAuth Authentication",
-  description: "Implement OAuth authentication with Google and GitHub providers",
-  size: "medium",
-  targetCompletion: "2024-03-25",
-  milestones: [
-    {
-      name: "Research & Design",
-      tasks: [
-        "Research OAuth providers and flows",
-        "Design session architecture"
-      ]
-    },
-    {
-      name: "Implementation",
-      tasks: [
-        "Implement SessionManager class",
-        "Integrate Passport.js",
-        "Add OAuth callback routes"
-      ]
-    },
-    {
-      name: "Testing & Deployment",
-      tasks: [
-        "Write integration tests",
-        "Deploy to staging"
-      ]
-    }
-  ],
-  relatedDecisions: ["decision-47"],
-  relatedDocs: ["docs/architecture/authentication.md"]
+await callTool('plan:create', {
+	name: 'OAuth Authentication',
+	description:
+		'Implement OAuth authentication with Google and GitHub providers',
+	size: 'medium',
+	targetCompletion: '2024-03-25',
+	milestones: [
+		{
+			name: 'Research & Design',
+			tasks: [
+				'Research OAuth providers and flows',
+				'Design session architecture',
+			],
+		},
+		{
+			name: 'Implementation',
+			tasks: [
+				'Implement SessionManager class',
+				'Integrate Passport.js',
+				'Add OAuth callback routes',
+			],
+		},
+		{
+			name: 'Testing & Deployment',
+			tasks: ['Write integration tests', 'Deploy to staging'],
+		},
+	],
+	relatedDecisions: ['decision-47'],
+	relatedDocs: ['docs/architecture/authentication.md'],
 });
 ```
 
 #### `plan:task:add`
+
 **Add task to existing plan.**
 
 **Parameters:**
+
 ```typescript
 {
   planId: string;                    // "feature-123"
@@ -327,6 +348,7 @@ await callTool("plan:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -337,9 +359,11 @@ await callTool("plan:create", {
 ```
 
 #### `plan:task:update`
+
 **Update task status and metadata.**
 
 **Parameters:**
+
 ```typescript
 {
   planId: string;                    // "feature-123"
@@ -352,6 +376,7 @@ await callTool("plan:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -376,9 +401,11 @@ await callTool("plan:create", {
 ```
 
 #### `plan:task:validate`
+
 **Manually trigger task validation.**
 
 **Parameters:**
+
 ```typescript
 {
   planId: string;
@@ -388,6 +415,7 @@ await callTool("plan:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   taskId: "task-458",
@@ -451,9 +479,11 @@ await callTool("plan:create", {
 ```
 
 #### `plan:milestone:create`
+
 **Add milestone to plan.**
 
 **Parameters:**
+
 ```typescript
 {
   planId: string;
@@ -464,9 +494,11 @@ await callTool("plan:create", {
 ```
 
 #### `plan:milestone:update`
+
 **Update milestone status.**
 
 **Parameters:**
+
 ```typescript
 {
   planId: string;
@@ -477,9 +509,11 @@ await callTool("plan:create", {
 ```
 
 #### `plan:export`
+
 **Export plan to various formats.**
 
 **Parameters:**
+
 ```typescript
 {
   planId: string;
@@ -489,6 +523,7 @@ await callTool("plan:create", {
 ```
 
 **Returns (markdown example):**
+
 ```typescript
 {
   success: true,
@@ -513,9 +548,11 @@ await callTool("plan:create", {
 ```
 
 #### `plan:metrics`
+
 **Get plan metrics and progress analytics.**
 
 **Parameters:**
+
 ```typescript
 {
   planId?: string;                   // Specific plan (default: all active)
@@ -525,6 +562,7 @@ await callTool("plan:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   plan: "feature-123",
@@ -562,9 +600,11 @@ await callTool("plan:create", {
 ```
 
 #### `plan:dependencies`
+
 **Visualize task dependencies.**
 
 **Parameters:**
+
 ```typescript
 {
   planId: string;
@@ -573,6 +613,7 @@ await callTool("plan:create", {
 ```
 
 **Returns (mermaid format):**
+
 ```typescript
 {
   format: "mermaid",
@@ -590,9 +631,11 @@ await callTool("plan:create", {
 ### Prompts
 
 #### `plan_feature`
+
 **Guided feature planning.**
 
 **Parameters:**
+
 ```typescript
 {
   featureName?: string;
@@ -601,18 +644,21 @@ await callTool("plan:create", {
 ```
 
 **Generated Prompt:**
+
 ```markdown
 Let's plan the [featureName] feature.
 
 I'll help you break this down into tasks:
 
 **Feature Size:** [size]
+
 - Small: 1-3 tasks, < 1 week
 - Medium: 4-8 tasks, 1-2 weeks
 - Large: 9-15 tasks, 2-4 weeks
 - XL: 16+ tasks, 4+ weeks
 
 **Planning Process:**
+
 1. What are the major milestones?
 2. What tasks are needed for each milestone?
 3. What are the task dependencies?
@@ -623,9 +669,11 @@ Let's start: What are the main milestones for this feature?
 ```
 
 #### `task_breakdown`
+
 **Decompose complex task.**
 
 **Parameters:**
+
 ```typescript
 {
   taskDescription: string;
@@ -634,12 +682,14 @@ Let's start: What are the main milestones for this feature?
 ```
 
 **Generated Prompt:**
+
 ```markdown
 This task seems complex. Let's break it down into smaller, manageable tasks.
 
 **Original Task:** [taskDescription]
 
 **Breakdown Strategy:**
+
 1. Identify distinct sub-tasks
 2. Ensure each is < [maxComplexity] complexity
 3. Define dependencies between sub-tasks
@@ -658,209 +708,230 @@ Does this breakdown make sense? Any adjustments needed?
 #### File Change Detection
 
 **Monitors:**
+
 - Files created/modified since task started
 - Line changes (additions/deletions)
 - Last modification timestamps
 
 **Implementation:**
+
 ```typescript
 interface FileChange {
-  path: string;
-  status: 'created' | 'modified' | 'deleted';
-  linesAdded: number;
-  linesRemoved: number;
-  lastModified: string;
-  hashBefore?: string;
-  hashAfter: string;
+	path: string;
+	status: 'created' | 'modified' | 'deleted';
+	linesAdded: number;
+	linesRemoved: number;
+	lastModified: string;
+	hashBefore?: string;
+	hashAfter: string;
 }
 
 function detectFileChanges(task: Task): FileChange[] {
-  const taskStartTime = new Date(task.started);
-  const gitLog = execSync(
-    `git log --since="${taskStartTime.toISOString()}" --name-status --pretty=format:"%H|%ai"`
-  );
-  
-  // Parse git log and compute file changes
-  // Return list of changed files with metadata
+	const taskStartTime = new Date(task.started);
+	const gitLog = execSync(
+		`git log --since="${taskStartTime.toISOString()}" --name-status --pretty=format:"%H|%ai"`,
+	);
+
+	// Parse git log and compute file changes
+	// Return list of changed files with metadata
 }
 ```
 
 #### Test Execution
 
 **Monitors:**
+
 - Test files created/modified
 - Test execution results (pass/fail)
 - Code coverage metrics
 
 **Implementation:**
+
 ```typescript
 interface TestResults {
-  total: number;
-  passed: number;
-  failed: number;
-  skipped: number;
-  coverage: number;
-  duration: number;
-  timestamp: string;
-  failures?: Array<{
-    test: string;
-    error: string;
-  }>;
+	total: number;
+	passed: number;
+	failed: number;
+	skipped: number;
+	coverage: number;
+	duration: number;
+	timestamp: string;
+	failures?: Array<{
+		test: string;
+		error: string;
+	}>;
 }
 
 async function runTests(task: Task): Promise<TestResults> {
-  const result = await execAsync('npm test -- --coverage --json');
-  const parsed = JSON.parse(result.stdout);
-  
-  return {
-    total: parsed.numTotalTests,
-    passed: parsed.numPassedTests,
-    failed: parsed.numFailedTests,
-    skipped: parsed.numSkippedTests,
-    coverage: parsed.coverageMap.total.lines.pct / 100,
-    duration: parsed.testResults.reduce((sum, t) => sum + t.perfStats.runtime, 0),
-    timestamp: new Date().toISOString()
-  };
+	const result = await execAsync('npm test -- --coverage --json');
+	const parsed = JSON.parse(result.stdout);
+
+	return {
+		total: parsed.numTotalTests,
+		passed: parsed.numPassedTests,
+		failed: parsed.numFailedTests,
+		skipped: parsed.numSkippedTests,
+		coverage: parsed.coverageMap.total.lines.pct / 100,
+		duration: parsed.testResults.reduce(
+			(sum, t) => sum + t.perfStats.runtime,
+			0,
+		),
+		timestamp: new Date().toISOString(),
+	};
 }
 ```
 
 #### Git Commit Analysis
 
 **Monitors:**
+
 - Commits since task started
 - Commit messages referencing task ID
 - Files changed in commits
 
 **Implementation:**
+
 ```typescript
 interface CommitInfo {
-  sha: string;
-  message: string;
-  timestamp: string;
-  author: string;
-  filesChanged: string[];
-  referencesTask: boolean;
+	sha: string;
+	message: string;
+	timestamp: string;
+	author: string;
+	filesChanged: string[];
+	referencesTask: boolean;
 }
 
 function analyzeCommits(task: Task): CommitInfo[] {
-  const taskStartTime = new Date(task.started);
-  const commits = execSync(
-    `git log --since="${taskStartTime.toISOString()}" --pretty=format:"%H|%s|%ai|%an" --name-only`
-  );
-  
-  return commits
-    .toString()
-    .split('\n\n')
-    .map(parseCommit)
-    .filter(c => c.referencesTask || c.filesChanged.some(f => 
-      task.validationCriteria?.requiredFiles?.includes(f)
-    ));
+	const taskStartTime = new Date(task.started);
+	const commits = execSync(
+		`git log --since="${taskStartTime.toISOString()}" --pretty=format:"%H|%s|%ai|%an" --name-only`,
+	);
+
+	return commits
+		.toString()
+		.split('\n\n')
+		.map(parseCommit)
+		.filter(
+			(c) =>
+				c.referencesTask ||
+				c.filesChanged.some((f) =>
+					task.validationCriteria?.requiredFiles?.includes(f),
+				),
+		);
 }
 ```
 
 #### Static Analysis
 
 **Monitors:**
+
 - Linting results (ESLint, TSLint, etc.)
 - Type checking results (TypeScript)
 - Code quality metrics
 
 **Implementation:**
+
 ```typescript
 interface StaticAnalysisResults {
-  lint: {
-    passed: boolean;
-    errors: number;
-    warnings: number;
-    issues?: Array<{
-      file: string;
-      line: number;
-      rule: string;
-      message: string;
-    }>;
-  };
-  typeCheck: {
-    passed: boolean;
-    errors: number;
-    issues?: Array<{
-      file: string;
-      line: number;
-      message: string;
-    }>;
-  };
+	lint: {
+		passed: boolean;
+		errors: number;
+		warnings: number;
+		issues?: Array<{
+			file: string;
+			line: number;
+			rule: string;
+			message: string;
+		}>;
+	};
+	typeCheck: {
+		passed: boolean;
+		errors: number;
+		issues?: Array<{
+			file: string;
+			line: number;
+			message: string;
+		}>;
+	};
 }
 
 async function runStaticAnalysis(task: Task): Promise<StaticAnalysisResults> {
-  const lintResult = await execAsync('npm run lint -- --format json');
-  const typeCheckResult = await execAsync('npm run type-check');
-  
-  return {
-    lint: parseLintOutput(lintResult.stdout),
-    typeCheck: parseTypeCheckOutput(typeCheckResult.stdout)
-  };
+	const lintResult = await execAsync('npm run lint -- --format json');
+	const typeCheckResult = await execAsync('npm run type-check');
+
+	return {
+		lint: parseLintOutput(lintResult.stdout),
+		typeCheck: parseTypeCheckOutput(typeCheckResult.stdout),
+	};
 }
 ```
 
 ### Confidence Scoring
 
 **Formula:**
+
 ```typescript
 function calculateConfidence(task: Task, evidence: ValidationEvidence): number {
-  let score = 0.0;
-  const weights = {
-    requiredFiles: 0.20,
-    requiredTests: 0.25,
-    testsPassing: 0.25,
-    lintPassing: 0.10,
-    typeCheckPassing: 0.10,
-    gitCommit: 0.10
-  };
-  
-  // Required files present
-  if (evidence.filesChanged.length > 0) {
-    const requiredFiles = task.validationCriteria?.requiredFiles || [];
-    const foundFiles = evidence.filesChanged.map(f => f.path);
-    const matchRate = requiredFiles.filter(f => foundFiles.includes(f)).length / requiredFiles.length;
-    score += weights.requiredFiles * matchRate;
-  }
-  
-  // Required tests exist
-  if (evidence.testsAdded) {
-    const requiredTests = task.validationCriteria?.requiredTests || [];
-    const foundTests = evidence.testResults?.tests || [];
-    const matchRate = requiredTests.filter(t => 
-      foundTests.some(ft => ft.includes(t))
-    ).length / requiredTests.length;
-    score += weights.requiredTests * matchRate;
-  }
-  
-  // Tests passing
-  if (evidence.testsPassed) {
-    score += weights.testsPassing;
-  } else if (evidence.testResults) {
-    score += weights.testsPassing * (evidence.testResults.passed / evidence.testResults.total);
-  }
-  
-  // Linting
-  if (evidence.lintPassed) {
-    score += weights.lintPassing;
-  }
-  
-  // Type checking
-  if (evidence.typeCheckPassed) {
-    score += weights.typeCheckPassing;
-  }
-  
-  // Git commit
-  if (evidence.commits.some(c => c.referencesTask)) {
-    score += weights.gitCommit;
-  }
-  
-  return Math.min(1.0, score);
+	let score = 0.0;
+	const weights = {
+		requiredFiles: 0.2,
+		requiredTests: 0.25,
+		testsPassing: 0.25,
+		lintPassing: 0.1,
+		typeCheckPassing: 0.1,
+		gitCommit: 0.1,
+	};
+
+	// Required files present
+	if (evidence.filesChanged.length > 0) {
+		const requiredFiles = task.validationCriteria?.requiredFiles || [];
+		const foundFiles = evidence.filesChanged.map((f) => f.path);
+		const matchRate =
+			requiredFiles.filter((f) => foundFiles.includes(f)).length /
+			requiredFiles.length;
+		score += weights.requiredFiles * matchRate;
+	}
+
+	// Required tests exist
+	if (evidence.testsAdded) {
+		const requiredTests = task.validationCriteria?.requiredTests || [];
+		const foundTests = evidence.testResults?.tests || [];
+		const matchRate =
+			requiredTests.filter((t) => foundTests.some((ft) => ft.includes(t)))
+				.length / requiredTests.length;
+		score += weights.requiredTests * matchRate;
+	}
+
+	// Tests passing
+	if (evidence.testsPassed) {
+		score += weights.testsPassing;
+	} else if (evidence.testResults) {
+		score +=
+			weights.testsPassing *
+			(evidence.testResults.passed / evidence.testResults.total);
+	}
+
+	// Linting
+	if (evidence.lintPassed) {
+		score += weights.lintPassing;
+	}
+
+	// Type checking
+	if (evidence.typeCheckPassed) {
+		score += weights.typeCheckPassing;
+	}
+
+	// Git commit
+	if (evidence.commits.some((c) => c.referencesTask)) {
+		score += weights.gitCommit;
+	}
+
+	return Math.min(1.0, score);
 }
 ```
 
 **Confidence Levels:**
+
 - **0.0 - 0.3:** Not started or minimal progress
 - **0.3 - 0.6:** In progress, some evidence of work
 - **0.6 - 0.8:** Nearly complete, minor issues remain
@@ -873,15 +944,15 @@ function calculateConfidence(task: Task, evidence: ValidationEvidence): number {
 
 ```typescript
 // Task completion validates against rules
-plan:task:update({
-  taskId: "task-458",
-  status: "completed"
-})
+plan: task: update({
+	taskId: 'task-458',
+	status: 'completed',
+});
 
 // Automatically runs:
-rules:validate({
-  filePath: "src/auth/session.ts"
-})
+rules: validate({
+	filePath: 'src/auth/session.ts',
+});
 
 // If violations found, reduces confidence score
 // and adds warnings to validation evidence
@@ -891,23 +962,23 @@ rules:validate({
 
 ```typescript
 // Task completion updates memory
-plan:task:update({
-  taskId: "task-458",
-  status: "completed"
-})
+plan: task: update({
+	taskId: 'task-458',
+	status: 'completed',
+});
 
 // Automatically updates:
-memory:progress:task({
-  taskId: "task-458",
-  status: "completed",
-  milestone: "Implementation"
-})
+memory: progress: task({
+	taskId: 'task-458',
+	status: 'completed',
+	milestone: 'Implementation',
+});
 
 // And logs to activeContext:
-memory:change:log({
-  summary: "Completed SessionManager implementation",
-  relatedPlan: "feature-123"
-})
+memory: change: log({
+	summary: 'Completed SessionManager implementation',
+	relatedPlan: 'feature-123',
+});
 ```
 
 ### Planning → Documentation
@@ -938,25 +1009,25 @@ memory:change:log({
 
 ```typescript
 // 1. User marks task complete
-await callTool("plan:task:update", {
-  planId: "feature-123",
-  taskId: "task-458",
-  status: "completed"
+await callTool('plan:task:update', {
+	planId: 'feature-123',
+	taskId: 'task-458',
+	status: 'completed',
 });
 
 // 2. Automatic validation triggered
 const validation = await validateTask(task);
 
 // 3. Rules validation
-const ruleViolations = await callTool("rules:validate", {
-  filePath: "src/auth/session.ts"
+const ruleViolations = await callTool('rules:validate', {
+	filePath: 'src/auth/session.ts',
 });
 
 // 4. Update memory
-await callTool("memory:progress:task", {
-  taskId: "task-458",
-  status: "completed",
-  notes: `Validation confidence: ${validation.confidence}`
+await callTool('memory:progress:task', {
+	taskId: 'task-458',
+	status: 'completed',
+	notes: `Validation confidence: ${validation.confidence}`,
 });
 
 // 5. Check documentation freshness
@@ -964,12 +1035,12 @@ const docChecks = checkDocumentationImpact(task);
 
 // 6. Return comprehensive result
 return {
-  success: true,
-  validation,
-  ruleViolations,
-  memoryUpdated: true,
-  documentationWarnings: docChecks.warnings,
-  nextTasks: getUnblockedTasks(plan)
+	success: true,
+	validation,
+	ruleViolations,
+	memoryUpdated: true,
+	documentationWarnings: docChecks.warnings,
+	nextTasks: getUnblockedTasks(plan),
 };
 ```
 
@@ -979,20 +1050,20 @@ return {
 
 ```json
 {
-  "size": "small",
-  "estimatedDuration": "2-5 days",
-  "taskCount": "1-3",
-  "milestones": [
-    {
-      "name": "Implementation",
-      "tasks": []
-    },
-    {
-      "name": "Testing",
-      "tasks": []
-    }
-  ],
-  "defaultComplexity": 3
+	"size": "small",
+	"estimatedDuration": "2-5 days",
+	"taskCount": "1-3",
+	"milestones": [
+		{
+			"name": "Implementation",
+			"tasks": []
+		},
+		{
+			"name": "Testing",
+			"tasks": []
+		}
+	],
+	"defaultComplexity": 3
 }
 ```
 
@@ -1000,24 +1071,24 @@ return {
 
 ```json
 {
-  "size": "medium",
-  "estimatedDuration": "1-2 weeks",
-  "taskCount": "4-8",
-  "milestones": [
-    {
-      "name": "Research & Design",
-      "tasks": []
-    },
-    {
-      "name": "Implementation",
-      "tasks": []
-    },
-    {
-      "name": "Testing & Deployment",
-      "tasks": []
-    }
-  ],
-  "defaultComplexity": 5
+	"size": "medium",
+	"estimatedDuration": "1-2 weeks",
+	"taskCount": "4-8",
+	"milestones": [
+		{
+			"name": "Research & Design",
+			"tasks": []
+		},
+		{
+			"name": "Implementation",
+			"tasks": []
+		},
+		{
+			"name": "Testing & Deployment",
+			"tasks": []
+		}
+	],
+	"defaultComplexity": 5
 }
 ```
 
@@ -1025,36 +1096,36 @@ return {
 
 ```json
 {
-  "size": "large",
-  "estimatedDuration": "2-4 weeks",
-  "taskCount": "9-15",
-  "milestones": [
-    {
-      "name": "Discovery & Planning",
-      "tasks": []
-    },
-    {
-      "name": "Architecture & Design",
-      "tasks": []
-    },
-    {
-      "name": "Core Implementation",
-      "tasks": []
-    },
-    {
-      "name": "Integration",
-      "tasks": []
-    },
-    {
-      "name": "Testing & Polish",
-      "tasks": []
-    },
-    {
-      "name": "Deployment",
-      "tasks": []
-    }
-  ],
-  "defaultComplexity": 6
+	"size": "large",
+	"estimatedDuration": "2-4 weeks",
+	"taskCount": "9-15",
+	"milestones": [
+		{
+			"name": "Discovery & Planning",
+			"tasks": []
+		},
+		{
+			"name": "Architecture & Design",
+			"tasks": []
+		},
+		{
+			"name": "Core Implementation",
+			"tasks": []
+		},
+		{
+			"name": "Integration",
+			"tasks": []
+		},
+		{
+			"name": "Testing & Polish",
+			"tasks": []
+		},
+		{
+			"name": "Deployment",
+			"tasks": []
+		}
+	],
+	"defaultComplexity": 6
 }
 ```
 
@@ -1062,45 +1133,45 @@ return {
 
 ```json
 {
-  "size": "xl",
-  "estimatedDuration": "4+ weeks",
-  "taskCount": "16+",
-  "milestones": [
-    {
-      "name": "Requirements & Research",
-      "tasks": []
-    },
-    {
-      "name": "System Design",
-      "tasks": []
-    },
-    {
-      "name": "Phase 1 Implementation",
-      "tasks": []
-    },
-    {
-      "name": "Phase 2 Implementation",
-      "tasks": []
-    },
-    {
-      "name": "Integration & Testing",
-      "tasks": []
-    },
-    {
-      "name": "Beta Deployment",
-      "tasks": []
-    },
-    {
-      "name": "Refinement",
-      "tasks": []
-    },
-    {
-      "name": "Production Deployment",
-      "tasks": []
-    }
-  ],
-  "defaultComplexity": 7,
-  "requiresMultiplePhases": true
+	"size": "xl",
+	"estimatedDuration": "4+ weeks",
+	"taskCount": "16+",
+	"milestones": [
+		{
+			"name": "Requirements & Research",
+			"tasks": []
+		},
+		{
+			"name": "System Design",
+			"tasks": []
+		},
+		{
+			"name": "Phase 1 Implementation",
+			"tasks": []
+		},
+		{
+			"name": "Phase 2 Implementation",
+			"tasks": []
+		},
+		{
+			"name": "Integration & Testing",
+			"tasks": []
+		},
+		{
+			"name": "Beta Deployment",
+			"tasks": []
+		},
+		{
+			"name": "Refinement",
+			"tasks": []
+		},
+		{
+			"name": "Production Deployment",
+			"tasks": []
+		}
+	],
+	"defaultComplexity": 7,
+	"requiresMultiplePhases": true
 }
 ```
 
@@ -1109,6 +1180,7 @@ return {
 ### Task Granularity
 
 **Too Large (Complexity 9-10):**
+
 ```typescript
 {
   title: "Implement complete authentication system",
@@ -1118,6 +1190,7 @@ return {
 ```
 
 **Just Right (Complexity 4-7):**
+
 ```typescript
 {
   title: "Implement SessionManager class",
@@ -1128,6 +1201,7 @@ return {
 ```
 
 **Too Small (Complexity 1-2):**
+
 ```typescript
 {
   title: "Add import statement",
@@ -1139,6 +1213,7 @@ return {
 ### Validation Criteria
 
 **Good:**
+
 ```typescript
 {
   validationCriteria: {
@@ -1161,35 +1236,38 @@ return {
 ```
 
 **Too Vague:**
+
 ```typescript
 {
-  validationCriteria: {
-    requiredFiles: ["something in src/"]
-  }
+	validationCriteria: {
+		requiredFiles: ['something in src/'];
+	}
 }
 ```
 
 ### Dependency Management
 
 **Good:**
+
 ```typescript
 {
-  tasks: [
-    { id: "task-1", title: "Design API", dependencies: [] },
-    { id: "task-2", title: "Implement API", dependencies: ["task-1"] },
-    { id: "task-3", title: "Test API", dependencies: ["task-2"] }
-  ]
+	tasks: [
+		{ id: 'task-1', title: 'Design API', dependencies: [] },
+		{ id: 'task-2', title: 'Implement API', dependencies: ['task-1'] },
+		{ id: 'task-3', title: 'Test API', dependencies: ['task-2'] },
+	];
 }
 // Clear linear dependency chain
 ```
 
 **Problematic:**
+
 ```typescript
 {
-  tasks: [
-    { id: "task-1", dependencies: ["task-2"] },
-    { id: "task-2", dependencies: ["task-1"] }
-  ]
+	tasks: [
+		{ id: 'task-1', dependencies: ['task-2'] },
+		{ id: 'task-2', dependencies: ['task-1'] },
+	];
 }
 // Circular dependency - impossible to complete
 ```
@@ -1201,17 +1279,20 @@ return {
 **Issue:** Task marked complete but confidence is < 0.6
 
 **Diagnosis:**
+
 ```bash
 devflow plan:task:validate --plan feature-123 --task task-458
 ```
 
 **Common Causes:**
+
 - Required files not created
 - Tests not added or failing
 - No git commits referencing task
 - Lint/type-check failures
 
 **Resolution:**
+
 - Review validation criteria
 - Ensure all required files exist
 - Fix failing tests
@@ -1222,11 +1303,13 @@ devflow plan:task:validate --plan feature-123 --task task-458
 **Issue:** Task cannot be started due to dependencies
 
 **Diagnosis:**
+
 ```bash
 devflow plan:dependencies --plan feature-123 --format list
 ```
 
 **Resolution:**
+
 - Complete dependency tasks first
 - Or remove dependency if incorrect
 - Or split task to reduce dependencies
@@ -1236,11 +1319,13 @@ devflow plan:dependencies --plan feature-123 --format list
 **Issue:** Plan target date passed, many tasks incomplete
 
 **Diagnosis:**
+
 ```bash
 devflow plan:metrics --plan feature-123 --include-forecasts
 ```
 
 **Resolution:**
+
 - Re-estimate task complexity
 - Adjust target completion date
 - Break down complex tasks
@@ -1248,4 +1333,4 @@ devflow plan:metrics --plan feature-123 --include-forecasts
 
 ---
 
-**Next:** [05-INTEGRATION.md](./05-INTEGRATION.md) - Cross-layer workflows and unified context
+**Next:** [Integration Guide](./INTEGRATION.md) - Cross-layer workflows and unified context

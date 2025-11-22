@@ -1,4 +1,4 @@
-# Layer 1: Rules Engine
+# Rules Engine
 
 **Project-specific coding standards, conventions, and constraints enforced across any AI agent.**
 
@@ -9,18 +9,23 @@ The Rules layer provides a universal system for defining, managing, and enforcin
 ## Design Principles
 
 ### 1. Declarative Configuration
+
 Rules are written once in `.mdc` format and automatically converted to platform-specific formats (`.cursorrules`, `AGENTS.md`, etc.).
 
 ### 2. Activation Control
+
 Three modes give fine-grained control:
+
 - **`always`**: Auto-applied to every conversation
 - **`manual`**: Applied on-demand via tool calls
 - **`context`**: Applied when file patterns match current work
 
 ### 3. Priority System
+
 When rules conflict, priority (1-10) determines precedence. Higher priority wins.
 
 ### 4. Git-Friendly
+
 Markdown-based storage enables versioning, diffing, and team collaboration.
 
 ## File Format: `.mdc` (Markdown Component)
@@ -35,7 +40,7 @@ type: always
 priority: 8
 tags: [typescript, code-quality]
 version: 1.2.0
-globs: ["**/*.ts", "**/*.tsx"]
+globs: ['**/*.ts', '**/*.tsx']
 author: engineering-team
 created: 2024-01-15
 updated: 2024-03-20
@@ -44,49 +49,55 @@ updated: 2024-03-20
 # TypeScript Standards
 
 ## Type Safety
+
 - Use explicit types for function parameters and return values
 - Never use `any` - prefer `unknown` for truly dynamic types
 - Enable `strict` mode in `tsconfig.json`
 
 ## Naming Conventions
+
 - Functions: `camelCase` verbs (e.g., `getUserProfile`)
 - Types/Interfaces: `PascalCase` nouns (e.g., `UserProfile`)
 - Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_RETRY_COUNT`)
 
 ## Error Handling
+
 - Use Result types over throwing exceptions
 - Exhaustive switch statements with `never` checks
 - Log errors with context, not just messages
 
 ## References
+
 - Decision: #23 (TypeScript adoption rationale)
 - Docs: docs/architecture/typescript-guide.md
 ```
 
 ### Metadata Fields
 
-| Field | Required | Type | Description |
-|-------|----------|------|-------------|
-| `id` | ✅ | string | Unique identifier (kebab-case) |
-| `name` | ✅ | string | Human-readable name |
-| `type` | ✅ | `always` \| `manual` \| `context` | Activation mode |
-| `priority` | ✅ | 1-10 | Conflict resolution weight |
-| `tags` | ❌ | string[] | Categorization labels |
-| `version` | ❌ | semver | Rule version for tracking changes |
-| `globs` | ❌ | string[] | File patterns (required for `context` type) |
-| `author` | ❌ | string | Creator identifier |
-| `created` | ❌ | ISO date | Creation timestamp |
-| `updated` | ❌ | ISO date | Last modification timestamp |
+| Field      | Required | Type                              | Description                                 |
+| ---------- | -------- | --------------------------------- | ------------------------------------------- |
+| `id`       | ✅       | string                            | Unique identifier (kebab-case)              |
+| `name`     | ✅       | string                            | Human-readable name                         |
+| `type`     | ✅       | `always` \| `manual` \| `context` | Activation mode                             |
+| `priority` | ✅       | 1-10                              | Conflict resolution weight                  |
+| `tags`     | ❌       | string[]                          | Categorization labels                       |
+| `version`  | ❌       | semver                            | Rule version for tracking changes           |
+| `globs`    | ❌       | string[]                          | File patterns (required for `context` type) |
+| `author`   | ❌       | string                            | Creator identifier                          |
+| `created`  | ❌       | ISO date                          | Creation timestamp                          |
+| `updated`  | ❌       | ISO date                          | Last modification timestamp                 |
 
 ### Content Guidelines
 
 **Do:**
+
 - Use clear, imperative language ("Use explicit types")
 - Provide concrete examples
 - Link to related decisions and documentation
-- Explain *why* when non-obvious
+- Explain _why_ when non-obvious
 
 **Don't:**
+
 - Write essays - keep it scannable
 - Duplicate documentation (link instead)
 - Use vague language ("try to", "should consider")
@@ -111,6 +122,7 @@ updated: 2024-03-20
 ```
 
 **Organization:**
+
 - `global/`: Always-active rules (type: `always`)
 - `contextual/`: Pattern-matched rules (type: `context`)
 - `manual/`: On-demand rules (type: `manual`)
@@ -120,14 +132,16 @@ updated: 2024-03-20
 ### Resources
 
 #### `devflow://context/rules`
+
 **Auto-loaded at session start** - provides summary of active rules.
 
 **Response Format:**
+
 ```json
 {
-  "uri": "devflow://context/rules",
-  "mimeType": "text/markdown",
-  "text": "# Active Project Rules\n\n## TypeScript Standards (priority: 8)\n- Explicit types required\n- No `any` usage\n\n## Git Conventions (priority: 7)\n- Conventional commits format\n- Reference issue numbers\n\n---\n3 always-active rules | 2 contextual rules ready | 4 manual rules available"
+	"uri": "devflow://context/rules",
+	"mimeType": "text/markdown",
+	"text": "# Active Project Rules\n\n## TypeScript Standards (priority: 8)\n- Explicit types required\n- No `any` usage\n\n## Git Conventions (priority: 7)\n- Conventional commits format\n- Reference issue numbers\n\n---\n3 always-active rules | 2 contextual rules ready | 4 manual rules available"
 }
 ```
 
@@ -135,23 +149,27 @@ updated: 2024-03-20
 Agents automatically receive this at conversation start. No explicit call needed.
 
 #### `devflow://rules/{rule-id}`
+
 **Individual rule retrieval** - full content of specific rule.
 
 **Response Format:**
+
 ```json
 {
-  "uri": "devflow://rules/typescript-standards",
-  "mimeType": "text/markdown",
-  "text": "# TypeScript Standards\n\n## Type Safety\n..."
+	"uri": "devflow://rules/typescript-standards",
+	"mimeType": "text/markdown",
+	"text": "# TypeScript Standards\n\n## Type Safety\n..."
 }
 ```
 
 ### Tools
 
 #### `rules:create`
+
 **Create a new rule from scratch or conversation.**
 
 **Parameters:**
+
 ```typescript
 {
   name: string;              // "React Component Guidelines"
@@ -166,6 +184,7 @@ Agents automatically receive this at conversation start. No explicit call needed
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -176,13 +195,14 @@ Agents automatically receive this at conversation start. No explicit call needed
 ```
 
 **Example:**
+
 ```typescript
-await callTool("rules:create", {
-  name: "Database Query Safety",
-  type: "context",
-  priority: 9,
-  globs: ["src/db/**/*.ts", "src/api/models/**/*.ts"],
-  content: `# Database Query Safety
+await callTool('rules:create', {
+	name: 'Database Query Safety',
+	type: 'context',
+	priority: 9,
+	globs: ['src/db/**/*.ts', 'src/api/models/**/*.ts'],
+	content: `# Database Query Safety
 
 ## SQL Injection Prevention
 - Use parameterized queries exclusively
@@ -193,15 +213,17 @@ await callTool("rules:create", {
 - Add EXPLAIN ANALYZE to complex queries
 - Index foreign keys and frequently filtered columns
 - Limit result sets in application code, not database`,
-  tags: ["database", "security"],
-  linkedDecisions: ["decision-15"]
+	tags: ['database', 'security'],
+	linkedDecisions: ['decision-15'],
 });
 ```
 
 #### `rules:update`
+
 **Modify existing rule.**
 
 **Parameters:**
+
 ```typescript
 {
   ruleId: string;           // "typescript-standards"
@@ -220,6 +242,7 @@ await callTool("rules:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -231,17 +254,20 @@ await callTool("rules:create", {
 ```
 
 #### `rules:delete`
+
 **Remove a rule.**
 
 **Parameters:**
+
 ```typescript
 {
-  ruleId: string;
-  confirm: true;  // Safety check
+	ruleId: string;
+	confirm: true; // Safety check
 }
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -250,9 +276,11 @@ await callTool("rules:create", {
 ```
 
 #### `rules:validate`
+
 **Check code against active rules.**
 
 **Parameters:**
+
 ```typescript
 {
   filePath?: string;        // Validate specific file
@@ -262,6 +290,7 @@ await callTool("rules:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   valid: false,
@@ -287,17 +316,20 @@ await callTool("rules:create", {
 ```
 
 #### `rules:activate`
+
 **Manually activate a manual-type rule.**
 
 **Parameters:**
+
 ```typescript
 {
-  ruleId: string;           // "performance-optimization"
-  scope: "conversation" | "permanent";
+	ruleId: string; // "performance-optimization"
+	scope: 'conversation' | 'permanent';
 }
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -307,20 +339,24 @@ await callTool("rules:create", {
 ```
 
 #### `rules:deactivate`
+
 **Deactivate an always-active or manually-activated rule.**
 
 **Parameters:**
+
 ```typescript
 {
-  ruleId: string;
-  scope: "conversation" | "permanent";
+	ruleId: string;
+	scope: 'conversation' | 'permanent';
 }
 ```
 
 #### `rules:list`
+
 **Query available rules.**
 
 **Parameters:**
+
 ```typescript
 {
   type?: "always" | "manual" | "context";
@@ -331,6 +367,7 @@ await callTool("rules:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   rules: [
@@ -351,9 +388,11 @@ await callTool("rules:create", {
 ```
 
 #### `rules:import`
+
 **Import rules from external formats.**
 
 **Parameters:**
+
 ```typescript
 {
   source: "cursorrules" | "agents-md" | "mdc";
@@ -366,6 +405,7 @@ await callTool("rules:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -377,9 +417,11 @@ await callTool("rules:create", {
 ```
 
 #### `rules:export`
+
 **Export rules to external formats.**
 
 **Parameters:**
+
 ```typescript
 {
   target: "cursorrules" | "agents-md" | "markdown";
@@ -389,6 +431,7 @@ await callTool("rules:create", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -402,9 +445,11 @@ await callTool("rules:create", {
 ### Prompts
 
 #### `init_session`
+
 **Conversation initialization with rule loading.**
 
 **Parameters:**
+
 ```typescript
 {
   contextPath?: string;     // Current working directory
@@ -413,25 +458,30 @@ await callTool("rules:create", {
 ```
 
 **Generated Prompt:**
+
 ```markdown
 You are working on a project with the following active rules:
 
 ## TypeScript Standards (priority: 8)
+
 - Use explicit types for all function signatures
 - Never use `any` - prefer `unknown`
 - Enable `strict` mode
 
 ## Git Commit Conventions (priority: 7)
+
 - Follow conventional commits format
 - Reference issue numbers in body
 
 ## API Route Patterns (priority: 6) [CONTEXTUAL: src/api/**/*.ts]
+
 - Use tRPC for type-safe endpoints
 - Validate inputs with Zod schemas
 
 ---
 
 Additional manual rules available:
+
 - performance-optimization (activate with rules:activate)
 - accessibility-checklist (activate with rules:activate)
 
@@ -439,9 +489,11 @@ Follow these rules strictly in all code you write or suggest.
 ```
 
 #### `create_rule_from_conversation`
+
 **Extract rule from current discussion.**
 
 **Parameters:**
+
 ```typescript
 {
   conversationSummary: string; // Context of what was discussed
@@ -451,15 +503,18 @@ Follow these rules strictly in all code you write or suggest.
 ```
 
 **Generated Prompt:**
+
 ```markdown
 Based on our conversation about [summary], let's create a reusable rule.
 
 Suggested structure:
+
 - Name: [suggestedName or "extracted from discussion"]
 - Type: [suggestedType or "always"]
 - Priority: [inferred from importance]
 
 Please provide:
+
 1. Concise rule title
 2. Key guidelines (bullet points)
 3. Examples if helpful
@@ -473,6 +528,7 @@ I'll format this as a .mdc rule for future use.
 ### Cursor (`.cursorrules`)
 
 **Input (.mdc):**
+
 ```markdown
 ---
 id: typescript-standards
@@ -483,11 +539,13 @@ priority: 8
 # TypeScript Standards
 
 ## Type Safety
+
 - Use explicit types
 - No `any`
 ```
 
 **Output (`.cursorrules`):**
+
 ```
 # TypeScript Standards
 
@@ -496,11 +554,12 @@ priority: 8
 - No `any`
 ```
 
-*Note: Cursor doesn't support metadata, so it's stripped. Priority determines order.*
+_Note: Cursor doesn't support metadata, so it's stripped. Priority determines order._
 
 ### GitHub Copilot (`AGENTS.md`)
 
 **Input (.mdc):**
+
 ```markdown
 ---
 id: api-conventions
@@ -514,6 +573,7 @@ type: always
 ```
 
 **Output (`AGENTS.md`):**
+
 ```markdown
 # API Conventions
 
@@ -521,7 +581,8 @@ type: always
 - OpenAPI documentation
 
 ---
-*Generated by DevFlow Rules Engine*
+
+_Generated by DevFlow Rules Engine_
 ```
 
 ### Claude Desktop / Zed (Native MCP)
@@ -535,6 +596,7 @@ Structured markdown with all metadata preserved in conversation context.
 ## Cross-Layer Integration
 
 ### Rules → Memory
+
 ```typescript
 // Rule references a decision
 {
@@ -551,6 +613,7 @@ Structured markdown with all metadata preserved in conversation context.
 ```
 
 ### Rules → Documentation
+
 ```typescript
 // Rule links to detailed guide
 {
@@ -564,12 +627,13 @@ enforced_by: [typescript-standards, naming-conventions]
 ```
 
 ### Rules → Planning
+
 ```typescript
 // Task validation checks rules
-plan:task:update({
-  taskId: "task-123",
-  status: "done"
-})
+plan: task: update({
+	taskId: 'task-123',
+	status: 'done',
+});
 
 // Automatically runs rules:validate on changed files
 // Blocks completion if violations found
@@ -580,11 +644,14 @@ plan:task:update({
 ### Priority System
 
 When rules conflict (e.g., two naming conventions):
+
 ```markdown
 # Rule A (priority: 8)
+
 - Functions: camelCase
 
 # Rule B (priority: 6)
+
 - Functions: snake_case
 ```
 
@@ -593,11 +660,14 @@ When rules conflict (e.g., two naming conventions):
 ### Scope Narrowing
 
 Context rules override global rules for matched files:
+
 ```markdown
 # Global (priority: 7, type: always)
+
 - Error handling: throw exceptions
 
 # API Routes (priority: 8, type: context, globs: ["src/api/**"])
+
 - Error handling: return Result types
 ```
 
@@ -606,25 +676,28 @@ Context rules override global rules for matched files:
 ### Explicit Deactivation
 
 ```typescript
-rules:deactivate({
-  ruleId: "legacy-exception-handling",
-  scope: "permanent"
-})
+rules: deactivate({
+	ruleId: 'legacy-exception-handling',
+	scope: 'permanent',
+});
 ```
 
 ## Performance Considerations
 
 ### Lazy Loading
+
 - Only `always` rules loaded at session start
 - `context` rules loaded when file patterns match
 - `manual` rules loaded on explicit activation
 
 ### Caching
+
 - Parsed rules cached in memory
 - File watch triggers cache invalidation
 - Validation results cached per file hash
 
 ### Indexing (Future)
+
 - SQLite index for full-text search
 - Tag-based querying
 - Cross-reference resolution
@@ -632,27 +705,34 @@ rules:deactivate({
 ## Best Practices
 
 ### Rule Granularity
+
 **Too Broad:**
+
 ```markdown
 # Coding Standards
+
 - Write good code
 - Follow best practices
 ```
 
 **Just Right:**
+
 ```markdown
 # TypeScript Function Signatures
+
 - Explicit parameter types
 - Explicit return types
 - Use generics for reusable logic
 ```
 
 ### Versioning
+
 - **Patch (1.2.0 → 1.2.1):** Typo fixes, clarifications
 - **Minor (1.2.0 → 1.3.0):** New guidelines added
 - **Major (1.2.0 → 2.0.0):** Breaking changes to standards
 
 ### Team Collaboration
+
 ```bash
 # Developer workflow
 git pull origin main
@@ -665,6 +745,7 @@ git commit -m "feat: implement OAuth (follows rule #23)"
 ## Migration Guide
 
 ### From `.cursorrules`
+
 ```bash
 devflow rules:import --source cursorrules --content "$(cat .cursorrules)"
 # Creates .devflow/rules/ structure
@@ -672,12 +753,15 @@ devflow rules:import --source cursorrules --content "$(cat .cursorrules)"
 ```
 
 ### From `AGENTS.md`
+
 ```bash
 devflow rules:import --source agents-md --content "$(cat AGENTS.md)"
 ```
 
 ### From Wiki/Confluence
+
 Manual process:
+
 1. Copy content sections to .mdc files
 2. Add metadata (id, type, priority)
 3. Commit to `.devflow/rules/`
@@ -693,24 +777,27 @@ name: Authentication Token Security
 type: always
 priority: 10
 tags: [security, authentication]
-globs: ["src/auth/**/*.ts", "src/api/**/*.ts"]
-linkedDecisions: ["decision-31"]
-linkedDocs: ["docs/security/token-management.md"]
+globs: ['src/auth/**/*.ts', 'src/api/**/*.ts']
+linkedDecisions: ['decision-31']
+linkedDocs: ['docs/security/token-management.md']
 ---
 
 # Authentication Token Security
 
 ## Storage
+
 - Never store tokens in localStorage (XSS vulnerable)
 - Use httpOnly cookies for session tokens
 - Use secure, sameSite flags
 
 ## Transmission
+
 - Only send tokens over HTTPS
 - Include CSRF tokens for state-changing operations
 - Expire tokens after 1 hour, refresh after 15 minutes
 
 ## Validation
+
 - Verify token signature on every request
 - Check expiration timestamps
 - Validate token audience matches current service
@@ -724,23 +811,26 @@ id: react-hooks-patterns
 name: React Hooks Best Practices
 type: context
 priority: 7
-globs: ["src/components/**/*.tsx", "src/hooks/**/*.ts"]
+globs: ['src/components/**/*.tsx', 'src/hooks/**/*.ts']
 tags: [react, hooks, frontend]
 ---
 
 # React Hooks Best Practices
 
 ## Custom Hooks
+
 - Prefix with `use` (e.g., `useUserProfile`)
 - Return objects, not arrays (better refactoring)
 - Document dependencies clearly
 
 ## useEffect
+
 - One effect per concern
 - Return cleanup functions
 - List all dependencies (ESLint will help)
 
 ## Performance
+
 - Wrap callbacks in useCallback when passed to children
 - Memoize expensive computations with useMemo
 - Use React.memo for pure components
@@ -762,17 +852,20 @@ tags: [performance, optimization]
 Activate this rule when working on performance improvements.
 
 ## Measurement First
+
 - Profile before optimizing (Chrome DevTools, Lighthouse)
 - Set performance budgets (LCP < 2.5s, FID < 100ms)
 - Use real user data, not synthetic
 
 ## Common Wins
+
 - Code splitting at route boundaries
 - Lazy load images (loading="lazy")
 - Minimize bundle size (analyze-webpack-bundle)
 - Use CDN for static assets
 
 ## Database
+
 - Add indexes for frequently queried columns
 - Use connection pooling
 - Cache query results (Redis)
@@ -782,6 +875,7 @@ Activate this rule when working on performance improvements.
 ## Troubleshooting
 
 ### Rules Not Loading
+
 ```bash
 # Check rule syntax
 devflow rules:validate --check-syntax
@@ -794,6 +888,7 @@ devflow status
 ```
 
 ### Conflicts Between Rules
+
 ```bash
 # List all active rules with priorities
 devflow rules:list --active --sort-by priority
@@ -803,10 +898,11 @@ devflow rules:deactivate --rule-id old-naming-convention
 ```
 
 ### Agent Not Respecting Rules
+
 1. Verify resource auto-loading: Check agent supports `devflow://context/rules`
 2. Explicitly call `init_session` prompt if needed
 3. Export to agent-specific format (`.cursorrules`, `AGENTS.md`)
 
 ---
 
-**Next:** [02-MEMORY-LAYER.md](./02-MEMORY-LAYER.md) - Session continuity and decision tracking
+**Next:** [Memory System](./MEMORY.md) - Session continuity and decision tracking

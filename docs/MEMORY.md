@@ -1,4 +1,4 @@
-# Layer 2: Memory System
+# Memory System
 
 **Session continuity, architectural decisions, and progress tracking that persists across conversations.**
 
@@ -9,21 +9,26 @@ The Memory layer solves the fundamental problem of AI agents forgetting context 
 ## Design Principles
 
 ### 1. Human-Readable Storage
+
 All memory stored as markdown files - readable in any editor, diffable in git, no proprietary formats.
 
 ### 2. Four-File Architecture
+
 Separation of concerns across distinct files:
+
 - **activeContext.md**: What's happening right now
 - **progress.md**: What's been done, what's next
 - **decisionLog.md**: Why things are the way they are
 - **projectContext.md**: High-level project overview
 
 ### 3. Hybrid Performance
+
 - **Phase 1**: Pure markdown (simple, git-friendly)
 - **Phase 2**: SQLite indexing (semantic search, ~5ms queries)
 - Markdown remains source of truth
 
 ### 4. Automatic Staleness Detection
+
 Memory tracks timestamps and file hashes to detect outdated information.
 
 ## File Structure
@@ -46,6 +51,7 @@ Memory tracks timestamps and file hashes to detect outdated information.
 **Purpose:** Current work focus, blockers, and recent changes (last 7 days).
 
 **Structure:**
+
 ```markdown
 # Active Context
 
@@ -54,6 +60,7 @@ Memory tracks timestamps and file hashes to detect outdated information.
 ## Current Focus
 
 Working on OAuth authentication implementation
+
 - Task: Implement session middleware (Plan: feature-123, Task: task-456)
 - Branch: feature/oauth-session-handling
 - Files: src/auth/session.ts, src/middleware/auth.ts
@@ -61,6 +68,7 @@ Working on OAuth authentication implementation
 ## Active Blockers
 
 ### Blocker: Redis connection configuration
+
 **Severity:** High  
 **Since:** 2024-03-19  
 **Impact:** Cannot test session persistence  
@@ -70,18 +78,21 @@ Working on OAuth authentication implementation
 ## Recent Changes (Last 7 Days)
 
 ### 2024-03-20: Session middleware scaffolding
+
 - Created `src/auth/session.ts` with SessionManager class
 - Added Redis client configuration
 - Updated API routes to use session middleware
 - **Related Decision:** #47 (Session-based auth)
 
 ### 2024-03-19: OAuth provider integration
+
 - Integrated Passport.js for OAuth flow
 - Configured Google and GitHub providers
 - Added callback routes
 - **Files Changed:** 8 files, +450 lines
 
 ### 2024-03-18: Authentication architecture decision
+
 - Decided on session-based auth over JWT
 - See Decision Log #47 for rationale
 - Updated architecture docs
@@ -94,6 +105,7 @@ Working on OAuth authentication implementation
 ```
 
 **Update Triggers:**
+
 - New task started
 - Blocker encountered/resolved
 - Significant file changes
@@ -106,6 +118,7 @@ Working on OAuth authentication implementation
 **Purpose:** Long-term work history, milestones, and roadmap.
 
 **Structure:**
+
 ```markdown
 # Project Progress
 
@@ -118,6 +131,7 @@ Working on OAuth authentication implementation
 **Plan:** feature-123
 
 ### Completed Tasks (7/9)
+
 - ✅ Research authentication strategies (2024-02-15)
 - ✅ Design session architecture (2024-02-20)
 - ✅ Set up Passport.js integration (2024-03-10)
@@ -127,15 +141,18 @@ Working on OAuth authentication implementation
 - ✅ Write unit tests (2024-03-20)
 
 ### In Progress (1/9)
+
 - 🔄 Integration testing (Started: 2024-03-20, Assigned: @yogev)
 
 ### Remaining (1/9)
+
 - ⏳ Deploy to staging environment
 - ⏳ Security audit
 
 ## Completed Milestones
 
 ### Milestone: Project Setup (100%, Completed: 2024-01-20)
+
 - ✅ Initialize repository
 - ✅ Configure TypeScript
 - ✅ Set up testing framework
@@ -143,6 +160,7 @@ Working on OAuth authentication implementation
 - ✅ Development environment
 
 ### Milestone: Database Layer (100%, Completed: 2024-02-10)
+
 - ✅ Database schema design
 - ✅ Migration system
 - ✅ ORM configuration
@@ -151,9 +169,11 @@ Working on OAuth authentication implementation
 ## Upcoming Milestones
 
 ### Milestone: API Development (Not Started)
+
 **Target:** 2024-04-15  
 **Dependencies:** User Authentication  
 **Tasks:**
+
 - Design REST API structure
 - Implement core endpoints
 - API documentation
@@ -169,13 +189,16 @@ Working on OAuth authentication implementation
 ## Archived Changes (Older than 30 days)
 
 ### 2024-02-28: Database connection pooling
+
 [... archived content ...]
 
 ### 2024-02-15: Authentication research complete
+
 [... archived content ...]
 ```
 
 **Update Triggers:**
+
 - Task status changes (started, completed, blocked)
 - Milestone reached
 - Sprint/iteration boundaries
@@ -188,28 +211,34 @@ Working on OAuth authentication implementation
 **Purpose:** Architectural decisions with rationale, alternatives considered, and outcomes.
 
 **Structure:**
+
 ```markdown
 # Decision Log
 
 **Last Updated:** 2024-03-20T14:30:00Z
 
 ## Decision #47: Session-based Authentication over JWT
+
 **Date:** 2024-03-18  
 **Status:** Accepted  
 **Impact:** High  
 **Tags:** [authentication, security, architecture]
 
 ### Context
+
 Need to implement user authentication for the application. Two main approaches considered: JWT (stateless) vs. Session (stateful).
 
 ### Decision
+
 Use session-based authentication with Redis as session store.
 
 ### Rationale
+
 1. **Security Requirements:** Application handles sensitive financial data requiring:
-   - Instant token revocation (logout, compromise)
-   - Session invalidation across all devices
-   - Session duration limits
+
+    - Instant token revocation (logout, compromise)
+    - Session invalidation across all devices
+    - Session duration limits
 
 2. **Team Familiarity:** Team has 3+ years experience with session-based auth, only 6 months with JWT
 
@@ -220,12 +249,15 @@ Use session-based authentication with Redis as session store.
 ### Alternatives Considered
 
 #### Alternative 1: JWT with Refresh Tokens
+
 **Pros:**
+
 - Stateless, easier horizontal scaling
 - No database lookup per request
 - Better for microservices
 
 **Cons:**
+
 - Cannot instantly revoke tokens (must wait for expiration)
 - Requires refresh token rotation logic
 - Larger request size (JWT in every header)
@@ -234,10 +266,13 @@ Use session-based authentication with Redis as session store.
 **Why Rejected:** Security requirement for instant revocation is non-negotiable
 
 #### Alternative 2: JWT with Redis Blacklist
+
 **Pros:**
+
 - Combines JWT benefits with revocation capability
 
 **Cons:**
+
 - Defeats stateless purpose (still need Redis lookup)
 - More complex than pure sessions
 - Larger request payloads
@@ -247,26 +282,31 @@ Use session-based authentication with Redis as session store.
 ### Consequences
 
 **Positive:**
+
 - Simple logout implementation (delete session)
 - Easy session duration enforcement
 - Can track active sessions per user
 - Smaller request payloads
 
 **Negative:**
+
 - Redis dependency for authentication
 - Slightly higher latency (session lookup)
 - More complex horizontal scaling (sticky sessions or shared Redis)
 
 **Neutral:**
+
 - Need session cleanup job (remove expired sessions)
 
 ### Implementation Notes
+
 - Use `express-session` with `connect-redis`
 - Session TTL: 1 hour (extend on activity)
 - Cookie settings: `httpOnly`, `secure`, `sameSite: strict`
 - Store minimal data in session (user ID only)
 
 ### Related
+
 - **Rules:** [auth-token-handling](../.devflow/rules/auth-token-handling.mdc)
 - **Documentation:** [docs/architecture/authentication.md](../../docs/architecture/authentication.md)
 - **Plan:** feature-123 (OAuth Authentication)
@@ -274,6 +314,7 @@ Use session-based authentication with Redis as session store.
 - **Superseded By:** N/A
 
 ### Outcomes (Added: 2024-03-25)
+
 - Implementation completed successfully
 - Average session lookup: 12ms (well below 50ms target)
 - Zero security incidents related to auth in first month
@@ -282,18 +323,22 @@ Use session-based authentication with Redis as session store.
 ---
 
 ## Decision #46: REST API over GraphQL
+
 **Date:** 2024-03-15  
 **Status:** Accepted  
 **Impact:** High  
 **Tags:** [api, architecture]
 
 ### Context
+
 Need to design API for frontend consumption. Debating between REST and GraphQL.
 
 ### Decision
+
 Use REST with OpenAPI documentation.
 
 ### Rationale
+
 1. **Team Experience:** All backend developers familiar with REST, only 1 knows GraphQL
 2. **Tooling:** Excellent REST tooling (Postman, Swagger, curl)
 3. **Caching:** Simpler HTTP caching strategies
@@ -302,12 +347,15 @@ Use REST with OpenAPI documentation.
 ### Alternatives Considered
 
 #### Alternative 1: GraphQL
+
 **Pros:**
+
 - Single endpoint, flexible queries
 - Reduces over-fetching
 - Strong typing with schema
 
 **Cons:**
+
 - Steeper learning curve for team
 - More complex caching
 - Potential N+1 query issues
@@ -316,17 +364,20 @@ Use REST with OpenAPI documentation.
 **Why Rejected:** Team familiarity and simplicity outweigh GraphQL benefits for our use case
 
 ### Consequences
+
 - Must design endpoints carefully to avoid over-fetching
 - Will implement field filtering via query params (`?fields=id,name`)
 - Need strong API versioning strategy
 
 ### Related
+
 - **Documentation:** [docs/api/rest-design.md](../../docs/api/rest-design.md)
 - **Rules:** [api-conventions](../.devflow/rules/api-conventions.mdc)
 
 ---
 
 ## Decision #45: PostgreSQL over MongoDB
+
 **Date:** 2024-02-01  
 **Status:** Accepted  
 **Impact:** Critical  
@@ -336,6 +387,7 @@ Use REST with OpenAPI documentation.
 ```
 
 **Update Triggers:**
+
 - Major architectural choice made
 - Technology selection
 - Design pattern adopted
@@ -344,6 +396,7 @@ Use REST with OpenAPI documentation.
 **Retention:** Permanent - decisions are historical record
 
 **Metadata Fields:**
+
 - **Status:** Proposed | Accepted | Rejected | Deprecated | Superseded
 - **Impact:** Low | Medium | High | Critical
 - **Tags:** Categorization for filtering
@@ -353,6 +406,7 @@ Use REST with OpenAPI documentation.
 **Purpose:** High-level project overview, constraints, and team information.
 
 **Structure:**
+
 ```markdown
 # Project Context
 
@@ -373,12 +427,14 @@ Persistent, structured, git-friendly context storage with automatic loading via 
 ## Goals
 
 ### Primary Goals
+
 1. Enable AI agents to maintain context across sessions
 2. Provide universal compatibility (Claude, Cursor, Zed, VSCode)
 3. Enforce project standards automatically
 4. Track decisions and progress over time
 
 ### Success Metrics
+
 - Zero context loss between sessions (100% decision recall)
 - < 100ms context loading time
 - 90%+ developer satisfaction with agent continuity
@@ -387,18 +443,21 @@ Persistent, structured, git-friendly context storage with automatic loading via 
 ## Constraints
 
 ### Technical Constraints
+
 - Must use MCP SDK (TypeScript)
 - Stdio transport for local tools
 - Markdown storage for git compatibility
 - No external dependencies for core functionality (SQLite optional)
 
 ### Team Constraints
+
 - Solo developer (initially)
 - 20 hours/week available
 - 8-week delivery timeline
 - Limited budget (open source project)
 
 ### Business Constraints
+
 - MIT license (maximize adoption)
 - Must work offline (no required cloud services)
 - No vendor lock-in
@@ -406,50 +465,57 @@ Persistent, structured, git-friendly context storage with automatic loading via 
 ## Technology Stack
 
 **Core:**
+
 - TypeScript 5.3+
 - MCP SDK (@modelcontextprotocol/sdk)
 - Node.js 20+
 
 **Storage:**
+
 - Markdown files (primary)
 - SQLite (optional, Phase 2)
 
 **Testing:**
+
 - Jest (unit tests)
 - Playwright (integration tests for agent compatibility)
 
 **Future UI:**
+
 - Tauri (native performance)
 - Svelte (lightweight, reactive)
 
 ## Team
 
 ### Current Team
+
 - **Yogev** - Lead Developer, Architect
-  - Focus: Core MCP server, Rules layer, Memory layer
-  - Availability: 20 hrs/week
+    - Focus: Core MCP server, Rules layer, Memory layer
+    - Availability: 20 hrs/week
 
 ### Future Team (Post-Launch)
+
 - Open source contributors
 - Community maintainers
 
 ## Project Structure
-
 ```
+
 dev-toolkit-mcp/
 ├── src/
-│   ├── rules/          # Rules engine
-│   ├── memory/         # Memory system
-│   ├── docs/           # Documentation management
-│   ├── planning/       # Planning and validation
-│   ├── core/           # Shared MCP infrastructure
-│   └── index.ts        # Entry point
-├── .devflow/           # Self-hosting (dogfooding)
-│   ├── rules/
-│   ├── memory/
-│   └── plans/
-├── docs/               # Project documentation
-└── tests/              # Test suites
+│ ├── rules/ # Rules engine
+│ ├── memory/ # Memory system
+│ ├── docs/ # Documentation management
+│ ├── planning/ # Planning and validation
+│ ├── core/ # Shared MCP infrastructure
+│ └── index.ts # Entry point
+├── .devflow/ # Self-hosting (dogfooding)
+│ ├── rules/
+│ ├── memory/
+│ └── plans/
+├── docs/ # Project documentation
+└── tests/ # Test suites
+
 ```
 
 ## Development Phases
@@ -481,24 +547,24 @@ dev-toolkit-mcp/
 ## Risks and Mitigations
 
 ### Risk: Agent compatibility issues
-**Likelihood:** Medium  
-**Impact:** High  
+**Likelihood:** Medium
+**Impact:** High
 **Mitigation:** Test with multiple agents early (Claude Desktop, Cursor, Zed)
 
 ### Risk: Performance degradation with large projects
-**Likelihood:** Medium  
-**Impact:** Medium  
+**Likelihood:** Medium
+**Impact:** Medium
 **Mitigation:** Implement SQLite indexing (Phase 2), lazy loading, caching
 
 ### Risk: Complex cross-layer dependencies
-**Likelihood:** Low  
-**Impact:** Medium  
+**Likelihood:** Low
+**Impact:** Medium
 **Mitigation:** Strict modularity, each layer functional independently
 
 ## Communication
 
-**Primary Channel:** GitHub Issues and Discussions  
-**Documentation:** In-repo markdown docs  
+**Primary Channel:** GitHub Issues and Discussions
+**Documentation:** In-repo markdown docs
 **Status Updates:** Weekly progress commits
 
 ## Related Resources
@@ -509,6 +575,7 @@ dev-toolkit-mcp/
 ```
 
 **Update Triggers:**
+
 - Project scope changes
 - Team changes
 - Technology decisions
@@ -521,50 +588,61 @@ dev-toolkit-mcp/
 ### Resources
 
 #### `devflow://context/memory`
+
 **Auto-loaded at session start** - provides active context summary.
 
 **Response Format:**
+
 ```json
 {
-  "uri": "devflow://context/memory",
-  "mimeType": "text/markdown",
-  "text": "# Active Context\n\n**Current Focus:** OAuth authentication (Task: session-middleware)\n**Blockers:** Waiting on Redis setup (High severity)\n\n**Recent Decisions:**\n- #47: Session-based auth (2024-03-18)\n- #46: REST over GraphQL (2024-03-15)\n\n**Progress:** 7/9 tasks complete in current milestone"
+	"uri": "devflow://context/memory",
+	"mimeType": "text/markdown",
+	"text": "# Active Context\n\n**Current Focus:** OAuth authentication (Task: session-middleware)\n**Blockers:** Waiting on Redis setup (High severity)\n\n**Recent Decisions:**\n- #47: Session-based auth (2024-03-18)\n- #46: REST over GraphQL (2024-03-15)\n\n**Progress:** 7/9 tasks complete in current milestone"
 }
 ```
 
 #### `devflow://memory/active`
+
 **Full activeContext.md** content.
 
 #### `devflow://memory/progress`
+
 **Full progress.md** content.
 
 #### `devflow://memory/decisions`
+
 **Full decisionLog.md** content.
 
 #### `devflow://memory/project`
+
 **Full projectContext.md** content.
 
 #### `devflow://memory/decision/{id}`
+
 **Individual decision** retrieval.
 
 **Parameters:**
+
 - `id`: Decision number (e.g., "47")
 
 **Response Format:**
+
 ```json
 {
-  "uri": "devflow://memory/decision/47",
-  "mimeType": "text/markdown",
-  "text": "## Decision #47: Session-based Authentication\n\n**Status:** Accepted\n..."
+	"uri": "devflow://memory/decision/47",
+	"mimeType": "text/markdown",
+	"text": "## Decision #47: Session-based Authentication\n\n**Status:** Accepted\n..."
 }
 ```
 
 ### Tools
 
 #### `memory:context:set`
+
 **Update current focus and active context.**
 
 **Parameters:**
+
 ```typescript
 {
   focus?: string;               // Current work description
@@ -579,6 +657,7 @@ dev-toolkit-mcp/
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -588,23 +667,26 @@ dev-toolkit-mcp/
 ```
 
 **Example:**
+
 ```typescript
-await callTool("memory:context:set", {
-  focus: "Implementing session middleware for OAuth authentication",
-  task: {
-    planId: "feature-123",
-    taskId: "task-456",
-    description: "Create SessionManager class with Redis integration"
-  },
-  files: ["src/auth/session.ts", "src/middleware/auth.ts"],
-  notes: "Using express-session with connect-redis adapter"
+await callTool('memory:context:set', {
+	focus: 'Implementing session middleware for OAuth authentication',
+	task: {
+		planId: 'feature-123',
+		taskId: 'task-456',
+		description: 'Create SessionManager class with Redis integration',
+	},
+	files: ['src/auth/session.ts', 'src/middleware/auth.ts'],
+	notes: 'Using express-session with connect-redis adapter',
 });
 ```
 
 #### `memory:blocker:add`
+
 **Log a blocker in active context.**
 
 **Parameters:**
+
 ```typescript
 {
   title: string;                // "Redis connection configuration"
@@ -616,6 +698,7 @@ await callTool("memory:context:set", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -625,17 +708,20 @@ await callTool("memory:context:set", {
 ```
 
 #### `memory:blocker:resolve`
+
 **Mark blocker as resolved.**
 
 **Parameters:**
+
 ```typescript
 {
-  blockerId: string;            // "blocker-12"
-  resolution: string;           // How it was resolved
+	blockerId: string; // "blocker-12"
+	resolution: string; // How it was resolved
 }
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -646,9 +732,11 @@ await callTool("memory:context:set", {
 ```
 
 #### `memory:change:log`
+
 **Log a significant change to active context.**
 
 **Parameters:**
+
 ```typescript
 {
   summary: string;              // "Implemented session middleware"
@@ -660,6 +748,7 @@ await callTool("memory:context:set", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -669,9 +758,11 @@ await callTool("memory:context:set", {
 ```
 
 #### `memory:decision:log`
+
 **Create new architectural decision.**
 
 **Parameters:**
+
 ```typescript
 {
   title: string;                    // "Session-based Authentication over JWT"
@@ -699,6 +790,7 @@ await callTool("memory:context:set", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -713,43 +805,53 @@ await callTool("memory:context:set", {
 ```
 
 **Example:**
+
 ```typescript
-await callTool("memory:decision:log", {
-  title: "Session-based Authentication over JWT",
-  context: "Need user authentication. Must support instant token revocation for security.",
-  decision: "Use session-based authentication with Redis as session store",
-  rationale: "Security requirements demand instant revocation. Team familiar with sessions.",
-  alternatives: [
-    {
-      name: "JWT with Refresh Tokens",
-      pros: ["Stateless", "Easier scaling", "No DB lookup per request"],
-      cons: ["Cannot instantly revoke", "Complex refresh logic", "Larger requests"],
-      whyRejected: "Instant revocation is non-negotiable security requirement"
-    }
-  ],
-  consequences: {
-    positive: [
-      "Simple logout (delete session)",
-      "Easy session duration enforcement",
-      "Smaller request payloads"
-    ],
-    negative: [
-      "Redis dependency",
-      "Slightly higher latency",
-      "More complex scaling"
-    ]
-  },
-  impact: "high",
-  tags: ["authentication", "security", "architecture"],
-  relatedRules: ["auth-token-handling"],
-  relatedDocs: ["docs/architecture/authentication.md"]
+await callTool('memory:decision:log', {
+	title: 'Session-based Authentication over JWT',
+	context:
+		'Need user authentication. Must support instant token revocation for security.',
+	decision: 'Use session-based authentication with Redis as session store',
+	rationale:
+		'Security requirements demand instant revocation. Team familiar with sessions.',
+	alternatives: [
+		{
+			name: 'JWT with Refresh Tokens',
+			pros: ['Stateless', 'Easier scaling', 'No DB lookup per request'],
+			cons: [
+				'Cannot instantly revoke',
+				'Complex refresh logic',
+				'Larger requests',
+			],
+			whyRejected:
+				'Instant revocation is non-negotiable security requirement',
+		},
+	],
+	consequences: {
+		positive: [
+			'Simple logout (delete session)',
+			'Easy session duration enforcement',
+			'Smaller request payloads',
+		],
+		negative: [
+			'Redis dependency',
+			'Slightly higher latency',
+			'More complex scaling',
+		],
+	},
+	impact: 'high',
+	tags: ['authentication', 'security', 'architecture'],
+	relatedRules: ['auth-token-handling'],
+	relatedDocs: ['docs/architecture/authentication.md'],
 });
 ```
 
 #### `memory:decision:update`
+
 **Update existing decision (add outcomes, change status).**
 
 **Parameters:**
+
 ```typescript
 {
   decisionId: string;           // "decision-47"
@@ -760,9 +862,11 @@ await callTool("memory:decision:log", {
 ```
 
 #### `memory:progress:task`
+
 **Update task progress.**
 
 **Parameters:**
+
 ```typescript
 {
   taskId: string;               // "task-456"
@@ -773,6 +877,7 @@ await callTool("memory:decision:log", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   success: true,
@@ -782,9 +887,11 @@ await callTool("memory:decision:log", {
 ```
 
 #### `memory:progress:milestone`
+
 **Create or update milestone.**
 
 **Parameters:**
+
 ```typescript
 {
   name: string;                 // "User Authentication"
@@ -801,9 +908,11 @@ await callTool("memory:decision:log", {
 ```
 
 #### `memory:recall`
+
 **Semantic search across all memory (Phase 2).**
 
 **Parameters:**
+
 ```typescript
 {
   query: string;                // "authentication decisions"
@@ -814,6 +923,7 @@ await callTool("memory:decision:log", {
 ```
 
 **Returns:**
+
 ```typescript
 {
   results: [
@@ -840,9 +950,11 @@ await callTool("memory:decision:log", {
 **Note:** Phase 2 feature - requires SQLite indexing. Phase 1 uses basic text search.
 
 #### `memory:export`
+
 **Export memory to various formats.**
 
 **Parameters:**
+
 ```typescript
 {
   format: "markdown" | "json" | "html";
@@ -854,9 +966,11 @@ await callTool("memory:decision:log", {
 ### Prompts
 
 #### `init_memory`
+
 **Initialize memory structure for new project.**
 
 **Parameters:**
+
 ```typescript
 {
   projectName: string;
@@ -867,16 +981,19 @@ await callTool("memory:decision:log", {
 ```
 
 **Generated Prompt:**
+
 ```markdown
 I'll help you initialize DevFlow Memory for [projectName].
 
 Please provide:
+
 1. **Project Overview** - What problem does this solve?
 2. **Primary Goals** - What defines success?
 3. **Technical Constraints** - Technology requirements, limitations
 4. **Team Context** - Who's working on this, availability
 
 I'll create:
+
 - projectContext.md with this information
 - activeContext.md for tracking current work
 - progress.md for milestone tracking
@@ -886,9 +1003,11 @@ Let's build a comprehensive memory foundation for your project.
 ```
 
 #### `decision_template`
+
 **Guided decision logging.**
 
 **Parameters:**
+
 ```typescript
 {
   decisionContext?: string;     // Pre-filled context
@@ -896,6 +1015,7 @@ Let's build a comprehensive memory foundation for your project.
 ```
 
 **Generated Prompt:**
+
 ```markdown
 Let's document this architectural decision properly.
 
@@ -912,21 +1032,25 @@ This will be logged in decisionLog.md and linked to relevant rules/docs/plans.
 ```
 
 #### `weekly_summary`
+
 **Generate weekly progress summary.**
 
 **Parameters:**
+
 ```typescript
 {
-  weekStart: string;            // ISO date
-  weekEnd: string;              // ISO date
+	weekStart: string; // ISO date
+	weekEnd: string; // ISO date
 }
 ```
 
 **Generated Prompt:**
+
 ```markdown
 Generating weekly summary for [weekStart] to [weekEnd].
 
 **Progress:**
+
 - Tasks completed: [X]
 - Decisions made: [Y]
 - Blockers resolved: [Z]
@@ -946,6 +1070,7 @@ This summary will be archived in progress.md.
 ## Cross-Layer Integration
 
 ### Memory → Rules
+
 ```typescript
 // Decision explains why rule exists
 {
@@ -961,12 +1086,13 @@ This summary will be archived in progress.md.
 ```
 
 ### Memory → Documentation
+
 ```typescript
 // Decision updates documentation
-memory:decision:log({
-  title: "REST over GraphQL",
-  relatedDocs: ["docs/architecture/api-design.md"]
-})
+memory: decision: log({
+	title: 'REST over GraphQL',
+	relatedDocs: ['docs/architecture/api-design.md'],
+});
 
 // Triggers doc update suggestion
 // "Decision #46 references docs/architecture/api-design.md"
@@ -974,12 +1100,13 @@ memory:decision:log({
 ```
 
 ### Memory → Planning
+
 ```typescript
 // Progress syncs with planning
-memory:progress:task({
-  taskId: "task-456",
-  status: "completed"
-})
+memory: progress: task({
+	taskId: 'task-456',
+	status: 'completed',
+});
 
 // Automatically updates planning layer
 // Triggers milestone progress recalculation
@@ -987,6 +1114,7 @@ memory:progress:task({
 ```
 
 ### Automatic Context Loading
+
 ```typescript
 // At session start, agent receives:
 {
@@ -1000,23 +1128,29 @@ memory:progress:task({
 ## Performance Strategy
 
 ### Phase 1: Pure Markdown
+
 **Implementation:**
+
 - Direct file reads/writes
 - Simple text search (grep-like)
 - No indexing overhead
 
 **Performance:**
+
 - Read: ~2-5ms per file
 - Write: ~10-20ms per file
 - Search: ~50-200ms (depends on file size)
 
 **Trade-offs:**
+
 - Simple, zero dependencies
 - Readable, diffable, git-friendly
 - Slower search for large projects
 
 ### Phase 2: SQLite Indexing
+
 **Implementation:**
+
 ```sql
 CREATE TABLE memory_entries (
   id TEXT PRIMARY KEY,
@@ -1036,19 +1170,23 @@ CREATE VIRTUAL TABLE memory_fts USING fts5(
 ```
 
 **Performance:**
+
 - Read: ~1-2ms (cached)
 - Write: ~5-10ms (markdown + SQLite)
 - Search: ~3-5ms (indexed)
 - Semantic search: ~8-15ms (with embeddings)
 
 **Trade-offs:**
+
 - Faster queries
 - Semantic search capability
 - Additional dependency (SQLite)
 - Markdown still source of truth
 
 ### Hybrid Approach
+
 **Best of Both Worlds:**
+
 1. Markdown files are primary storage (human-readable, git-friendly)
 2. SQLite is secondary index (performance, search)
 3. On write: Update markdown, then update SQLite
@@ -1058,6 +1196,7 @@ CREATE VIRTUAL TABLE memory_fts USING fts5(
 ## Staleness Detection
 
 ### File Hashing
+
 ```typescript
 // Track file state in activeContext.md metadata
 {
@@ -1075,6 +1214,7 @@ CREATE VIRTUAL TABLE memory_fts USING fts5(
 ```
 
 ### Timestamp-Based
+
 ```typescript
 // Automatic archival
 if (changeAge > 30 days) {
@@ -1090,7 +1230,9 @@ if (decisionAge > 365 days && status === "accepted") {
 ## Best Practices
 
 ### Decision Logging
+
 **Good:**
+
 ```markdown
 ## Decision #47: Session-based Auth over JWT
 
@@ -1099,12 +1241,14 @@ if (decisionAge > 365 days && status === "accepted") {
 **Decision:** Use sessions with Redis
 
 **Rationale:**
+
 - Security requirement: instant token revocation
 - Team familiarity (3+ years with sessions)
 - Infrastructure: Redis already in use
 ```
 
 **Bad:**
+
 ```markdown
 ## Decision #47: Use sessions
 
@@ -1112,31 +1256,37 @@ We decided to use sessions because they're better.
 ```
 
 ### Active Context Updates
+
 **Good:**
+
 ```typescript
-memory:context:set({
-  focus: "Implementing session middleware",
-  task: { planId: "feature-123", taskId: "task-456" },
-  files: ["src/auth/session.ts"],
-  notes: "Using express-session, need to handle Redis connection failures"
+memory: context: set({
+	focus: 'Implementing session middleware',
+	task: { planId: 'feature-123', taskId: 'task-456' },
+	files: ['src/auth/session.ts'],
+	notes: 'Using express-session, need to handle Redis connection failures',
 });
 ```
 
 **Bad:**
+
 ```typescript
-memory:context:set({
-  focus: "Working on stuff"
+memory: context: set({
+	focus: 'Working on stuff',
 });
 ```
 
 ### Progress Tracking
+
 **Good:**
+
 - Update tasks immediately when status changes
 - Link tasks to milestones
 - Include completion dates
 - Note blockers and their resolution
 
 **Bad:**
+
 - Batch updates once per week
 - Vague task descriptions
 - No milestone grouping
@@ -1163,6 +1313,7 @@ devflow memory:import --source cline --content "$(cat cline-memory.md)"
 ## Troubleshooting
 
 ### Memory Not Loading
+
 ```bash
 # Verify file structure
 ls -la .devflow/memory/
@@ -1175,6 +1326,7 @@ devflow memory:validate
 ```
 
 ### Slow Search (Phase 1)
+
 ```bash
 # Reduce search scope
 memory:recall({
@@ -1188,6 +1340,7 @@ devflow memory:index --build
 ```
 
 ### SQLite Index Out of Sync (Phase 2)
+
 ```bash
 # Rebuild from markdown source of truth
 devflow memory:index --rebuild
@@ -1197,4 +1350,4 @@ devflow memory:index --rebuild
 
 ---
 
-**Next:** [03-DOCS-LAYER.md](./03-DOCS-LAYER.md) - AI-optimized documentation management
+**Next:** [Documentation Layer](./DOCS.md) - AI-optimized documentation management

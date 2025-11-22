@@ -348,6 +348,7 @@ When task status changes to "completed":
 ## Quick Reference: Common Commands
 
 ### Rules Layer
+
 ```typescript
 // Create a rule
 rules:create({ name, type: "always", priority: 8, content })
@@ -360,45 +361,49 @@ rules:export({ target: "cursorrules" })
 ```
 
 ### Memory Layer
+
 ```typescript
 // Update current focus
-memory:context:set({ focus, task, files })
+memory: context: set({ focus, task, files });
 
 // Log decision
-memory:decision:log({ title, decision, rationale, alternatives })
+memory: decision: log({ title, decision, rationale, alternatives });
 
 // Add blocker
-memory:blocker:add({ title, severity: "high", impact })
+memory: blocker: add({ title, severity: 'high', impact });
 ```
 
 ### Documentation Layer
+
 ```typescript
 // Create docs
-doc:create({ type: "api", title, category })
+doc: create({ type: 'api', title, category });
 
 // Validate quality
-doc:validate({ path: "docs/api/auth.md" })
+doc: validate({ path: 'docs/api/auth.md' });
 
 // Optimize for LLM
-doc:optimize:llm({ path, model: "claude" })
+doc: optimize: llm({ path, model: 'claude' });
 ```
 
 ### Planning Layer
+
 ```typescript
 // Create plan
-plan:create({ name, size: "medium", milestones })
+plan: create({ name, size: 'medium', milestones });
 
 // Update task
-plan:task:update({ planId, taskId, status: "completed" })
+plan: task: update({ planId, taskId, status: 'completed' });
 
 // Validate task (auto)
-plan:task:validate({ planId, taskId })
+plan: task: validate({ planId, taskId });
 ```
 
 ### Integration
+
 ```typescript
 // Check consistency
-sync:validate()
+sync: validate();
 
 // Get unified context
 // Resource: devflow://context/unified
@@ -551,17 +556,20 @@ DevFlow is the ONLY solution that combines:
 ## Next Steps
 
 ### For New Users
-1. Read [00-OVERVIEW.md](./00-OVERVIEW.md) - Understand the vision
-2. Read [README.md](./README.md) - Quick start guide
-3. Try example workflows in [09-EXAMPLES.md](./09-EXAMPLES.md)
+
+1. Read [OVERVIEW.md](./OVERVIEW.md) - Understand the vision
+2. Read [QUICKSTART.md](./QUICKSTART.md) - 5-minute quick start guide
+3. Try example workflows in [EXAMPLES.md](./EXAMPLES.md)
 
 ### For Developers
-1. Study [08-IMPLEMENTATION.md](./08-IMPLEMENTATION.md) - Technical details
-2. Review [06-MCP-PRIMITIVES.md](./06-MCP-PRIMITIVES.md) - API reference
-3. Check [07-AGENT-COMPATIBILITY.md](./07-AGENT-COMPATIBILITY.md) - Integration
+
+1. Study [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Technical details
+2. Review [MCP-PRIMITIVES.md](./MCP-PRIMITIVES.md) - API reference
+3. Check [AGENT-COMPATIBILITY.md](./AGENT-COMPATIBILITY.md) - Integration
 
 ### For Contributors
-1. Review the roadmap in [00-OVERVIEW.md](./00-OVERVIEW.md)
+
+1. Review the roadmap in [OVERVIEW.md](./OVERVIEW.md)
 2. Identify areas to contribute
 3. Follow the modular architecture principles
 
