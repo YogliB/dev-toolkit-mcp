@@ -340,8 +340,3 @@ bun test --coverage
 - **Transactions** - Multi-file atomic operations
 - **Migrations** - Schema evolution and data migration tools
 - **Compression** - Optional file compression for storage efficiency
-
-```
-
-Now let me delete the plan file:
-```
