@@ -11,7 +11,7 @@
 
 | PR  | Repo            | Status | Link | Notes                               |
 | --- | --------------- | ------ | ---- | ----------------------------------- |
-| 1   | dev-toolkit-mcp | ⏸️     | -    | Server init + wire MemoryRepository |
+| 1   | dev-toolkit-mcp | 🟢     | -    | Server init + wire MemoryRepository |
 | 2   | dev-toolkit-mcp | ⏸️     | -    | MCP memory tools                    |
 | 3   | dev-toolkit-mcp | ⏸️     | -    | MCP memory resources                |
 | 4   | dev-toolkit-mcp | ⏸️     | -    | Integration tests + docs            |
@@ -20,7 +20,7 @@ Status: 🟢 done · 🟡 in‑progress · 🟠 review · ⏸️ not‑started �
 
 ---
 
-## PR1: Server Initialization + Wire MemoryRepository — ⏸️
+## PR1: Server Initialization + Wire MemoryRepository — 🟢
 
 **Repo:** dev-toolkit-mcp · **Link:** - · **ETA:** 1-2h dev + 15m review
 **Files:** `src/index.ts`, `src/core/config.ts`
