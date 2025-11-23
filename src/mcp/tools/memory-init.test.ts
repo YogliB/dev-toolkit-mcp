@@ -31,7 +31,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
 
@@ -50,7 +50,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			const parsed = JSON.parse(result.text);
 			expect(parsed.path).toBe('.devflow/memory');
@@ -62,7 +62,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			const parsed = JSON.parse(result.text);
 			expect(parsed.timestamp).toBeDefined();
@@ -77,7 +77,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			await tool.execute({});
+			await tool.execute();
 
 			expect(mockRepository.saveMemory).toHaveBeenCalledTimes(4);
 		});
@@ -88,7 +88,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			await tool.execute({});
+			await tool.execute();
 
 			const calls = (
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
@@ -107,7 +107,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			await tool.execute({});
+			await tool.execute();
 
 			const calls = (
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
@@ -126,7 +126,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			await tool.execute({});
+			await tool.execute();
 
 			const calls = (
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
@@ -145,7 +145,7 @@ describe('Memory Init Tool', () => {
 			).mockRejectedValueOnce(new ValidationError('Invalid frontmatter'));
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
 
@@ -161,7 +161,7 @@ describe('Memory Init Tool', () => {
 			).mockRejectedValueOnce(new Error('Disk full'));
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
 
@@ -177,7 +177,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			const parsed = JSON.parse(result.text);
 			expect(parsed.message).toContain('initialized successfully');
@@ -191,7 +191,7 @@ describe('Memory Init Tool', () => {
 
 			const tool = createMemoryInitTool(mockRepository);
 
-			const resultWithoutArgument = await tool.execute({});
+			const resultWithoutArgument = await tool.execute();
 			expect(resultWithoutArgument.type).toBe('text');
 
 			const parsed = JSON.parse(resultWithoutArgument.text);
@@ -204,7 +204,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			await tool.execute({});
+			await tool.execute();
 
 			const calls = (
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
@@ -223,7 +223,7 @@ describe('Memory Init Tool', () => {
 			).mockResolvedValue();
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			const parsed = JSON.parse(result.text);
 			expect(parsed).toHaveProperty('success');
@@ -239,7 +239,7 @@ describe('Memory Init Tool', () => {
 			).mockRejectedValueOnce(new Error('Test error'));
 
 			const tool = createMemoryInitTool(mockRepository);
-			const result = await tool.execute({});
+			const result = await tool.execute();
 
 			const parsed = JSON.parse(result.text);
 			expect(parsed).toHaveProperty('success');
