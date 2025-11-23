@@ -22,25 +22,23 @@ export class PlansRepository {
 		this.plansPath = options.plansPath ?? 'docs/plans';
 	}
 
-	private buildPlansPath(relativePath: string): string {
-		const normalized = path.normalize(relativePath);
+	private buildPlansPath(name: string): string {
+		const normalized = path.normalize(name);
 
 		if (path.isAbsolute(normalized) || normalized.startsWith('..')) {
 			throw new ValidationError(
-				`Invalid plans path "${relativePath}": path traversal is not allowed`,
+				`Invalid plan name "${name}": path traversal is not allowed`,
 			);
 		}
 
-		return `${this.plansPath}/${normalized}`;
+		return `${this.plansPath}/${normalized}.md`;
 	}
 
 	async getPlan(name: string): Promise<PlansFile> {
-		const filePath = name.endsWith('.md') ? name : `${name}.md`;
+		const filePath = this.buildPlansPath(name);
 
 		try {
-			const content = await this.storageEngine.readFile(
-				this.buildPlansPath(filePath),
-			);
+			const content = await this.storageEngine.readFile(filePath);
 			const parsed = parseMarkdown(content);
 
 			const plansFile: PlansFile = {
@@ -67,7 +65,6 @@ export class PlansRepository {
 
 	async savePlan(name: string, data: Partial<PlansFile>): Promise<void> {
 		try {
-			const filePath = name.endsWith('.md') ? name : `${name}.md`;
 			const frontmatter = data.frontmatter ?? {};
 			const content = data.content ?? '';
 
@@ -78,11 +75,9 @@ export class PlansRepository {
 
 			const validated = PlansFileSchema.parse(plansFile);
 			const markdown = stringifyMarkdown(validated);
+			const filePath = this.buildPlansPath(name);
 
-			await this.storageEngine.writeFile(
-				this.buildPlansPath(filePath),
-				markdown,
-			);
+			await this.storageEngine.writeFile(filePath, markdown);
 		} catch (error) {
 			if (error instanceof ValidationError) {
 				throw error;
@@ -114,8 +109,8 @@ export class PlansRepository {
 
 	async deletePlan(name: string): Promise<void> {
 		try {
-			const filePath = name.endsWith('.md') ? name : `${name}.md`;
-			await this.storageEngine.delete(this.buildPlansPath(filePath));
+			const filePath = this.buildPlansPath(name);
+			await this.storageEngine.delete(filePath);
 		} catch (error) {
 			if (error instanceof FileNotFoundError) {
 				throw error;
