@@ -9,12 +9,12 @@
 
 ## Implementation Status
 
-| PR  | Repo            | Status | Link | Notes                               |
-| --- | --------------- | ------ | ---- | ----------------------------------- |
-| 1   | dev-toolkit-mcp | 🟢     | -    | Server init + wire MemoryRepository |
-| 2   | dev-toolkit-mcp | ⏸️     | -    | MCP memory tools                    |
-| 3   | dev-toolkit-mcp | ⏸️     | -    | MCP memory resources                |
-| 4   | dev-toolkit-mcp | ⏸️     | -    | Integration tests + docs            |
+| PR  | Repo            | Status | Link | Notes                                |
+| --- | --------------- | ------ | ---- | ------------------------------------ |
+| 1   | dev-toolkit-mcp | 🟢     | -    | Server init + wire MemoryRepository  |
+| 2   | dev-toolkit-mcp | 🟢     | -    | MCP memory tools (4 tools, 22 tests) |
+| 3   | dev-toolkit-mcp | ⏸️     | -    | MCP memory resources                 |
+| 4   | dev-toolkit-mcp | ⏸️     | -    | Integration tests + docs             |
 
 Status: 🟢 done · 🟡 in‑progress · 🟠 review · ⏸️ not‑started · 🔴 blocked · ⚫ canceled
 
@@ -54,53 +54,53 @@ Status: 🟢 done · 🟡 in‑progress · 🟠 review · ⏸️ not‑started �
 
 ---
 
-## PR2: MCP Memory Tools — ⏸️
+## PR2: MCP Memory Tools — 🟢
 
-**Repo:** dev-toolkit-mcp · **Link:** - · **ETA:** 2-3h dev + 30m review
-**Files:** `src/mcp/tools/memory.ts`, `src/index.ts`
+**Repo:** dev-toolkit-mcp · **Link:** - · **Status:** COMPLETED
+**Files:** `src/mcp/tools/memory.ts` (243 lines), `src/mcp/tools/memory.test.ts` (401 lines), `src/index.ts`
 
-**Changes:**
+**Implementation Summary:**
 
-1. **Implement memory:get tool** — File: `src/mcp/tools/memory.ts`
-    - Input schema: `{ name: z.string() }`
-    - Call `memoryRepository.getMemory(name)`
-    - Return: `{ frontmatter, content }` as JSON
-    - Error handling: FileNotFoundError, ValidationError
+1. ✅ **Implemented memory:get tool** — Get memory file by name
+    - Input: `{ name: z.string() }` (Zod validated)
+    - Output: `{ type: 'text', text: JSON.stringify({ frontmatter, content }) }`
+    - Error handling: FileNotFoundError, ValidationError, generic errors
 
-2. **Implement memory:save tool** — File: `src/mcp/tools/memory.ts`
-    - Input schema: `{ name: z.string(), frontmatter?: z.record(z.any()), content: z.string() }`
-    - Call `memoryRepository.saveMemory(name, { frontmatter, content })`
-    - Return: `{ success: true, message: 'Memory saved' }`
-    - Error handling: ValidationError, WriteError
+2. ✅ **Implemented memory:save tool** — Save/update memory file
+    - Input: `{ name: z.string(), frontmatter?: z.record(z.string(), z.any()), content: z.string() }`
+    - Output: `{ type: 'text', text: JSON.stringify({ success: true, message, name }) }`
+    - Error handling: ValidationError, generic errors
 
-3. **Implement memory:list tool** — File: `src/mcp/tools/memory.ts`
-    - Input schema: none (or optional `{ filter?: z.string() }`)
-    - Call `memoryRepository.listMemories()`
-    - Return: `{ memories: string[] }`
-    - Error handling: FileNotFoundError
+3. ✅ **Implemented memory:list tool** — List all memory files
+    - Input: `{}` (optional)
+    - Output: `{ type: 'text', text: JSON.stringify({ memories: string[], count: number }) }`
+    - Error handling: generic errors
 
-4. **Implement memory:delete tool** — File: `src/mcp/tools/memory.ts`
-    - Input schema: `{ name: z.string() }`
-    - Call `memoryRepository.deleteMemory(name)`
-    - Return: `{ success: true, message: 'Memory deleted' }`
-    - Error handling: FileNotFoundError
+4. ✅ **Implemented memory:delete tool** — Delete memory file
+    - Input: `{ name: z.string() }`
+    - Output: `{ type: 'text', text: JSON.stringify({ success: true, message, name }) }`
+    - Error handling: FileNotFoundError, generic errors
 
-5. **Register tools with fastmcp** — File: `src/index.ts`
-    - Import memory tools
-    - Register each tool with `server.addTool({ name, description, parameters, execute })`
-    - Wire execute functions to MemoryRepository methods
+5. ✅ **Registered all tools with fastmcp server** — File: `src/index.ts`
+    - Imported 4 tool factories
+    - Registered each tool with `server.addTool()`
+    - Added error handling and logging for registration
+    - All tools callable via MCP protocol
 
-**Acceptance:**
+**Completion Metrics:**
 
-- [ ] All 4 tools registered and callable
-- [ ] Input validation works (Zod schemas)
-- [ ] Tools call MemoryRepository methods correctly
-- [ ] Error handling returns meaningful messages
-- [ ] Tools return proper JSON responses
-- [ ] Unit tests for each tool
-- [ ] All checks pass
+- ✅ All 4 tools registered and callable via MCP protocol
+- ✅ Input validation works correctly (Zod schemas)
+- ✅ Tools call MemoryRepository methods without errors
+- ✅ Error handling returns meaningful JSON responses
+- ✅ Tools return MCP-compatible TextContent responses
+- ✅ 22 unit tests (100% pass rate)
+- ✅ TypeScript: 0 errors
+- ✅ Linting: 0 warnings
+- ✅ Test coverage: ≥90% for memory.ts
+- ✅ No regressions (134 total tests passing)
 
-**Dependencies:** Blocked by PR1 · Blocks PR4
+**Dependencies:** Blocked by PR1 ✅ · Blocks PR4
 
 ---
 
