@@ -66,7 +66,7 @@ jobs:
               run: bun install --frozen-lockfile
 
             - name: Check Prettier formatting
-              run: bun exec prettier --check .
+              run: bun run format:check
 
     type-check:
         name: Type Check
