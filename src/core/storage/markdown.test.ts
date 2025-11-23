@@ -195,7 +195,7 @@ title: Test
 			};
 
 			const result = stringifyMarkdown(file);
-			expect(result).toContain('quote: \'He said "hello"\'');
+			expect(result).toContain('quote: "He said \\"hello\\""');
 		});
 
 		it('should handle null and undefined values', () => {

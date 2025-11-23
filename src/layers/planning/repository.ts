@@ -1,3 +1,4 @@
+import path from 'path';
 import { StorageEngine } from '../../core/storage/engine';
 import { parseMarkdown, stringifyMarkdown } from '../../core/storage/markdown';
 import {
@@ -21,12 +22,24 @@ export class PlansRepository {
 		this.plansPath = options.plansPath ?? 'docs/plans';
 	}
 
+	private buildPlansPath(relativePath: string): string {
+		const normalized = path.normalize(relativePath);
+
+		if (path.isAbsolute(normalized) || normalized.startsWith('..')) {
+			throw new ValidationError(
+				`Invalid plans path "${relativePath}": path traversal is not allowed`,
+			);
+		}
+
+		return `${this.plansPath}/${normalized}`;
+	}
+
 	async getPlan(name: string): Promise<PlansFile> {
 		const filePath = name.endsWith('.md') ? name : `${name}.md`;
 
 		try {
 			const content = await this.storageEngine.readFile(
-				`${this.plansPath}/${filePath}`,
+				this.buildPlansPath(filePath),
 			);
 			const parsed = parseMarkdown(content);
 
@@ -67,7 +80,7 @@ export class PlansRepository {
 			const markdown = stringifyMarkdown(validated);
 
 			await this.storageEngine.writeFile(
-				`${this.plansPath}/${filePath}`,
+				this.buildPlansPath(filePath),
 				markdown,
 			);
 		} catch (error) {
@@ -88,7 +101,10 @@ export class PlansRepository {
 			});
 			return files
 				.filter((file) => file.endsWith('.md'))
-				.map((file) => file.replace(/\.md$/, ''));
+				.map((file) => {
+					const relativePath = path.relative(this.plansPath, file);
+					return relativePath.replace(/\.md$/, '');
+				});
 		} catch (error) {
 			throw new ValidationError(
 				`Failed to list plans: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -99,7 +115,7 @@ export class PlansRepository {
 	async deletePlan(name: string): Promise<void> {
 		try {
 			const filePath = name.endsWith('.md') ? name : `${name}.md`;
-			await this.storageEngine.delete(`${this.plansPath}/${filePath}`);
+			await this.storageEngine.delete(this.buildPlansPath(filePath));
 		} catch (error) {
 			if (error instanceof FileNotFoundError) {
 				throw error;

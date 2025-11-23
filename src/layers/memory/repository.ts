@@ -1,3 +1,4 @@
+import path from 'path';
 import { StorageEngine } from '../../core/storage/engine';
 import { parseMarkdown, stringifyMarkdown } from '../../core/storage/markdown';
 import { MemoryFileSchema, type MemoryFile } from '../../core/schemas/memory';
@@ -17,8 +18,20 @@ export class MemoryRepository {
 		this.memorybankPath = options.memorybankPath ?? 'memory-bank';
 	}
 
+	private buildMemoryPath(relativePath: string): string {
+		const normalized = path.normalize(relativePath);
+
+		if (path.isAbsolute(normalized) || normalized.startsWith('..')) {
+			throw new ValidationError(
+				`Invalid memory path "${relativePath}": path traversal is not allowed`,
+			);
+		}
+
+		return `${this.memorybankPath}/${normalized}`;
+	}
+
 	async getMemory(name: string): Promise<MemoryFile> {
-		const filePath = `${this.memorybankPath}/${name}.md`;
+		const filePath = this.buildMemoryPath(`${name}.md`);
 
 		try {
 			const content = await this.storageEngine.readFile(filePath);
@@ -58,7 +71,7 @@ export class MemoryRepository {
 
 			const validated = MemoryFileSchema.parse(memoryFile);
 			const markdown = stringifyMarkdown(validated);
-			const filePath = `${this.memorybankPath}/${name}.md`;
+			const filePath = this.buildMemoryPath(`${name}.md`);
 
 			await this.storageEngine.writeFile(filePath, markdown);
 		} catch (error) {
@@ -80,7 +93,13 @@ export class MemoryRepository {
 			);
 			return files
 				.filter((file) => file.endsWith('.md'))
-				.map((file) => file.replace(/\.md$/, ''));
+				.map((file) => {
+					const relativePath = path.relative(
+						this.memorybankPath,
+						file,
+					);
+					return relativePath.replace(/\.md$/, '');
+				});
 		} catch (error) {
 			throw new ValidationError(
 				`Failed to list memories: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -90,7 +109,7 @@ export class MemoryRepository {
 
 	async deleteMemory(name: string): Promise<void> {
 		try {
-			const filePath = `${this.memorybankPath}/${name}.md`;
+			const filePath = this.buildMemoryPath(`${name}.md`);
 			await this.storageEngine.delete(filePath);
 		} catch (error) {
 			if (error instanceof FileNotFoundError) {

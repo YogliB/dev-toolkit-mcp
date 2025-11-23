@@ -1,3 +1,4 @@
+import path from 'path';
 import { StorageEngine } from '../../core/storage/engine';
 import { parseMarkdown, stringifyMarkdown } from '../../core/storage/markdown';
 import {
@@ -21,8 +22,20 @@ export class DocsRepository {
 		this.docsPath = options.docsPath ?? 'docs';
 	}
 
+	private buildDocsPath(relativePath: string): string {
+		const normalized = path.normalize(relativePath);
+
+		if (path.isAbsolute(normalized) || normalized.startsWith('..')) {
+			throw new ValidationError(
+				`Invalid docs path "${relativePath}": path traversal is not allowed`,
+			);
+		}
+
+		return `${this.docsPath}/${normalized}`;
+	}
+
 	async getDoc(path: string): Promise<DocsFile> {
-		const filePath = `${this.docsPath}/${path}`;
+		const filePath = this.buildDocsPath(path);
 
 		try {
 			const content = await this.storageEngine.readFile(filePath);
@@ -62,7 +75,7 @@ export class DocsRepository {
 
 			const validated = DocsFileSchema.parse(docsFile);
 			const markdown = stringifyMarkdown(validated);
-			const filePath = `${this.docsPath}/${path}`;
+			const filePath = this.buildDocsPath(path);
 
 			await this.storageEngine.writeFile(filePath, markdown);
 		} catch (error) {
@@ -79,7 +92,7 @@ export class DocsRepository {
 	async listDocs(directory?: string): Promise<string[]> {
 		try {
 			const searchPath = directory
-				? `${this.docsPath}/${directory}`
+				? this.buildDocsPath(directory)
 				: this.docsPath;
 			const files = await this.storageEngine.listFiles(searchPath, {
 				recursive: true,
@@ -94,7 +107,7 @@ export class DocsRepository {
 
 	async deleteDoc(path: string): Promise<void> {
 		try {
-			const filePath = `${this.docsPath}/${path}`;
+			const filePath = this.buildDocsPath(path);
 			await this.storageEngine.delete(filePath);
 		} catch (error) {
 			if (error instanceof FileNotFoundError) {

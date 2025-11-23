@@ -38,7 +38,7 @@ export function stringifyMarkdown(file: MarkdownFile): string {
 		} else if (typeof value === 'object') {
 			frontmatterLines.push(`${key}: ${JSON.stringify(value)}`);
 		} else if (typeof value === 'string' && value.includes('"')) {
-			frontmatterLines.push(`${key}: '${value}'`);
+			frontmatterLines.push(`${key}: ${JSON.stringify(value)}`);
 		} else {
 			frontmatterLines.push(`${key}: ${value}`);
 		}

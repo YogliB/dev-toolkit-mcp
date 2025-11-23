@@ -39,7 +39,8 @@ export class StorageEngine {
 
 		const fullPath = path.resolve(this.rootPath, normalized);
 
-		if (!fullPath.startsWith(this.rootPath)) {
+		const relative = path.relative(this.rootPath, fullPath);
+		if (relative.startsWith('..') || path.isAbsolute(relative)) {
 			throw new PathValidationError(
 				`Path is outside root directory: ${filePath}`,
 			);
