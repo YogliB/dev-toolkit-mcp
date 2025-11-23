@@ -164,10 +164,9 @@ export class StorageEngine {
 
 					for (const entry of entries) {
 						const fullPath = path.join(currentPath, entry.name);
-						const relativePath = path.relative(
-							this.rootPath,
-							fullPath,
-						);
+						const relativePath = path
+							.relative(this.rootPath, fullPath)
+							.replace(/\\/g, '/');
 
 						if (entry.isFile()) {
 							files.push(relativePath);
