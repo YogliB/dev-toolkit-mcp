@@ -11,7 +11,7 @@ interface PerformanceMetrics {
 	testCount: number;
 	fileCount: number;
 	avgPerTest: number;
-	files: Record<string, TestFileMetrics>;
+	files: Map<string, TestFileMetrics>;
 	timestamp: string;
 }
 
@@ -36,23 +36,23 @@ function parseVitestResults(): PerformanceMetrics | null {
 		const content = readFileSync(RESULTS_FILE, 'utf-8');
 		const results = JSON.parse(content);
 
-		const files: Record<string, TestFileMetrics> = {};
+		const files = new Map<string, TestFileMetrics>();
 		let totalDuration = 0;
 		let totalTests = 0;
 
 		if (results.testResults) {
 			for (const result of results.testResults) {
-				const filename = result.name;
+				const filename = String(result.name);
 				const duration =
 					result.perfStats?.end - result.perfStats?.start || 0;
 				const testCount =
 					result.numPassingTests + (result.numFailingTests || 0);
 
-				files[filename] = {
+				files.set(filename, {
 					name: filename,
 					duration,
 					testCount,
-				};
+				});
 
 				totalDuration += duration;
 				totalTests += testCount;
@@ -62,7 +62,7 @@ function parseVitestResults(): PerformanceMetrics | null {
 		return {
 			totalDuration,
 			testCount: totalTests,
-			fileCount: Object.keys(files).length,
+			fileCount: files.size,
 			avgPerTest: totalTests > 0 ? totalDuration / totalTests : 0,
 			files,
 			timestamp: new Date().toISOString(),
@@ -145,8 +145,8 @@ function generateReport(
 	report += '| File | Duration | Tests | Status |\n';
 	report += '|------|----------|-------|--------|\n';
 
-	for (const [, file] of Object.entries(current.files)) {
-		const baselineFile = baseline.files[file.name];
+	for (const [filename, file] of current.files.entries()) {
+		const baselineFile = baseline.files.get(filename);
 		const fileRegression = baselineFile
 			? (file.duration - baselineFile.duration) / baselineFile.duration
 			: 0;
@@ -159,8 +159,8 @@ function generateReport(
 			status = '✅ Stable';
 		}
 
-		const filename = file.name.split('/').pop() || file.name;
-		report += `| ${filename} | ${file.duration}ms | ${file.testCount} | ${status} |\n`;
+		const displayName = file.name.split('/').pop() || file.name;
+		report += `| ${displayName} | ${file.duration}ms | ${file.testCount} | ${status} |\n`;
 	}
 
 	return report;

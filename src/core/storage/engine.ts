@@ -1,4 +1,3 @@
-import { promises as fs } from 'fs';
 import path from 'path';
 import { PathValidationError, FileNotFoundError, WriteError } from './errors';
 
@@ -52,12 +51,13 @@ export class StorageEngine {
 	async readFile(filePath: string): Promise<string> {
 		try {
 			const validatedPath = this.validatePath(filePath);
-			this.log('debug', `Reading file: ${validatedPath}`);
+			this.log('debug', `Reading file: ${filePath}`);
 
-			const content = await fs.readFile(validatedPath, 'utf-8');
+			const { readFile } = await import('fs/promises');
+			const content = await readFile(validatedPath, 'utf-8');
 			this.log(
 				'debug',
-				`Successfully read file: ${validatedPath} (${content.length} bytes)`,
+				`Successfully read file: ${filePath} (${content.length} bytes)`,
 			);
 			return content;
 		} catch (error) {
@@ -80,12 +80,13 @@ export class StorageEngine {
 	async writeFile(filePath: string, content: string): Promise<void> {
 		try {
 			const validatedPath = this.validatePath(filePath);
-			this.log('debug', `Writing file: ${validatedPath}`);
+			this.log('debug', `Writing file: ${filePath}`);
 
 			const directory = path.dirname(validatedPath);
 
 			try {
-				await fs.mkdir(directory, { recursive: true });
+				const { mkdir } = await import('fs/promises');
+				await mkdir(directory, { recursive: true });
 			} catch (mkdirError) {
 				throw new WriteError(
 					filePath,
@@ -93,10 +94,11 @@ export class StorageEngine {
 				);
 			}
 
-			await fs.writeFile(validatedPath, content, 'utf-8');
+			const { writeFile } = await import('fs/promises');
+			await writeFile(validatedPath, content, 'utf-8');
 			this.log(
 				'debug',
-				`Successfully wrote file: ${validatedPath} (${content.length} bytes)`,
+				`Successfully wrote file: ${filePath} (${content.length} bytes)`,
 			);
 		} catch (error) {
 			if (
@@ -116,7 +118,8 @@ export class StorageEngine {
 	async exists(filePath: string): Promise<boolean> {
 		try {
 			const validatedPath = this.validatePath(filePath);
-			await fs.access(validatedPath);
+			const { access } = await import('fs/promises');
+			await access(validatedPath);
 			return true;
 		} catch {
 			return false;
@@ -126,9 +129,10 @@ export class StorageEngine {
 	async delete(filePath: string): Promise<void> {
 		try {
 			const validatedPath = this.validatePath(filePath);
-			this.log('debug', `Deleting file: ${validatedPath}`);
-			await fs.unlink(validatedPath);
-			this.log('debug', `Successfully deleted file: ${validatedPath}`);
+			this.log('debug', `Deleting file: ${filePath}`);
+			const { unlink } = await import('fs/promises');
+			await unlink(validatedPath);
+			this.log('debug', `Successfully deleted file: ${filePath}`);
 		} catch (error) {
 			if (error instanceof PathValidationError) {
 				throw error;
@@ -151,19 +155,26 @@ export class StorageEngine {
 		options: { recursive?: boolean } = {},
 	): Promise<string[]> {
 		try {
-			const validatedPath = this.validatePath(dirPath || '.');
-			this.log('debug', `Listing files in: ${validatedPath}`);
+			const safeDir = dirPath || '.';
+			const validatedPath = this.validatePath(safeDir);
+			this.log('debug', `Listing files in: ${safeDir}`);
 
 			const files: string[] = [];
 
-			const readDir = async (currentPath: string): Promise<void> => {
+			const readDir = async (
+				currentValidatedPath: string,
+			): Promise<void> => {
 				try {
-					const entries = await fs.readdir(currentPath, {
+					const { readdir } = await import('fs/promises');
+					const entries = await readdir(currentValidatedPath, {
 						withFileTypes: true,
 					});
 
 					for (const entry of entries) {
-						const fullPath = path.join(currentPath, entry.name);
+						const fullPath = path.join(
+							currentValidatedPath,
+							entry.name,
+						);
 						const relativePath = path
 							.relative(this.rootPath, fullPath)
 							.replace(/\\/g, '/');
@@ -182,7 +193,7 @@ export class StorageEngine {
 					) {
 						this.log(
 							'debug',
-							`Directory not found: ${currentPath}`,
+							`Directory not found: ${currentValidatedPath}`,
 						);
 					} else {
 						throw err;

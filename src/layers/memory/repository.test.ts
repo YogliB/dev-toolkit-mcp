@@ -1,23 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, rm } from 'fs/promises';
-import { join } from 'path';
 import { StorageEngine } from '../../core/storage/engine';
 import { MemoryRepository } from './repository';
 import { FileNotFoundError } from '../../core/storage/errors';
 
-const testDir = join(
-	process.cwd(),
-	'.test-storage',
-	`memory-${process.pid}-${Date.now()}`,
-);
+const testMemoryStorageDir = '.test-storage/memory-storage';
 
 describe('MemoryRepository', () => {
 	let storageEngine: StorageEngine;
 	let repository: MemoryRepository;
 
 	beforeEach(async () => {
-		await mkdir(testDir, { recursive: true });
-		storageEngine = new StorageEngine({ rootPath: testDir });
+		await mkdir(testMemoryStorageDir, { recursive: true });
+		storageEngine = new StorageEngine({ rootPath: testMemoryStorageDir });
 		repository = new MemoryRepository({
 			storageEngine,
 			memorybankPath: 'memory-bank',
@@ -25,7 +20,7 @@ describe('MemoryRepository', () => {
 	});
 
 	afterEach(async () => {
-		await rm(testDir, { recursive: true, force: true });
+		await rm('.test-storage', { recursive: true, force: true });
 	});
 
 	describe('saveMemory and getMemory', () => {

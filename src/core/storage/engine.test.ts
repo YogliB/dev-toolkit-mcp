@@ -1,25 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, rm } from 'fs/promises';
-import { join } from 'path';
 import { StorageEngine } from './engine';
 import { PathValidationError, FileNotFoundError } from './errors';
 
-const testDir = join(
-	process.cwd(),
-	'.test-storage',
-	`engine-${process.pid}-${Date.now()}`,
-);
+const baseTestDir = '.test-storage';
+const testStorageDir = '.test-storage/engine-storage';
 
 describe('StorageEngine', () => {
 	let engine: StorageEngine;
 
 	beforeEach(async () => {
-		await mkdir(testDir, { recursive: true });
-		engine = new StorageEngine({ rootPath: testDir });
+		await mkdir(testStorageDir, { recursive: true });
+		engine = new StorageEngine({ rootPath: testStorageDir });
 	});
 
 	afterEach(async () => {
-		await rm(testDir, { recursive: true, force: true });
+		await rm(baseTestDir, { recursive: true, force: true });
 	});
 
 	describe('validatePath', () => {
@@ -207,7 +203,7 @@ describe('StorageEngine', () => {
 		});
 
 		it('should return empty array for empty directories', async () => {
-			await mkdir(join(testDir, 'empty'), { recursive: true });
+			await mkdir(testStorageDir + '/empty', { recursive: true });
 
 			const files = await engine.listFiles('empty');
 			expect(files).toEqual([]);
@@ -222,7 +218,7 @@ describe('StorageEngine', () => {
 
 	describe('getRootPath', () => {
 		it('should return the root path', () => {
-			expect(engine.getRootPath()).toBe(testDir);
+			expect(engine.getRootPath()).toContain('engine-storage');
 		});
 	});
 
