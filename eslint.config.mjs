@@ -6,6 +6,7 @@ import sonarjs from 'eslint-plugin-sonarjs';
 import security from 'eslint-plugin-security';
 import prettier from 'eslint-plugin-prettier/recommended';
 import importPlugin from 'eslint-plugin-import';
+import unicorn from 'eslint-plugin-unicorn';
 
 export default [
 	{
@@ -23,6 +24,7 @@ export default [
 	security.configs.recommended,
 	importPlugin.flatConfigs.recommended,
 	importPlugin.flatConfigs.typescript,
+	unicorn.configs.recommended,
 	{
 		settings: {
 			'import/resolver': {
