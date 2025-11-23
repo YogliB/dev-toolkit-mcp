@@ -18,20 +18,20 @@ export class MemoryRepository {
 		this.memorybankPath = options.memorybankPath ?? 'memory-bank';
 	}
 
-	private buildMemoryPath(relativePath: string): string {
-		const normalized = path.normalize(relativePath);
+	private buildMemoryPath(name: string): string {
+		const normalized = path.normalize(name);
 
 		if (path.isAbsolute(normalized) || normalized.startsWith('..')) {
 			throw new ValidationError(
-				`Invalid memory path "${relativePath}": path traversal is not allowed`,
+				`Invalid memory name "${name}": path traversal is not allowed`,
 			);
 		}
 
-		return `${this.memorybankPath}/${normalized}`;
+		return `${this.memorybankPath}/${normalized}.md`;
 	}
 
 	async getMemory(name: string): Promise<MemoryFile> {
-		const filePath = this.buildMemoryPath(`${name}.md`);
+		const filePath = this.buildMemoryPath(name);
 
 		try {
 			const content = await this.storageEngine.readFile(filePath);
@@ -71,7 +71,7 @@ export class MemoryRepository {
 
 			const validated = MemoryFileSchema.parse(memoryFile);
 			const markdown = stringifyMarkdown(validated);
-			const filePath = this.buildMemoryPath(`${name}.md`);
+			const filePath = this.buildMemoryPath(name);
 
 			await this.storageEngine.writeFile(filePath, markdown);
 		} catch (error) {
@@ -109,7 +109,7 @@ export class MemoryRepository {
 
 	async deleteMemory(name: string): Promise<void> {
 		try {
-			const filePath = this.buildMemoryPath(`${name}.md`);
+			const filePath = this.buildMemoryPath(name);
 			await this.storageEngine.delete(filePath);
 		} catch (error) {
 			if (error instanceof FileNotFoundError) {
