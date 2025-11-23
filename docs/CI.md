@@ -56,21 +56,33 @@ The CI pipeline consists of 5 jobs that run in parallel (with a final status che
 
 ### 4. Test
 
-**Purpose:** Runs the test suite with Vitest and generates coverage reports.
+**Purpose:** Runs the test suite with Vitest and generates coverage reports, with performance monitoring.
 
 **Commands:**
 
-- `bun run test` — Runs all unit and integration tests
-- `bun run test:coverage` — Generates coverage report (non-blocking)
+- `bun run test:ci` — Full test suite with coverage and JSON reporter for performance tracking
+- Performance check — Compares against baseline and alerts on regressions
 
 **Fails if:**
 
 - Any test fails
 - Test suite encounters runtime errors
+- Performance regression exceeds 20% threshold (non-blocking warning)
 
-**Artifacts:** Coverage reports are uploaded as artifacts (optional, non-blocking)
+**Performance Monitoring:**
 
-**Duration:** ~60-90 seconds
+- Baseline tracked in `.vitest-performance.json`
+- Alert if regression > 20% from baseline
+- Alert if total duration > 5000ms
+- Performance reports uploaded as artifacts
+- Thresholds configurable in baseline file
+
+**Artifacts:**
+
+- Coverage reports (optional, non-blocking)
+- Performance JSON report (`.vitest/results.json`)
+
+**Duration:** ~60-120 seconds (includes performance analysis)
 
 ### 5. CI Status
 
