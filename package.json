@@ -24,8 +24,9 @@
 		"test:ci": "CI=1 vitest run --coverage",
 		"test:perf": "CI=1 vitest run && bun run scripts/test-performance.ts",
 		"update-baseline": "bun run scripts/update-baseline.ts --update-baseline",
-		"lint": "eslint .",
-		"lint:fix": "eslint --fix .",
+		"lint": "eslint . --max-warnings=0 --cache --cache-location .eslintcache",
+		"lint:fix": "eslint --fix . --max-warnings=0 --cache --cache-location .eslintcache",
+		"lint:clean": "rm -f .eslintcache",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"type-check": "bun run tsc --noEmit",
@@ -75,7 +76,7 @@
 	},
 	"lint-staged": {
 		"*.{ts,js}": [
-			"eslint --fix"
+			"eslint --fix --max-warnings=0 --cache --cache-location .eslintcache"
 		],
 		"*.*": [
 			"prettier --write --ignore-unknown"
