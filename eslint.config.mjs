@@ -8,6 +8,42 @@ import prettier from 'eslint-plugin-prettier/recommended';
 import importPlugin from 'eslint-plugin-import';
 import unicorn from 'eslint-plugin-unicorn';
 
+const noDisableCommentsPlugin = {
+	rules: {
+		'no-eslint-disable-comments': {
+			meta: {
+				type: 'problem',
+				docs: {
+					description: 'Forbid disabling ESLint rules via comments',
+					category: 'Best Practices',
+				},
+			},
+			create(context) {
+				return {
+					LineComment(node) {
+						if (/eslint-disable/.test(node.value)) {
+							context.report({
+								node,
+								message:
+									'Use of eslint-disable comments is forbidden. Fix the underlying issue instead.',
+							});
+						}
+					},
+					BlockComment(node) {
+						if (/eslint-disable/.test(node.value)) {
+							context.report({
+								node,
+								message:
+									'Use of eslint-disable comments is forbidden. Fix the underlying issue instead.',
+							});
+						}
+					},
+				};
+			},
+		},
+	},
+};
+
 export default [
 	{
 		ignores: [
@@ -32,6 +68,14 @@ export default [
 				typescript: true,
 				node: true,
 			},
+		},
+	},
+	{
+		plugins: {
+			'no-disable-comments': noDisableCommentsPlugin,
+		},
+		rules: {
+			'no-disable-comments/no-eslint-disable-comments': 'error',
 		},
 	},
 	prettier,

@@ -52,6 +52,67 @@ devflow init
 
 **📖 [Full Documentation Index](./docs/README.md)**
 
+## Memory MCP
+
+**Memory tools and resources** for maintaining context across sessions in Cursor and Zed.
+
+### Features
+
+- **memory:save** - Create/update memory files with metadata
+- **memory:get** - Retrieve specific memory by name
+- **memory:list** - List all memories in the bank
+- **memory:delete** - Remove memory files
+- **devflow://context/memory** (Cursor) - Auto-loaded session context
+- **@memory:context** (Zed) - Manual context prompt
+- **@memory:load** (Zed) - Load specific memory via prompt
+
+### Setup
+
+#### Cursor
+
+Create `mcp.json` in your project root:
+
+```json
+{
+	"mcpServers": {
+		"devflow": {
+			"command": "devflow",
+			"args": ["serve", "--stdio"]
+		}
+	}
+}
+```
+
+Then use in Cursor Composer or Chat:
+
+```
+/memory:save name=activeContext content="Current work..."
+/memory:list
+```
+
+#### Zed
+
+Add to your `settings.json`:
+
+```json
+{
+	"context_servers": {
+		"devflow": {
+			"command": "devflow",
+			"args": ["serve", "--stdio"]
+		}
+	}
+}
+```
+
+Then use in Zed Assistant:
+
+- Type `@memory:context` to get session context
+- Type `@memory:load name=<name>` to load specific memory
+- Use `/memory:save`, `/memory:get`, `/memory:list`, `/memory:delete` commands
+
+**See [Memory Configuration Guide](./docs/MEMORY.md) for details**
+
 ## Why DevFlow?
 
 Current AI coding tools suffer from **context fragmentation**:

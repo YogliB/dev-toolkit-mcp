@@ -1,0 +1,11 @@
+{
+	"mcpServers": {
+		"devflow": {
+			"command": "devflow",
+			"args": ["serve", "--stdio"],
+			"env": {
+				"DEVFLOW_ROOT": "${workspaceFolder}"
+			}
+		}
+	}
+}

@@ -149,46 +149,47 @@ devflow rules:list
 
 ## Step 5: Connect to Your AI Agent
 
-### Option A: Claude Desktop
+### Option A: Cursor
 
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+Create `mcp.json` in your project root:
 
 ```json
 {
 	"mcpServers": {
 		"devflow": {
 			"command": "devflow",
-			"args": ["serve"]
+			"args": ["serve", "--stdio"]
 		}
 	}
 }
 ```
 
-Restart Claude Desktop.
+Restart Cursor or reload the window.
 
-### Option B: Cursor
+### Option B: Zed
 
-```bash
-devflow generate cursorrules
-```
-
-This creates/updates `.cursorrules` from your DevFlow rules.
-
-### Option C: Zed
-
-Edit `~/.config/zed/settings.json`:
+Edit `settings.json` (Cmd+, on macOS or Ctrl+, on Linux/Windows):
 
 ```json
 {
 	"context_servers": {
 		"devflow": {
-			"command": "devflow serve --stdio"
+			"command": "devflow",
+			"args": ["serve", "--stdio"]
 		}
 	}
 }
 ```
 
 Restart Zed.
+
+### Option C: Generate .cursorrules (Cursor Only)
+
+```bash
+devflow generate cursorrules
+```
+
+This creates/updates `.cursorrules` from your DevFlow rules.
 
 ---
 
@@ -221,6 +222,72 @@ You now have DevFlow managing your project context. Your AI agent will:
 - ✅ Remember these rules across sessions
 - ✅ Apply them automatically to all TypeScript files
 - ✅ Suggest fixes when you violate the standards
+
+---
+
+## Using Memory MCP in Cursor
+
+**Memory MCP** provides tools to save and retrieve session context across Cursor sessions.
+
+### Step 1:Next Steps
+
+## Using Memory MCP
+
+DevFlow provides memory tools for maintaining context across AI sessions.
+
+### In Cursor
+
+Once configured (see Step 5, Option A), use memory tools in Composer or Chat:
+
+**Create a memory:**
+
+```
+Use memory:save to create a new context file:
+{
+  "name": "activeContext",
+  "content": "Working on authentication feature. Using JWT tokens.",
+  "frontmatter": {
+    "title": "Current Work",
+    "tags": ["auth", "jwt"]
+  }
+}
+```
+
+**View context (auto-loaded):**
+The `devflow://context/memory` resource automatically loads activeContext and progress files into your conversation context.
+
+**List all memories:**
+
+```
+Use memory:list to see all available memories
+```
+
+**Get specific memory:**
+
+```
+Use memory:get with name="projectContext"
+```
+
+### In Zed
+
+Zed doesn't support auto-loaded resources, so use prompts instead:
+
+**Load session context:**
+
+```
+Type @ in the Assistant panel and select "memory:context"
+```
+
+This manually loads activeContext + progress (equivalent to Cursor's auto-loaded resource).
+
+**Load specific memory:**
+
+```
+Type @ and select "memory:load", then specify name="projectContext"
+```
+
+**Use memory tools:**
+All memory tools (save, get, list, delete) work the same as in Cursor.
 
 ---
 
