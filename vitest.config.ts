@@ -2,21 +2,17 @@ import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 export default defineConfig({
+	cacheDir: '.vitest/cache',
 	test: {
 		globals: true,
 		environment: 'node',
 
-		// Test discovery patterns - simplified for better compatibility
+		// Test discovery patterns
 		include: ['**/*.{test,spec}.ts'],
 		exclude: ['**/node_modules/**', '**/dist/**'],
 
 		// Performance: Parallel execution
 		pool: 'forks',
-		poolOptions: {
-			forks: {
-				singleFork: process.env.CI ? true : false,
-			},
-		},
 
 		// Performance: Within-file concurrent tests
 		sequence: {
@@ -25,23 +21,8 @@ export default defineConfig({
 		},
 
 		// Environment-specific optimizations
-		...(process.env.CI
-			? {
-					// CI: Sequential execution to prevent file system race conditions
-					isolate: true,
-					bail: 0,
-					fileParallelism: false,
-					maxConcurrency: 1,
-				}
-			: {
-					// Dev: Fast feedback with parallel execution
-					isolate: false,
-					bail: 1,
-					watch: true,
-					changed: true,
-					fileParallelism: true,
-					maxConcurrency: 10,
-				}),
+		isolate: process.env.CI ? true : false,
+		maxWorkers: process.env.CI ? 1 : undefined,
 
 		// Timeouts
 		testTimeout: 5000,
@@ -69,9 +50,6 @@ export default defineConfig({
 					json: '.vitest/results.json',
 				}
 			: undefined,
-
-		// Caching for faster re-runs
-		cacheDir: '.vitest/cache',
 	},
 
 	resolve: {
