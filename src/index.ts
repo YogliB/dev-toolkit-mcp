@@ -63,19 +63,19 @@ async function main(): Promise<void> {
 	try {
 		const memoryGetTool = createMemoryGetTool(memoryRepository);
 		server.addTool(memoryGetTool);
-		console.error('[DevFlow:INFO] Registered tool: memory:get');
+		console.error('[DevFlow:INFO] Registered tool: memory-get');
 
 		const memorySaveTool = createMemorySaveTool(memoryRepository);
 		server.addTool(memorySaveTool);
-		console.error('[DevFlow:INFO] Registered tool: memory:save');
+		console.error('[DevFlow:INFO] Registered tool: memory-save');
 
 		const memoryListTool = createMemoryListTool(memoryRepository);
 		server.addTool(memoryListTool);
-		console.error('[DevFlow:INFO] Registered tool: memory:list');
+		console.error('[DevFlow:INFO] Registered tool: memory-list');
 
 		const memoryDeleteTool = createMemoryDeleteTool(memoryRepository);
 		server.addTool(memoryDeleteTool);
-		console.error('[DevFlow:INFO] Registered tool: memory:delete');
+		console.error('[DevFlow:INFO] Registered tool: memory-delete');
 
 		console.error(
 			'[DevFlow:INFO] All memory tools registered successfully',

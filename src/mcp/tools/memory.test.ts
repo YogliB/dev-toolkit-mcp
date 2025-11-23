@@ -106,7 +106,7 @@ describe('Memory Tools', () => {
 		it('should have correct tool metadata', () => {
 			const tool = createMemoryGetTool(mockRepository);
 
-			expect(tool.name).toBe('memory:get');
+			expect(tool.name).toBe('memory-get');
 			expect(tool.description).toBe('Get a memory file by name');
 			expect(tool.parameters).toBeDefined();
 		});
@@ -213,7 +213,7 @@ describe('Memory Tools', () => {
 		it('should have correct tool metadata', () => {
 			const tool = createMemorySaveTool(mockRepository);
 
-			expect(tool.name).toBe('memory:save');
+			expect(tool.name).toBe('memory-save');
 			expect(tool.description).toBe('Save or update a memory file');
 			expect(tool.parameters).toBeDefined();
 		});
@@ -276,7 +276,7 @@ describe('Memory Tools', () => {
 		it('should have correct tool metadata', () => {
 			const tool = createMemoryListTool(mockRepository);
 
-			expect(tool.name).toBe('memory:list');
+			expect(tool.name).toBe('memory-list');
 			expect(tool.description).toBe(
 				'List all memory files in the memory bank',
 			);
@@ -344,7 +344,7 @@ describe('Memory Tools', () => {
 		it('should have correct tool metadata', () => {
 			const tool = createMemoryDeleteTool(mockRepository);
 
-			expect(tool.name).toBe('memory:delete');
+			expect(tool.name).toBe('memory-delete');
 			expect(tool.description).toBe('Delete a memory file by name');
 			expect(tool.parameters).toBeDefined();
 		});
