@@ -462,7 +462,7 @@ export function createMemoryListTool() {
 						{
 							memories,
 							count: memories.length,
-							structure: 'cline-6-file',
+							structure: '6-file',
 						},
 						undefined,
 						2,
@@ -505,8 +505,7 @@ const MemoryContextInputSchema = z.object({}).optional();
 export function createMemoryContextTool(repository: MemoryRepository) {
 	return {
 		name: 'memory-context',
-		description:
-			'Get combined memory context from all 6 core memory files (Cline structure)',
+		description: 'Get combined memory context from all 6 core memory files',
 		parameters: MemoryContextInputSchema,
 		execute: async () => {
 			console.error(`[DevFlow:INFO] Memory tool called: memory-context`);
@@ -569,7 +568,7 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 	return {
 		name: 'memory-update',
 		description:
-			'Review all 6 core memory files with guided update workflow (Cline structure)',
+			'Review all 6 core memory files with guided update workflow',
 		parameters: MemoryUpdateInputSchema,
 		execute: async () => {
 			console.error(`[DevFlow:INFO] Memory tool called: memory-update`);
@@ -678,8 +677,7 @@ const MemoryInitInputSchema = z.object({}).optional();
 export function createMemoryInitTool(repository: MemoryRepository) {
 	return {
 		name: 'memory-init',
-		description:
-			'Initialize memory bank with 6 core template files (Cline structure)',
+		description: 'Initialize memory bank with 6 core template files',
 		parameters: MemoryInitInputSchema,
 		execute: async () => {
 			console.error(`[DevFlow:INFO] Memory tool called: memory-init`);

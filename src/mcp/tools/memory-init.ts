@@ -22,7 +22,7 @@ export function createMemoryInitTool(repository: MemoryRepository) {
 	return {
 		name: 'memory-init',
 		description:
-			'Initialize memory bank with 6 core files (Cline structure): projectBrief, productContext, systemPatterns, techContext, activeContext, progress',
+			'Initialize memory bank with 6 core files: projectBrief, productContext, systemPatterns, techContext, activeContext, progress',
 		parameters: MemoryInitInputSchema,
 		execute: async (): Promise<{
 			type: 'text';
@@ -78,7 +78,7 @@ export function createMemoryInitTool(repository: MemoryRepository) {
 				// Build hierarchy visualization
 				const hierarchy = getTemplateHierarchy();
 				const hierarchyLines = [
-					'6-file Cline structure:',
+					'6-file structure:',
 					'',
 					...hierarchy.map((template, index) => {
 						const isLast = index === hierarchy.length - 1;
@@ -94,11 +94,11 @@ export function createMemoryInitTool(repository: MemoryRepository) {
 				const result: InitializationResult = {
 					success: true,
 					message:
-						'Memory bank initialized successfully with 6 core files (Cline structure)',
+						'Memory bank initialized successfully with 6 core files',
 					filesCreated,
 					path: '.devflow/memory',
 					timestamp,
-					structure: 'cline-6-file',
+					structure: '6-file',
 					hierarchy: hierarchyText,
 				};
 
@@ -111,7 +111,7 @@ export function createMemoryInitTool(repository: MemoryRepository) {
 				if (hasLegacyFiles) {
 					responseText +=
 						'\n\n⚠️  DEPRECATION WARNING: Legacy 4-file structure detected (projectContext.md, decisionLog.md).\n' +
-						'The new 6-file Cline structure is recommended. See MIGRATION.md for upgrade instructions.\n' +
+						'The new 6-file structure is recommended. See MIGRATION.md for upgrade instructions.\n' +
 						'Legacy files will continue to work but are no longer created by memory-init.';
 				}
 

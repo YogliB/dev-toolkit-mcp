@@ -51,7 +51,7 @@ New to DevFlow? Start here:
 
 ## Memory System Overview
 
-DevFlow provides persistent context across sessions through **six core memory files** following the Cline Memory Bank structure:
+DevFlow provides persistent context across sessions through **six core memory files**:
 
 ### File Hierarchy
 
@@ -228,7 +228,6 @@ src/
 - **Git-Friendly** - Plain Markdown, human-readable
 - **Cross-Platform** - Works with Claude, Cursor, Zed
 - **Zero Config** - Works immediately after `memory-init`
-- **Cline-Compatible** - Same 6-file structure as 600k+ users
 
 ---
 
@@ -252,7 +251,7 @@ If output shows `"structure": "legacy-4-file"`, you should migrate.
 4. Create `systemPatterns.md` from architecture sections
 5. Migrate `decisionLog.md` → `systemPatterns.md` "Key Technical Decisions"
 6. Update `activeContext.md` and `progress.md`
-7. Verify: `devflow memory-list` shows `cline-6-file`
+7. Verify: `devflow memory-list` shows `6-file`
 
 **[Complete Migration Guide →](./MIGRATION.md)**
 
@@ -302,7 +301,6 @@ bun test --reporter=verbose
 
 - [Model Context Protocol](https://modelcontextprotocol.io)
 - [MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [Cline Memory Bank](https://docs.cline.bot/prompting/cline-memory-bank)
 
 **Documentation:**
 

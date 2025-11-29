@@ -23,8 +23,7 @@ export function createContextResource(
 	return {
 		uri: 'devflow://context/memory',
 		name: 'Memory Bank Context',
-		description:
-			'Auto-loaded context from all 6 core memory files (Cline structure)',
+		description: 'Auto-loaded context from all 6 core memory files',
 		mimeType: 'text/markdown',
 		load: async (): Promise<ResourceResult | ResourceResult[]> => {
 			console.error(

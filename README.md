@@ -30,7 +30,7 @@ devflow memory-init
 
 ## Memory System
 
-DevFlow provides six core memory files following the Cline Memory Bank structure:
+DevFlow provides six core memory files:
 
 ### Core Memory Files
 

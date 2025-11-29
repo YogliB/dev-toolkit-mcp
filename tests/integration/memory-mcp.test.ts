@@ -227,7 +227,7 @@ describe('[Integration:Memory] Memory MCP End-to-End with File-Specific Tools', 
 			const parsed = JSON.parse(result.text);
 			expect(parsed.memories).toBeArrayOfSize(6);
 			expect(parsed.count).toBe(6);
-			expect(parsed.structure).toBe('cline-6-file');
+			expect(parsed.structure).toBe('6-file');
 
 			// Verify all core files are present
 			const memoryNames = parsed.memories.map(
