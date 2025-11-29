@@ -1,10 +1,7 @@
-import projectBriefTemplate from './projectBrief.md' with { type: 'file' };
-import productContextTemplate from './productContext.md' with { type: 'file' };
-import systemPatternsTemplate from './systemPatterns.md' with { type: 'file' };
-import techContextTemplate from './techContext.md' with { type: 'file' };
-import activeContextTemplate from './activeContext.md' with { type: 'file' };
-import progressTemplate from './progress.md' with { type: 'file' };
 import { file } from 'bun';
+import path from 'node:path';
+
+const TEMPLATE_DIR = import.meta.dir;
 
 export interface LoadedTemplate {
 	name: string;
@@ -13,27 +10,27 @@ export interface LoadedTemplate {
 }
 
 async function readProjectBriefTemplate(): Promise<string> {
-	return await file(projectBriefTemplate).text();
+	return await file(path.join(TEMPLATE_DIR, 'projectBrief.md')).text();
 }
 
 async function readProductContextTemplate(): Promise<string> {
-	return await file(productContextTemplate).text();
+	return await file(path.join(TEMPLATE_DIR, 'productContext.md')).text();
 }
 
 async function readSystemPatternsTemplate(): Promise<string> {
-	return await file(systemPatternsTemplate).text();
+	return await file(path.join(TEMPLATE_DIR, 'systemPatterns.md')).text();
 }
 
 async function readTechContextTemplate(): Promise<string> {
-	return await file(techContextTemplate).text();
+	return await file(path.join(TEMPLATE_DIR, 'techContext.md')).text();
 }
 
 async function readActiveContextTemplate(): Promise<string> {
-	return await file(activeContextTemplate).text();
+	return await file(path.join(TEMPLATE_DIR, 'activeContext.md')).text();
 }
 
 async function readProgressTemplate(): Promise<string> {
-	return await file(progressTemplate).text();
+	return await file(path.join(TEMPLATE_DIR, 'progress.md')).text();
 }
 
 export async function loadTemplate(
