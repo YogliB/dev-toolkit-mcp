@@ -33,30 +33,44 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		}
 	});
 
-	it('should create all 4 core memory files', async () => {
+	it('should create all 6 core memory files', async () => {
 		const tool = createMemoryInitTool(repository);
 		const result = await tool.execute({});
 
 		expect(result.type).toBe('text');
 
-		const parsed = JSON.parse(result.text);
+		const parsed = JSON.parse(result.text.split('\n\n')[0]);
 		expect(parsed.success).toBe(true);
-		expect(parsed.filesCreated).toHaveLength(4);
+		expect(parsed.filesCreated).toHaveLength(6);
 
 		const memories = await repository.listMemories();
-		expect(memories).toContain('projectContext');
+		expect(memories).toContain('projectBrief');
+		expect(memories).toContain('productContext');
+		expect(memories).toContain('systemPatterns');
+		expect(memories).toContain('techContext');
 		expect(memories).toContain('activeContext');
 		expect(memories).toContain('progress');
-		expect(memories).toContain('decisionLog');
 	});
 
 	it('should create files with proper structure', async () => {
 		const tool = createMemoryInitTool(repository);
 		await tool.execute({});
 
-		const projectContext = await repository.getMemory('projectContext');
-		expect(projectContext.content).toContain('# Project Context');
-		expect(projectContext.frontmatter.category).toBe('project-info');
+		const projectBrief = await repository.getMemory('projectBrief');
+		expect(projectBrief.content).toContain('# Project Brief');
+		expect(projectBrief.frontmatter.category).toBe('foundation');
+
+		const productContext = await repository.getMemory('productContext');
+		expect(productContext.content).toContain('# Product Context');
+		expect(productContext.frontmatter.category).toBe('product');
+
+		const systemPatterns = await repository.getMemory('systemPatterns');
+		expect(systemPatterns.content).toContain('# System Patterns');
+		expect(systemPatterns.frontmatter.category).toBe('architecture');
+
+		const techContext = await repository.getMemory('techContext');
+		expect(techContext.content).toContain('# Technical Context');
+		expect(techContext.frontmatter.category).toBe('technical-setup');
 
 		const activeContext = await repository.getMemory('activeContext');
 		expect(activeContext.content).toContain('# Active Context');
@@ -65,19 +79,31 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		const progress = await repository.getMemory('progress');
 		expect(progress.content).toContain('# Progress');
 		expect(progress.frontmatter.category).toBe('tracking');
+	});
 
-		const decisionLog = await repository.getMemory('decisionLog');
-		expect(decisionLog.content).toContain('# Decision Log');
-		expect(decisionLog.frontmatter.category).toBe('decisions');
+	it('should not create decisionLog.md (deprecated)', async () => {
+		const tool = createMemoryInitTool(repository);
+		await tool.execute({});
+
+		const memories = await repository.listMemories();
+		expect(memories).not.toContain('decisionLog');
+	});
+
+	it('should not create old projectContext.md', async () => {
+		const tool = createMemoryInitTool(repository);
+		await tool.execute({});
+
+		const memories = await repository.listMemories();
+		expect(memories).not.toContain('projectContext');
 	});
 
 	it('should create files with placeholders for user to fill', async () => {
 		const tool = createMemoryInitTool(repository);
 		await tool.execute({});
 
-		const projectContext = await repository.getMemory('projectContext');
-		expect(projectContext.content).toContain('[');
-		expect(projectContext.content).toContain(']');
+		const projectBrief = await repository.getMemory('projectBrief');
+		expect(projectBrief.content).toContain('[');
+		expect(projectBrief.content).toContain(']');
 
 		const activeContext = await repository.getMemory('activeContext');
 		expect(activeContext.content).toContain('[DATE]');
@@ -85,8 +111,8 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		const progress = await repository.getMemory('progress');
 		expect(progress.content).toContain('[Milestone Name]');
 
-		const decisionLog = await repository.getMemory('decisionLog');
-		expect(decisionLog.content).toContain('[Decision Title]');
+		const systemPatterns = await repository.getMemory('systemPatterns');
+		expect(systemPatterns.content).toContain('[Decision Title]');
 	});
 
 	it('should return correct path in result', async () => {
@@ -114,10 +140,12 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		await tool.execute({});
 
 		const files = [
-			'projectContext',
+			'projectBrief',
+			'productContext',
+			'systemPatterns',
+			'techContext',
 			'activeContext',
 			'progress',
-			'decisionLog',
 		];
 
 		for (const fileName of files) {
@@ -133,12 +161,33 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		const tool = createMemoryInitTool(repository);
 		await tool.execute({});
 
-		const projectContext = await repository.getMemory('projectContext');
-		expect(projectContext.frontmatter).toHaveProperty(
+		const projectBrief = await repository.getMemory('projectBrief');
+		expect(projectBrief.frontmatter).toHaveProperty(
 			'category',
-			'project-info',
+			'foundation',
 		);
-		expect(projectContext.frontmatter).toHaveProperty('created');
+		expect(projectBrief.frontmatter).toHaveProperty('created');
+
+		const productContext = await repository.getMemory('productContext');
+		expect(productContext.frontmatter).toHaveProperty(
+			'category',
+			'product',
+		);
+		expect(productContext.frontmatter).toHaveProperty('created');
+
+		const systemPatterns = await repository.getMemory('systemPatterns');
+		expect(systemPatterns.frontmatter).toHaveProperty(
+			'category',
+			'architecture',
+		);
+		expect(systemPatterns.frontmatter).toHaveProperty('created');
+
+		const techContext = await repository.getMemory('techContext');
+		expect(techContext.frontmatter).toHaveProperty(
+			'category',
+			'technical-setup',
+		);
+		expect(techContext.frontmatter).toHaveProperty('created');
 
 		const activeContext = await repository.getMemory('activeContext');
 		expect(activeContext.frontmatter).toHaveProperty(
@@ -150,10 +199,6 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		const progress = await repository.getMemory('progress');
 		expect(progress.frontmatter).toHaveProperty('category', 'tracking');
 		expect(progress.frontmatter).toHaveProperty('created');
-
-		const decisionLog = await repository.getMemory('decisionLog');
-		expect(decisionLog.frontmatter).toHaveProperty('category', 'decisions');
-		expect(decisionLog.frontmatter).toHaveProperty('created');
 	});
 
 	it('should return all created file names in result', async () => {
@@ -162,11 +207,14 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 
 		const parsed = JSON.parse(result.text);
 		const filesCreated = parsed.filesCreated;
+		await tool.execute({});
 
-		expect(filesCreated).toContain('projectContext');
+		expect(filesCreated).toContain('projectBrief');
+		expect(filesCreated).toContain('productContext');
+		expect(filesCreated).toContain('systemPatterns');
+		expect(filesCreated).toContain('techContext');
 		expect(filesCreated).toContain('activeContext');
 		expect(filesCreated).toContain('progress');
-		expect(filesCreated).toContain('decisionLog');
 	});
 
 	it('should create files with template sections for current context', async () => {
@@ -191,16 +239,19 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		expect(progress.content).toContain('## Known Issues');
 	});
 
-	it('should create files with template sections for decisions', async () => {
+	it('should create systemPatterns with decision template sections', async () => {
 		const tool = createMemoryInitTool(repository);
 		await tool.execute({});
 
-		const decisionLog = await repository.getMemory('decisionLog');
-		expect(decisionLog.content).toContain('## Decision');
-		expect(decisionLog.content).toContain('### Context');
-		expect(decisionLog.content).toContain('### Decision');
-		expect(decisionLog.content).toContain('### Rationale');
-		expect(decisionLog.content).toContain('### Alternatives Considered');
+		const systemPatterns = await repository.getMemory('systemPatterns');
+		expect(systemPatterns.content).toContain('## Key Technical Decisions');
+		expect(systemPatterns.content).toContain('**Context:**');
+		expect(systemPatterns.content).toContain('**Decision:**');
+		expect(systemPatterns.content).toContain('**Rationale:**');
+		expect(systemPatterns.content).toContain(
+			'**Alternatives Considered:**',
+		);
+		expect(systemPatterns.content).toContain('**Consequences:**');
 	});
 
 	it('should work with full initialization workflow', async () => {
@@ -210,27 +261,27 @@ describe('[Integration] Memory Init Tool End-to-End', () => {
 		expect(directoryBefore).toBe(false);
 
 		const result = await tool.execute({});
-		const parsed = JSON.parse(result.text);
+		const parsed = JSON.parse(result.text.split('\n\n')[0]);
 
 		expect(parsed.success).toBe(true);
-		expect(parsed.filesCreated).toHaveLength(4);
+		expect(parsed.filesCreated).toHaveLength(6);
 
 		const directoryAfter = await storageEngine.exists('.devflow/memory');
 		expect(directoryAfter).toBe(true);
 
 		const memories = await repository.listMemories();
-		expect(memories.length).toBe(4);
+		expect(memories.length).toBe(6);
 	});
 
 	it('should properly serialize content with markdown formatting', async () => {
 		const tool = createMemoryInitTool(repository);
 		await tool.execute({});
 
-		const projectContext = await repository.getMemory('projectContext');
+		const projectBrief = await repository.getMemory('projectBrief');
 
-		expect(projectContext.content).toMatch(/^# Project Context/);
-		expect(projectContext.content).toMatch(/## Project Overview/);
-		expect(projectContext.content).toMatch(/### /);
+		expect(projectBrief.content).toMatch(/^# Project Brief/);
+		expect(projectBrief.content).toMatch(/## What Are We Building/);
+		expect(projectBrief.content).toMatch(/### /);
 
 		const activeContext = await repository.getMemory('activeContext');
 		expect(activeContext.content).toMatch(/^# Active Context/);

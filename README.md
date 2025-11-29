@@ -30,14 +30,16 @@ devflow memory-init
 
 ## Memory System
 
-DevFlow provides four core memory files for comprehensive context management:
+DevFlow provides six core memory files following the Cline Memory Bank structure:
 
 ### Core Memory Files
 
+- **projectBrief.md** - Foundation document (what you're building)
+- **productContext.md** - Why it exists and how it should work
+- **systemPatterns.md** - Architecture, design patterns, and decisions
+- **techContext.md** - Technologies, setup, and constraints
 - **activeContext.md** - Current work and immediate focus
 - **progress.md** - Session progress and accomplishments
-- **decisionLog.md** - Architectural decisions and reasoning
-- **projectContext.md** - Project metadata and setup information
 
 ### Memory Tools
 
@@ -48,18 +50,17 @@ All tools available via MCP protocol:
 - `memory-list` - List all memories in the bank
 - `memory-delete` - Remove memory files
 - `memory-init` - Initialize memory bank with core template files
-- `memory-context` - Get combined activeContext + progress for quick session refresh
+- `memory-context` - Get combined context from all 6 core files for session refresh
 - `memory-update` - Review all memory files with guided update workflow
 
 ### Memory Resources
 
-- `devflow://context/memory` - Combined context resource (Cursor)
+- `devflow://context/memory` - Combined context resource with all 6 files (Cursor)
 - `devflow://memory/{name}` - Individual memory file resource
 
 ### Memory Prompts
 
 - `memory:load` - Load and format specific memory (Zed workaround)
-- `memory:context` - Get session context summary
 
 ## Setup by Agent
 

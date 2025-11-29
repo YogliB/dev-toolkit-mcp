@@ -1,138 +1,271 @@
 # Memory Bank Templates
 
-This directory contains template files for initializing a DevFlow memory bank. Each template provides a structured starting point for maintaining session continuity and project context.
+This directory contains template files for initializing a DevFlow memory bank following Cline's official Memory Bank structure. Each template provides a structured starting point for maintaining session continuity and project context across AI agent sessions.
 
 ## Overview
 
-The memory bank consists of four core files that work together to maintain comprehensive project context:
+The memory bank consists of **6 core files** that work together in a hierarchical structure to maintain comprehensive project context:
 
-1. **projectContext.md** - High-level project overview and scope
-2. **activeContext.md** - Current work focus and immediate concerns
-3. **progress.md** - Historical milestones and metrics
-4. **decisionLog.md** - Architectural decisions and rationale
+1. **projectBrief.md** - Foundation document (what you're building)
+2. **productContext.md** - Why it exists and how it should work
+3. **systemPatterns.md** - Architecture, design patterns, and decisions
+4. **techContext.md** - Technologies, setup, and constraints
+5. **activeContext.md** - Current work focus and immediate concerns
+6. **progress.md** - Historical milestones, metrics, and tracking
+
+This structure is based on [Cline's Memory Bank](https://docs.cline.bot/prompting/cline-memory-bank), used by 600k+ developers.
+
+## File Hierarchy
+
+Files build upon each other in a clear dependency structure:
+
+```
+projectBrief.md (foundation - read first)
+├── productContext.md (why/how product works)
+├── systemPatterns.md (architecture + decisions)
+└── techContext.md (tech stack + setup)
+    ├── activeContext.md (current work)
+    └── progress.md (tracking + history)
+```
+
+**Reading Order for New Sessions:**
+
+1. `projectBrief.md` - Understand what you're building
+2. `productContext.md` - Understand why and how
+3. `systemPatterns.md` - Understand architecture
+4. `techContext.md` - Understand technologies
+5. `activeContext.md` - Understand current work
+6. `progress.md` - Understand project status
+
+**Editing Order When Working:**
+
+1. `activeContext.md` - Update daily with current work
+2. `systemPatterns.md` - Document architectural decisions as made
+3. `progress.md` - Update weekly with milestone progress
+4. `productContext.md` - Update when user experience changes
+5. `techContext.md` - Update when tech stack changes
+6. `projectBrief.md` - Update when scope changes
 
 ## File Descriptions
 
-### projectContext.md
+### 1. projectBrief.md
 
-**Purpose:** Foundation document providing high-level project understanding.
+**Purpose:** Foundation document that shapes all other files. Source of truth for project scope.
 
-**When to read:** At project start or when joining a new project.
+**Philosophy:** Keep it simple and high-level. Can be technical or non-technical. This is what you'd tell someone in 5 minutes about what you're building.
 
-**Key sections:**
+**Key Sections:**
 
-- Project Overview: What the project is and why it exists
-- Scope: What's in and out of scope
-- Constraints: Technical and business limitations
-- Technology Stack: Language, frameworks, databases
-- Current Status: Project phase and health
-- Future Vision: Where the project is headed
+- What Are We Building? - Clear description
+- Core Requirements - Fundamental must-haves
+- Goals - Primary and secondary objectives
+- Who Is This For? - Target users and stakeholders
+- Success Criteria - How we'll know we succeeded
+- Project Scope - What's in and out
+- Timeline - Key dates
+- Context - Why now? What prompted this?
 
-**Update frequency:** Quarterly or when scope changes significantly
+**Update Frequency:** Rarely - only when fundamental scope or goals change
 
-**Use cases:**
+**Use Cases:**
 
-- New team members getting oriented
-- Understanding project boundaries and constraints
-- Reviewing long-term goals
+- New team member orientation
+- Aligning on project direction
+- Scope discussions
+- Quarterly reviews
 
-### activeContext.md
+---
 
-**Purpose:** Snapshot of current work, blockers, and recent activity.
+### 2. productContext.md
 
-**When to read:** Every work session start; the primary context window.
+**Purpose:** Explains why the project exists, what problems it solves, and how it should work from a product perspective.
 
-**Key sections:**
+**Philosophy:** Product thinking - focus on user value, experience, and workflows. This informs all technical decisions.
 
-- Current Focus: What's being worked on right now
-- Active Blockers: Problems blocking progress with severity and workarounds
-- Recent Changes: Last 7 days of work with dates
-- Context Notes: Important patterns, performance considerations, security notes
-- Next Steps: Immediate priorities
+**Key Sections:**
 
-**Update frequency:** Daily or multiple times per day
+- Why This Project Exists - Root cause and value proposition
+- Problems Being Solved - Specific issues with impact
+- How It Should Work - User experience goals and workflows
+- User Scenarios - Typical and edge case journeys
+- Product Principles - Guiding principles for decisions
+- What Good Looks Like - Success indicators
+- Metrics for Success - Measurable targets
 
-**Retention policy:** Keep last 7 days; archive older entries to progress.md
+**Update Frequency:** When user experience changes, new features are scoped, or product direction shifts
 
-**Use cases:**
+**Use Cases:**
 
-- Resuming work after a break
-- Understanding current blockers and workarounds
-- Coordinating with teammates on immediate priorities
-- Documenting why decisions were made in recent work
+- Understanding user needs
+- Making product vs. technical trade-offs
+- Designing new features
+- Validating solutions against goals
 
-### progress.md
+**References:** Built on foundation in `projectBrief.md`
 
-**Purpose:** Long-term project history, milestones, and metrics.
+---
 
-**When to read:** When understanding project evolution or planning next milestones.
+### 3. systemPatterns.md
 
-**Key sections:**
+**Purpose:** Documents system architecture, design patterns, component relationships, and architectural decisions.
 
-- Current Milestone: Status and task breakdown
-- Completed Milestones: Historical achievements with learnings
-- Upcoming Milestones: Future planned work
-- Metrics: Velocity, task duration, blocker resolution time
-- Known Issues: Bugs and problems with severity
-- Lessons Learned: Patterns and insights discovered
-- Archived Changes: Work older than 30 days (compressed)
+**Philosophy:** This is the "how it's built" file. Includes architectural decisions (replaces standalone decision log concept).
 
-**Update frequency:** Weekly or at milestone boundaries
+**Key Sections:**
 
-**Retention policy:** Permanent; compress entries older than 90 days
+- System Architecture - High-level structure and style
+- Component Overview - What each component does
+- Component Relationships - Data flow and dependencies
+- Design Patterns - Patterns used and where
+- Key Technical Decisions - Architectural choices with full context
+    - Context, Decision, Rationale
+    - Alternatives Considered
+    - Consequences and Trade-offs
+- Critical Implementation Paths - Important flows through system
+- System Boundaries - What system does/doesn't do
+- Scalability Considerations
+- Security Architecture
+- Error Handling Strategy
+- Technical Debt & Improvements
 
-**Use cases:**
+**Update Frequency:** When making architectural decisions, discovering patterns, or changing system design
 
-- Tracking overall project health and velocity
-- Understanding what worked well and what didn't
-- Planning future milestones based on historical patterns
-- Identifying recurring issues or bottlenecks
-- Onboarding new team members to project history
+**Use Cases:**
 
-### decisionLog.md
+- Understanding system architecture
+- Making architectural decisions
+- Avoiding re-litigating past choices
+- Onboarding to technical design
+- Refactoring planning
 
-**Purpose:** Record architectural and technical decisions with full context.
+**References:** Built on `projectBrief.md` and `productContext.md`, informs `activeContext.md`
 
-**When to read:** When understanding why something was built a certain way.
+---
 
-**Key sections per decision:**
+### 4. techContext.md
 
-- Context: Situation leading to the decision
-- Decision: What was decided, stated clearly
-- Rationale: Why this choice was made
-- Alternatives Considered: Other options and why they weren't chosen
-- Consequences: Expected benefits, drawbacks, and follow-up actions
-- Related Decisions: Links to dependent decisions
+**Purpose:** Documents technologies used, development setup, technical constraints, dependencies, and tool usage patterns.
 
-**Update frequency:** As decisions are made (not on a schedule)
+**Philosophy:** Everything a developer needs to know to work with the technology stack.
 
-**Use cases:**
+**Key Sections:**
 
-- Understanding design choices and their tradeoffs
-- Avoiding re-litigating old decisions
-- Identifying when decisions need to be revisited
-- Training new team members on architectural philosophy
-- Documenting decision reversal when assumptions change
+- Technology Stack - Languages, frameworks, databases
+- Frontend/Backend Tech - Specific frameworks and tools
+- Infrastructure & DevOps - Hosting, CI/CD, monitoring
+- Key Dependencies - Critical libraries and versions
+- Development Setup - How to get started locally
+- Environment Variables - Configuration needed
+- Development Tools - Linters, formatters, testing
+- Technical Constraints - Performance, compatibility, security, scalability
+- Tool Usage Patterns - Version control, testing, deployment
+- Dependencies Management - Package management strategy
+- Build & Release - Build process and release strategy
+- Documentation & Resources - Links to docs and resources
+
+**Update Frequency:** When adding/changing technologies, updating dependencies, or modifying development processes
+
+**Use Cases:**
+
+- Setting up development environment
+- Understanding technical constraints
+- Evaluating new technologies
+- Troubleshooting setup issues
+- Documenting tool choices
+
+**References:** Built on `projectBrief.md`, informs `activeContext.md`
+
+---
+
+### 5. activeContext.md
+
+**Purpose:** Snapshot of current work, blockers, and recent activity (last 7 days). The most frequently updated file.
+
+**Philosophy:** Keep it current. This is what you read every time you start working. Archive old entries to `progress.md`.
+
+**Key Sections:**
+
+- Current Focus - What's being worked on right now
+- Active Blockers - Problems blocking progress with severity
+- Recent Changes (Last 7 Days) - What changed and why
+- Context Notes - Important patterns, performance, security considerations
+- Next Steps - Immediate priorities
+- Archive Note - Reminder to archive old changes
+
+**Update Frequency:** Daily or multiple times per day
+
+**Retention Policy:** Keep last 7 days only; move older entries to `progress.md`
+
+**Use Cases:**
+
+- Starting a work session
+- Understanding current blockers
+- Coordinating with team on priorities
+- Documenting recent decisions
+
+**References:** References all upstream files (`projectBrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`), feeds into `progress.md`
+
+---
+
+### 6. progress.md
+
+**Purpose:** Long-term project history, milestone tracking, metrics, and lessons learned.
+
+**Philosophy:** Historical record of what's been accomplished, what's working, and what's next.
+
+**Key Sections:**
+
+- Current Milestone - Status and task breakdown
+- Completed Milestones - Historical achievements with learnings
+- Upcoming Milestones - Future planned work
+- Metrics & Velocity - Task completion, duration, trends
+- Known Issues - Bugs and problems with severity
+- Lessons Learned & Patterns - Insights discovered
+- Risk Tracking - Realized and active risks
+- Archived Changes - Work older than 30 days (compressed)
+
+**Update Frequency:** Weekly or at milestone boundaries
+
+**Retention Policy:** Permanent; compress entries older than 90 days
+
+**Use Cases:**
+
+- Tracking project health and velocity
+- Understanding what worked/didn't work
+- Planning future milestones
+- Identifying recurring issues
+- Onboarding to project history
+
+**References:** Receives archived content from `activeContext.md`
+
+---
 
 ## Template Variables
 
 All templates use placeholder variables in `[brackets]`. Replace them with actual values:
 
-- `[DATE]` - Current date (format: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ)
+- `[DATE]` - Current date (format: YYYY-MM-DD or ISO 8601)
 - `[Name]` - Descriptive name or title
 - `[High/Medium/Low]` - Choose one based on context
 - `[Task]` - Specific task or item
-- `[Reason/Description]` - Explanatory text
+- `[Description]` - Explanatory text
+- `[Technology]` - Technology name and version
 
 ## Frontmatter Fields
 
 Each memory file uses YAML frontmatter to track metadata:
 
-**Common fields:**
+**Standard fields:**
 
-- `category` - File type (active-work, tracking, decisions, project-info)
-- `created` - File creation timestamp
-- `updated` - Last modification timestamp
+- `category` - File type category
+    - `foundation` (projectBrief)
+    - `product` (productContext)
+    - `architecture` (systemPatterns)
+    - `technical-setup` (techContext)
+    - `active-work` (activeContext)
+    - `tracking` (progress)
+- `created` - File creation timestamp (ISO 8601)
+- `updated` - Last modification timestamp (ISO 8601)
 
 **Optional fields:**
 
@@ -145,100 +278,191 @@ Each memory file uses YAML frontmatter to track metadata:
 ```yaml
 ---
 category: active-work
+created: 2024-03-15T10:00:00Z
 updated: 2024-03-20T14:30:00Z
 tags: [auth, critical]
 ---
 ```
 
-## Usage Examples
+## Usage Guide
 
 ### Initializing a New Project
 
-1. Use `memory-init` tool to create all four files with templates
-2. Fill in projectContext.md first (foundation)
-3. Create initial activeContext.md entry
-4. Set up progress.md with first milestone
-5. Begin decisionLog.md as decisions arise
+1. Use `memory-init` tool to create all 6 files with templates
+2. Fill in `projectBrief.md` first - this is your foundation
+3. Complete `productContext.md` - define the "why" and "how"
+4. Set up `systemPatterns.md` with initial architecture thoughts
+5. Configure `techContext.md` with your tech stack
+6. Create initial `activeContext.md` entry for current work
+7. Set up `progress.md` with first milestone
 
-### Updating Memory During Development
+**Order matters:** Each file builds on the previous ones.
 
-**Daily update:**
+### Daily Workflow
 
-- Update activeContext.md with what you're working on
-- Note any blockers encountered
-- Record recent changes
+**Starting Work:**
 
-**Weekly update:**
+1. Read `activeContext.md` for immediate context
+2. Check `progress.md` for current milestone status
+3. Reference `systemPatterns.md` if architectural questions arise
 
-- Review activeContext.md and archive old entries to progress.md
-- Update progress.md with milestone status
-- Add lessons learned section
+**During Work:**
 
-**When making architectural decisions:**
+1. Update `activeContext.md` with what you're working on
+2. Note any blockers or decisions made
+3. Document architectural decisions in `systemPatterns.md`
 
-- Add entry to decisionLog.md
-- Document context, rationale, and alternatives
-- Link from activeContext.md if relevant
+**Ending Work Session:**
 
-### Resuming Work After Break
+1. Update `activeContext.md` with current state
+2. Document any decisions made today
+3. Note next steps for tomorrow
 
-1. Read activeContext.md for immediate context
-2. Check progress.md for project status
-3. Review decisionLog.md if context unclear
-4. Reference projectContext.md if scope questions arise
+### Weekly Maintenance
+
+1. Review `activeContext.md` and archive entries >7 days to `progress.md`
+2. Update `progress.md` with milestone status and metrics
+3. Add lessons learned to `progress.md`
+4. Update `techContext.md` if dependencies changed
+5. Adjust `productContext.md` if user experience insights emerged
+
+### Making Architectural Decisions
+
+When making a significant technical or architectural decision:
+
+1. Document in `systemPatterns.md` under "Key Technical Decisions"
+2. Include full context (what led to this decision)
+3. State the decision clearly
+4. Explain rationale with specific reasons
+5. List alternatives considered and why not chosen
+6. Document consequences (positive, negative, trade-offs)
+7. Reference from `activeContext.md` if currently relevant
+
+### Resuming After Time Away
+
+**New Session (you or AI):**
+
+1. Read `projectBrief.md` - What are we building?
+2. Read `productContext.md` - Why and how should it work?
+3. Scan `systemPatterns.md` - How is it architected?
+4. Check `techContext.md` - What technologies are used?
+5. Read `activeContext.md` - What's happening right now?
+6. Review `progress.md` - Where are we in the timeline?
+
+**Quick Context (AI agents):**
+
+- All 6 files should be loaded at session start
+- `activeContext.md` + `progress.md` provide immediate working context
+- Other files provide deep context when needed
 
 ## Best Practices
 
-### Write for clarity and future readers
+### Writing Guidelines
 
-- Use specific, searchable language
-- Include dates and context
-- Avoid insider jargon without explanation
-- Link between files when relevant
+- **Be specific:** Use dates, file names, concrete examples
+- **Be searchable:** Use consistent terminology, avoid vague language
+- **Be concise:** Clarity over completeness
+- **Be current:** Update frequently, archive old content
+- **Link between files:** Reference related sections
 
-### Keep activeContext current
+### File-Specific Tips
 
-- Update at end of work session
-- Archive to progress.md after 7 days
-- Reference decisions by ID
-- Note external dependencies
+**projectBrief.md:**
 
-### Document decisions thoroughly
+- Keep it simple and high-level
+- Don't duplicate details from other files
+- Update rarely - this should be stable
 
-- Record decisions as they're made, not retroactively
-- Include what was considered but not chosen
-- Explain why chosen option was better
-- Note any assumptions that could change
+**productContext.md:**
 
-### Maintain metrics and learnings
+- Focus on user value, not implementation
+- Describe ideal experience, not current state
+- Use scenarios and workflows
 
-- Track what went well and what didn't
-- Record velocity and task duration
-- Document patterns discovered
-- Note recurring issues for future reference
+**systemPatterns.md:**
 
-## Template Structure Relationships
+- Document decisions when made, not retroactively
+- Include alternatives considered
+- Explain architectural reasoning
+- Update as system evolves
 
-```
-projectContext.md (Foundation - read first)
-       ↓
-activeContext.md (Current work - read daily)
-       ↓
-progress.md (Archive past work - read weekly)
+**techContext.md:**
 
-decisionLog.md (Referenced from active/progress contexts)
-```
+- Keep dependency versions current
+- Document setup issues and solutions
+- Update when technologies change
 
-**Reading order for new context:**
+**activeContext.md:**
 
-1. projectContext.md - Understand project scope and constraints
-2. activeContext.md - See what's currently happening
-3. progress.md - Understand project history and velocity
-4. decisionLog.md - Clarify any "why" questions
+- Update daily or more
+- Archive after 7 days
+- Keep focused on "now"
+- Reference upstream files
 
-**Editing order when updating:**
+**progress.md:**
 
-1. activeContext.md - Record current work and decisions
-2. decisionLog.md - Document any architectural decisions
-3. progress.md - Archive and update metrics weekly
-4. projectContext.md - Update when scope or constraints change
+- Track metrics consistently
+- Document lessons learned
+- Compress old entries
+- Celebrate milestones
+
+### Context Management
+
+**When context window fills:**
+
+1. Ask AI to "update memory bank"
+2. Review all 6 files
+3. Archive old content from `activeContext.md` to `progress.md`
+4. Start new session with "follow your custom instructions"
+5. AI loads all 6 files to rebuild context
+
+**Keeping files manageable:**
+
+- Archive `activeContext.md` changes >7 days
+- Compress `progress.md` entries >90 days
+- Don't duplicate content across files
+- Use references instead of copying
+
+## Migration from Legacy Structure
+
+If you have an older 4-file structure (`projectContext`, `activeContext`, `progress`, `decisionLog`):
+
+**Migration Steps:**
+
+1. Split `projectContext.md` into:
+    - `projectBrief.md` - High-level scope and goals
+    - `productContext.md` - Product thinking and workflows
+    - `techContext.md` - Technology stack and setup
+2. Create `systemPatterns.md` from architecture sections
+3. Migrate decision log entries to `systemPatterns.md` "Key Technical Decisions" section
+4. Update `activeContext.md` and `progress.md` if needed
+5. Delete old files after migration
+
+See `MIGRATION.md` for detailed instructions.
+
+## Philosophical Notes
+
+### Why This Structure?
+
+**Hierarchical organization:** Files build on each other, providing clear reading order and reducing duplication.
+
+**Separation of concerns:** Product thinking (why) separated from technical implementation (how).
+
+**Decision documentation:** Architectural decisions live in `systemPatterns.md` where they're most relevant, not in a separate log.
+
+**AI-friendly:** Structure designed for AI agents to load context efficiently and maintain understanding across sessions.
+
+**Human-readable:** All files are markdown, git-friendly, and useful documentation for humans too.
+
+### Design Principles
+
+1. **Foundation first:** `projectBrief.md` is the source of truth
+2. **Product before implementation:** Understand "why" before "how"
+3. **Architecture informs work:** System design guides daily tasks
+4. **Current over historical:** `activeContext.md` is most important for daily work
+5. **Archive aggressively:** Keep current files focused
+6. **Document decisions in context:** Decisions live with architecture, not separate
+
+---
+
+_These templates follow Cline's Memory Bank methodology, proven with 600k+ users. They enable AI agents to maintain context across sessions and provide valuable project documentation as a side effect._

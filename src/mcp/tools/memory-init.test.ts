@@ -21,38 +21,47 @@ describe('Memory Init Tool', () => {
 
 			expect(tool.name).toBe('memory-init');
 			expect(tool.description).toContain('memory bank');
-			expect(tool.description).toContain('template');
+			expect(tool.description).toContain('6 core files');
 			expect(tool.execute).toBeDefined();
 		});
 
-		it('should initialize memory bank with 4 core files', async () => {
+		it('should initialize memory bank with 6 core files', async () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(undefined as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
 
-			const parsed = JSON.parse(result.text);
+			const parsed = JSON.parse(result.text.split('\n\n')[0]); // Get JSON before deprecation warning
 			expect(parsed.success).toBe(true);
-			expect(parsed.filesCreated).toHaveLength(4);
-			expect(parsed.filesCreated).toContain('projectContext');
+			expect(parsed.filesCreated).toHaveLength(6);
+			expect(parsed.filesCreated).toContain('projectBrief');
+			expect(parsed.filesCreated).toContain('productContext');
+			expect(parsed.filesCreated).toContain('systemPatterns');
+			expect(parsed.filesCreated).toContain('techContext');
 			expect(parsed.filesCreated).toContain('activeContext');
 			expect(parsed.filesCreated).toContain('progress');
-			expect(parsed.filesCreated).toContain('decisionLog');
+			expect(parsed.structure).toBe('cline-6-file');
 		});
 
 		it('should set correct path in result', async () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			const result = await tool.execute();
 
-			const parsed = JSON.parse(result.text);
+			const parsed = JSON.parse(result.text.split('\n\n')[0]);
 			expect(parsed.path).toBe('.devflow/memory');
 		});
 
@@ -60,11 +69,14 @@ describe('Memory Init Tool', () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			const result = await tool.execute();
 
-			const parsed = JSON.parse(result.text);
+			const parsed = JSON.parse(result.text.split('\n\n')[0]);
 			expect(parsed.timestamp).toBeDefined();
 
 			const timestamp = new Date(parsed.timestamp);
@@ -75,17 +87,23 @@ describe('Memory Init Tool', () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			await tool.execute();
 
-			expect(mockRepository.saveMemory).toHaveBeenCalledTimes(4);
+			expect(mockRepository.saveMemory).toHaveBeenCalledTimes(6);
 		});
 
 		it('should save files with correct names', async () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			await tool.execute();
@@ -95,16 +113,21 @@ describe('Memory Init Tool', () => {
 			).mock.calls;
 
 			const savedNames = calls.map((call) => call[0]);
-			expect(savedNames).toContain('projectContext');
+			expect(savedNames).toContain('projectBrief');
+			expect(savedNames).toContain('productContext');
+			expect(savedNames).toContain('systemPatterns');
+			expect(savedNames).toContain('techContext');
 			expect(savedNames).toContain('activeContext');
 			expect(savedNames).toContain('progress');
-			expect(savedNames).toContain('decisionLog');
 		});
 
 		it('should save files with frontmatter', async () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			await tool.execute();
@@ -141,6 +164,9 @@ describe('Memory Init Tool', () => {
 
 		it('should return error object when validation fails', async () => {
 			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
+			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockRejectedValueOnce(new ValidationError('Invalid frontmatter'));
 
@@ -149,7 +175,7 @@ describe('Memory Init Tool', () => {
 
 			expect(result.type).toBe('text');
 
-			const parsed = JSON.parse(result.text);
+			const parsed = JSON.parse(result.text.split('\n\n')[0]);
 			expect(parsed.success).toBe(false);
 			expect(parsed.error).toBe('Validation failed');
 			expect(parsed.message).toContain('Invalid frontmatter');
@@ -157,37 +183,46 @@ describe('Memory Init Tool', () => {
 
 		it('should return error object for generic errors', async () => {
 			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
+			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
-			).mockRejectedValueOnce(new Error('Disk full'));
+			).mockRejectedValueOnce(new Error('Write failed'));
 
 			const tool = createMemoryInitTool(mockRepository);
 			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
 
-			const parsed = JSON.parse(result.text);
+			const parsed = JSON.parse(result.text.split('\n\n')[0]);
 			expect(parsed.success).toBe(false);
 			expect(parsed.error).toBe('Initialization failed');
-			expect(parsed.message).toContain('Disk full');
+			expect(parsed.message).toContain('Write failed');
 		});
 
 		it('should include success message in result', async () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			const result = await tool.execute();
 
-			const parsed = JSON.parse(result.text);
+			const parsed = JSON.parse(result.text.split('\n\n')[0]);
 			expect(parsed.message).toContain('initialized successfully');
-			expect(parsed.message).toContain('4 core files');
+			expect(parsed.message).toContain('6 core files');
 		});
 
 		it('should handle optional input schema', async () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 
@@ -202,6 +237,9 @@ describe('Memory Init Tool', () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			await tool.execute();
@@ -209,31 +247,40 @@ describe('Memory Init Tool', () => {
 			const calls = (
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mock.calls;
-			const savedNames = calls.map((call) => call[0]);
 
-			expect(savedNames[0]).toBe('projectContext');
-			expect(savedNames[1]).toBe('activeContext');
-			expect(savedNames[2]).toBe('progress');
-			expect(savedNames[3]).toBe('decisionLog');
+			expect(calls[0][0]).toBe('projectBrief');
+			expect(calls[1][0]).toBe('productContext');
+			expect(calls[2][0]).toBe('systemPatterns');
+			expect(calls[3][0]).toBe('techContext');
+			expect(calls[4][0]).toBe('activeContext');
+			expect(calls[5][0]).toBe('progress');
 		});
 
 		it('should return proper JSON structure on success', async () => {
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockResolvedValue(void 0 as void);
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 
 			const tool = createMemoryInitTool(mockRepository);
 			const result = await tool.execute();
 
-			const parsed = JSON.parse(result.text);
+			const parsed = JSON.parse(result.text.split('\n\n')[0]);
 			expect(parsed).toHaveProperty('success');
 			expect(parsed).toHaveProperty('message');
 			expect(parsed).toHaveProperty('filesCreated');
 			expect(parsed).toHaveProperty('path');
 			expect(parsed).toHaveProperty('timestamp');
+			expect(parsed).toHaveProperty('structure');
+			expect(parsed).toHaveProperty('hierarchy');
 		});
 
 		it('should return proper JSON structure on error', async () => {
+			(
+				mockRepository.listMemories as ReturnType<typeof vi.fn>
+			).mockResolvedValue([]);
 			(
 				mockRepository.saveMemory as ReturnType<typeof vi.fn>
 			).mockRejectedValueOnce(new Error('Test error'));

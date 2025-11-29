@@ -83,9 +83,22 @@ describe('[Integration:Memory] Memory MCP End-to-End', () => {
 
 			expect(result.type).toBe('text');
 			const parsed = JSON.parse(result.text);
-			expect(parsed.memories).toContain('test1');
-			expect(parsed.memories).toContain('test2');
+			expect(parsed.memories).toBeArrayOfSize(2);
+			const memoryNames = parsed.memories.map(
+				(m: { name: string }) => m.name,
+			);
+			expect(memoryNames).toContain('test1');
+			expect(memoryNames).toContain('test2');
 			expect(parsed.count).toBe(2);
+			expect(parsed.structure).toBe('partial');
+			// Custom files should not be marked as core files
+			for (const m of parsed.memories as Array<{
+				isCoreFile: boolean;
+				category: string;
+			}>) {
+				expect(m.isCoreFile).toBe(false);
+				expect(m.category).toBe('custom');
+			}
 		});
 	});
 
@@ -482,7 +495,10 @@ describe('[Integration:Memory] Memory MCP End-to-End', () => {
 			const listTool = createMemoryListTool(repository);
 			result = await listTool.execute();
 			const listParsed = JSON.parse(result.text);
-			expect(listParsed.memories).toContain('journey-test');
+			const memoryNames = listParsed.memories.map(
+				(m: { name: string }) => m.name,
+			);
+			expect(memoryNames).toContain('journey-test');
 
 			// Step 3: Get
 			const getTool = createMemoryGetTool(repository);
@@ -499,7 +515,10 @@ describe('[Integration:Memory] Memory MCP End-to-End', () => {
 			// Verify deletion
 			result = await listTool.execute();
 			const finalList = JSON.parse(result.text);
-			expect(finalList.memories).not.toContain('journey-test');
+			const finalNames = finalList.memories.map(
+				(m: { name: string }) => m.name,
+			);
+			expect(finalNames).not.toContain('journey-test');
 		});
 	});
 });

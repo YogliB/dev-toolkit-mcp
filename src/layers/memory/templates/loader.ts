@@ -1,7 +1,9 @@
-import projectContextTemplate from './projectContext.md' with { type: 'file' };
+import projectBriefTemplate from './projectBrief.md' with { type: 'file' };
+import productContextTemplate from './productContext.md' with { type: 'file' };
+import systemPatternsTemplate from './systemPatterns.md' with { type: 'file' };
+import techContextTemplate from './techContext.md' with { type: 'file' };
 import activeContextTemplate from './activeContext.md' with { type: 'file' };
 import progressTemplate from './progress.md' with { type: 'file' };
-import decisionLogTemplate from './decisionLog.md' with { type: 'file' };
 import { file } from 'bun';
 
 export interface LoadedTemplate {
@@ -10,8 +12,20 @@ export interface LoadedTemplate {
 	frontmatter: Record<string, string | string[]>;
 }
 
-async function readProjectContextTemplate(): Promise<string> {
-	return await file(projectContextTemplate).text();
+async function readProjectBriefTemplate(): Promise<string> {
+	return await file(projectBriefTemplate).text();
+}
+
+async function readProductContextTemplate(): Promise<string> {
+	return await file(productContextTemplate).text();
+}
+
+async function readSystemPatternsTemplate(): Promise<string> {
+	return await file(systemPatternsTemplate).text();
+}
+
+async function readTechContextTemplate(): Promise<string> {
+	return await file(techContextTemplate).text();
 }
 
 async function readActiveContextTemplate(): Promise<string> {
@@ -22,10 +36,6 @@ async function readProgressTemplate(): Promise<string> {
 	return await file(progressTemplate).text();
 }
 
-async function readDecisionLogTemplate(): Promise<string> {
-	return await file(decisionLogTemplate).text();
-}
-
 export async function loadTemplate(
 	templateName: string,
 ): Promise<LoadedTemplate> {
@@ -33,8 +43,20 @@ export async function loadTemplate(
 
 	try {
 		switch (templateName) {
-			case 'projectContext': {
-				content = await readProjectContextTemplate();
+			case 'projectBrief': {
+				content = await readProjectBriefTemplate();
+				break;
+			}
+			case 'productContext': {
+				content = await readProductContextTemplate();
+				break;
+			}
+			case 'systemPatterns': {
+				content = await readSystemPatternsTemplate();
+				break;
+			}
+			case 'techContext': {
+				content = await readTechContextTemplate();
 				break;
 			}
 			case 'activeContext': {
@@ -46,11 +68,14 @@ export async function loadTemplate(
 				break;
 			}
 			case 'decisionLog': {
-				content = await readDecisionLogTemplate();
-				break;
+				throw new Error(
+					'decisionLog template is deprecated. Use systemPatterns.md for architectural decisions instead. See MIGRATION.md for details.',
+				);
 			}
 			default: {
-				throw new Error(`Invalid template name: "${templateName}"`);
+				throw new Error(
+					`Invalid template name: "${templateName}". Valid templates: projectBrief, productContext, systemPatterns, techContext, activeContext, progress`,
+				);
 			}
 		}
 
@@ -71,20 +96,77 @@ export async function loadTemplate(
 
 export async function loadAllTemplates(): Promise<LoadedTemplate[]> {
 	return await Promise.all([
-		loadTemplate('projectContext'),
+		loadTemplate('projectBrief'),
+		loadTemplate('productContext'),
+		loadTemplate('systemPatterns'),
+		loadTemplate('techContext'),
 		loadTemplate('activeContext'),
 		loadTemplate('progress'),
-		loadTemplate('decisionLog'),
 	]);
 }
 
 function getCategoryForTemplate(templateName: string): string {
 	const categories = new Map<string, string>([
-		['projectContext', 'project-info'],
+		['projectBrief', 'foundation'],
+		['productContext', 'product'],
+		['systemPatterns', 'architecture'],
+		['techContext', 'technical-setup'],
 		['activeContext', 'active-work'],
 		['progress', 'tracking'],
-		['decisionLog', 'decisions'],
 	]);
 
 	return categories.get(templateName) ?? 'general';
+}
+
+export interface TemplateHierarchy {
+	name: string;
+	displayName: string;
+	dependencies: string[];
+	description: string;
+}
+
+export function getTemplateHierarchy(): TemplateHierarchy[] {
+	return [
+		{
+			name: 'projectBrief',
+			displayName: 'Project Brief',
+			dependencies: [],
+			description: "Foundation document - what you're building",
+		},
+		{
+			name: 'productContext',
+			displayName: 'Product Context',
+			dependencies: ['projectBrief'],
+			description: 'Why it exists and how it should work',
+		},
+		{
+			name: 'systemPatterns',
+			displayName: 'System Patterns',
+			dependencies: ['projectBrief', 'productContext'],
+			description: 'Architecture, design patterns, and decisions',
+		},
+		{
+			name: 'techContext',
+			displayName: 'Technical Context',
+			dependencies: ['projectBrief'],
+			description: 'Technologies, setup, and constraints',
+		},
+		{
+			name: 'activeContext',
+			displayName: 'Active Context',
+			dependencies: [
+				'projectBrief',
+				'productContext',
+				'systemPatterns',
+				'techContext',
+			],
+			description: 'Current work focus',
+		},
+		{
+			name: 'progress',
+			displayName: 'Progress',
+			dependencies: ['activeContext'],
+			description: 'Tracking and history',
+		},
+	];
 }

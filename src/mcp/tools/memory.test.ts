@@ -213,15 +213,31 @@ describe('Memory Tools', () => {
 		});
 
 		it('should have correct tool metadata', () => {
-			const tool = createMemorySaveTool(mockRepository);
+			const tool = createMemoryUpdateTool(mockRepository);
 
-			expect(tool.name).toBe('memory-save');
-			expect(tool.description).toBe('Save or update a memory file');
+			expect(tool.name).toBe('memory-update');
+			expect(tool.description).toContain('6 core memory files');
 			expect(tool.parameters).toBeDefined();
 		});
 
 		describe('createMemoryContextTool', () => {
-			it('should return combined activeContext and progress', async () => {
+			it('should return combined context from all 6 core files', async () => {
+				const mockProjectBrief = {
+					frontmatter: {},
+					content: '# Project Brief\n\nBuilding inventory system',
+				};
+				const mockProductContext = {
+					frontmatter: {},
+					content: '# Product Context\n\nSolving warehouse tracking',
+				};
+				const mockSystemPatterns = {
+					frontmatter: {},
+					content: '# System Patterns\n\nMicroservices architecture',
+				};
+				const mockTechContext = {
+					frontmatter: {},
+					content: '# Tech Context\n\nReact + TypeScript',
+				};
 				const mockActiveContext = {
 					frontmatter: {},
 					content: '# Current Work\n\nWorking on feature X',
@@ -232,32 +248,66 @@ describe('Memory Tools', () => {
 				};
 
 				(mockRepository.getMemory as ReturnType<typeof vi.fn>)
+					.mockResolvedValueOnce(mockProjectBrief)
+					.mockResolvedValueOnce(mockProductContext)
+					.mockResolvedValueOnce(mockSystemPatterns)
+					.mockResolvedValueOnce(mockTechContext)
 					.mockResolvedValueOnce(mockActiveContext)
-					.mockResolvedValueOnce(mockProgress);
+					.mockResolvedValueOnce(mockProgress)
+					.mockRejectedValueOnce(
+						new FileNotFoundError('.devflow/memory/decisionLog.md'),
+					); // Check for deprecated file
 
 				const tool = createMemoryContextTool(mockRepository);
 				const result = await tool.execute();
 
 				expect(result.type).toBe('text');
+				expect(result.text).toContain('# Project Brief');
+				expect(result.text).toContain('Building inventory system');
+				expect(result.text).toContain('# Product Context');
+				expect(result.text).toContain('# System Patterns');
+				expect(result.text).toContain('# Technical Context');
 				expect(result.text).toContain('# Active Context');
 				expect(result.text).toContain('Working on feature X');
 				expect(result.text).toContain('# Progress');
 				expect(result.text).toContain('Completed 3/5 tasks');
 			});
 
-			it('should handle missing activeContext gracefully', async () => {
+			it('should handle missing files gracefully', async () => {
 				const mockProgress = {
 					frontmatter: {},
 					content: '# Milestone 1\n\nCompleted 3/5 tasks',
 				};
 
+				// Mock all 6 files with most missing
 				(mockRepository.getMemory as ReturnType<typeof vi.fn>)
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/projectBrief.md',
+						),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/productContext.md',
+						),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/systemPatterns.md',
+						),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError('.devflow/memory/techContext.md'),
+					)
 					.mockRejectedValueOnce(
 						new FileNotFoundError(
 							'.devflow/memory/activeContext.md',
 						),
 					)
-					.mockResolvedValueOnce(mockProgress);
+					.mockResolvedValueOnce(mockProgress)
+					.mockRejectedValueOnce(
+						new FileNotFoundError('.devflow/memory/decisionLog.md'),
+					);
 
 				const tool = createMemoryContextTool(mockRepository);
 				const result = await tool.execute();
@@ -268,7 +318,26 @@ describe('Memory Tools', () => {
 			});
 
 			it('should return message when no files found', async () => {
+				// Mock all 6 files as missing
 				(mockRepository.getMemory as ReturnType<typeof vi.fn>)
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/projectBrief.md',
+						),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/productContext.md',
+						),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/systemPatterns.md',
+						),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError('.devflow/memory/techContext.md'),
+					)
 					.mockRejectedValueOnce(
 						new FileNotFoundError(
 							'.devflow/memory/activeContext.md',
@@ -276,6 +345,9 @@ describe('Memory Tools', () => {
 					)
 					.mockRejectedValueOnce(
 						new FileNotFoundError('.devflow/memory/progress.md'),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError('.devflow/memory/decisionLog.md'),
 					);
 
 				const tool = createMemoryContextTool(mockRepository);
@@ -288,11 +360,25 @@ describe('Memory Tools', () => {
 		});
 
 		describe('createMemoryUpdateTool', () => {
-			it('should return all 4 memory files with workflow guide', async () => {
+			it('should return all 6 memory files with workflow guide', async () => {
 				const mockFiles = {
-					projectContext: {
+					projectBrief: {
 						frontmatter: {},
-						content: '# Project Overview\n\nThis is a test project',
+						content: '# Project Brief\n\nBuilding inventory system',
+					},
+					productContext: {
+						frontmatter: {},
+						content:
+							'# Product Context\n\nSolving warehouse tracking',
+					},
+					systemPatterns: {
+						frontmatter: {},
+						content:
+							'# System Patterns\n\nMicroservices architecture',
+					},
+					techContext: {
+						frontmatter: {},
+						content: '# Tech Context\n\nReact + TypeScript',
 					},
 					activeContext: {
 						frontmatter: {},
@@ -302,31 +388,34 @@ describe('Memory Tools', () => {
 						frontmatter: {},
 						content: '# Milestone 1\n\nCompleted 3/5 tasks',
 					},
-					decisionLog: {
-						frontmatter: {},
-						content: '# Decision 001\n\nUse TypeScript',
-					},
 				};
 
 				(mockRepository.getMemory as ReturnType<typeof vi.fn>)
-					.mockResolvedValueOnce(mockFiles.projectContext)
+					.mockResolvedValueOnce(mockFiles.projectBrief)
+					.mockResolvedValueOnce(mockFiles.productContext)
+					.mockResolvedValueOnce(mockFiles.systemPatterns)
+					.mockResolvedValueOnce(mockFiles.techContext)
 					.mockResolvedValueOnce(mockFiles.activeContext)
 					.mockResolvedValueOnce(mockFiles.progress)
-					.mockResolvedValueOnce(mockFiles.decisionLog);
+					.mockRejectedValueOnce(
+						new FileNotFoundError('.devflow/memory/decisionLog.md'),
+					);
 
 				const tool = createMemoryUpdateTool(mockRepository);
 				const result = await tool.execute();
 
 				expect(result.type).toBe('text');
 				expect(result.text).toContain('Memory Bank Update Workflow');
-				expect(result.text).toContain('Project Context');
+				expect(result.text).toContain('Project Brief');
+				expect(result.text).toContain('Product Context');
+				expect(result.text).toContain('System Patterns');
+				expect(result.text).toContain('Technical Context');
 				expect(result.text).toContain('Active Context');
 				expect(result.text).toContain('Progress');
-				expect(result.text).toContain('Decision Log');
-				expect(result.text).toContain('This is a test project');
+				expect(result.text).toContain('Building inventory system');
 				expect(result.text).toContain('Working on feature X');
 				expect(result.text).toContain('Completed 3/5 tasks');
-				expect(result.text).toContain('Use TypeScript');
+				expect(result.text).toContain('Microservices architecture');
 			});
 
 			it('should include workflow checklist', async () => {
@@ -338,10 +427,9 @@ describe('Memory Tools', () => {
 				const result = await tool.execute();
 
 				expect(result.text).toContain('What to Update');
-				expect(result.text).toContain('projectContext.md:');
+				expect(result.text).toContain('projectBrief.md:');
 				expect(result.text).toContain('activeContext.md:');
 				expect(result.text).toContain('progress.md:');
-				expect(result.text).toContain('decisionLog.md:');
 				expect(result.text).toContain('Next Steps After Review');
 				expect(result.text).toContain('memory-save');
 			});
@@ -350,7 +438,21 @@ describe('Memory Tools', () => {
 				(mockRepository.getMemory as ReturnType<typeof vi.fn>)
 					.mockResolvedValueOnce({
 						frontmatter: {},
-						content: 'Project data',
+						content: 'Project brief data',
+					})
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/productContext.md',
+						),
+					)
+					.mockRejectedValueOnce(
+						new FileNotFoundError(
+							'.devflow/memory/systemPatterns.md',
+						),
+					)
+					.mockResolvedValueOnce({
+						frontmatter: {},
+						content: 'Tech context data',
 					})
 					.mockRejectedValueOnce(
 						new FileNotFoundError(
@@ -369,15 +471,15 @@ describe('Memory Tools', () => {
 				const result = await tool.execute();
 
 				expect(result.type).toBe('text');
-				expect(result.text).toContain('Project Context');
-				expect(result.text).toContain('Project data');
+				expect(result.text).toContain('Project Brief');
+				expect(result.text).toContain('Project brief data');
+				expect(result.text).toContain('Product Context (Not Found)');
+				expect(result.text).toContain('System Patterns (Not Found)');
+				expect(result.text).toContain('Technical Context');
+				expect(result.text).toContain('Tech context data');
 				expect(result.text).toContain('Active Context (Not Found)');
 				expect(result.text).toContain('Progress');
 				expect(result.text).toContain('Progress data');
-				expect(result.text).toContain('Decision Log (Not Found)');
-				expect(result.text).toContain(
-					'missing: activeContext, decisionLog',
-				);
 			});
 
 			it('should return message when all files missing', async () => {
@@ -410,10 +512,12 @@ describe('Memory Tools', () => {
 			const parsed = JSON.parse(
 				(result as { type: string; text: string }).text,
 			);
-			expect(parsed).toEqual({
-				memories,
-				count: 3,
-			});
+			expect(parsed.count).toBe(3);
+			expect(parsed.memories).toHaveLength(3);
+			expect(parsed.memories[0]).toHaveProperty('name');
+			expect(parsed.memories[0]).toHaveProperty('isCoreFile');
+			expect(parsed.memories[0]).toHaveProperty('category');
+			expect(parsed.structure).toBe('partial');
 			expect(mockRepository.listMemories).toHaveBeenCalled();
 		});
 
@@ -428,10 +532,9 @@ describe('Memory Tools', () => {
 			const parsed = JSON.parse(
 				(result as { type: string; text: string }).text,
 			);
-			expect(parsed).toEqual({
-				memories: [],
-				count: 0,
-			});
+			expect(parsed.memories).toEqual([]);
+			expect(parsed.count).toBe(0);
+			expect(parsed.structure).toBe('unknown');
 		});
 
 		it('should return error object on list failure', async () => {
@@ -452,12 +555,10 @@ describe('Memory Tools', () => {
 		});
 
 		it('should have correct tool metadata', () => {
-			const tool = createMemoryListTool(mockRepository);
+			const tool = createMemoryContextTool(mockRepository);
 
-			expect(tool.name).toBe('memory-list');
-			expect(tool.description).toBe(
-				'List all memory files in the memory bank',
-			);
+			expect(tool.name).toBe('memory-context');
+			expect(tool.description).toContain('all 6 core memory files');
 		});
 	});
 

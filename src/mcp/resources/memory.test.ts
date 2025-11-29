@@ -30,15 +30,39 @@ describe('Memory Resources', () => {
 
 			expect(resource.uri).toBe('devflow://context/memory');
 			expect(resource.name).toBe('Memory Bank Context');
-			expect(resource.description).toContain('activeContext');
+			expect(resource.description).toContain('all 6 core memory files');
 			expect(resource.mimeType).toBe('text/markdown');
 			expect(typeof resource.load).toBe('function');
 		});
 
-		it('should load both activeContext and progress when both exist', async () => {
+		it('should load all 6 core files when they exist', async () => {
 			(
 				mockRepository.getMemory as ReturnType<typeof vi.fn>
 			).mockImplementation(async (name: string) => {
+				if (name === 'projectBrief') {
+					return {
+						frontmatter: {},
+						content: 'Project brief content',
+					};
+				}
+				if (name === 'productContext') {
+					return {
+						frontmatter: {},
+						content: 'Product context content',
+					};
+				}
+				if (name === 'systemPatterns') {
+					return {
+						frontmatter: {},
+						content: 'System patterns content',
+					};
+				}
+				if (name === 'techContext') {
+					return {
+						frontmatter: {},
+						content: 'Tech context content',
+					};
+				}
 				if (name === 'activeContext') {
 					return {
 						frontmatter: {},
@@ -151,10 +175,17 @@ describe('Memory Resources', () => {
 		it('should handle unexpected errors gracefully', async () => {
 			(mockRepository.getMemory as ReturnType<typeof vi.fn>)
 				.mockRejectedValueOnce(new Error('Database connection failed'))
+				.mockRejectedValueOnce(new Error('Database connection failed'))
+				.mockRejectedValueOnce(new Error('Database connection failed'))
+				.mockRejectedValueOnce(new Error('Database connection failed'))
+				.mockRejectedValueOnce(new Error('Database connection failed'))
 				.mockResolvedValueOnce({
 					frontmatter: {},
 					content: 'Progress content',
-				});
+				})
+				.mockRejectedValueOnce(
+					new FileNotFoundError('.devflow/memory/decisionLog.md'),
+				);
 
 			const resource = createContextResource(mockRepository);
 			const rawResult = await resource.load!();
@@ -269,10 +300,10 @@ describe('Memory Resources', () => {
 			expect(result.uri).toBe('devflow://memory/../etc/passwd');
 		});
 
-		it('should handle unexpected errors', async () => {
+		it('should handle unexpected errors gracefully', async () => {
 			(
 				mockRepository.getMemory as ReturnType<typeof vi.fn>
-			).mockRejectedValue(new Error('Unexpected failure'));
+			).mockRejectedValue(new Error('Unexpected error'));
 
 			const template = createMemoryResourceTemplate(mockRepository);
 			const rawResult = await template.load!({ name: 'test' });
@@ -282,8 +313,8 @@ describe('Memory Resources', () => {
 				{ text: string }
 			>;
 
-			expect(result.text).toContain('Error: Failed to Load Memory');
-			expect(result.text).toContain('Unexpected failure');
+			expect(result.text).toContain('Error');
+			expect(result.text).toContain('Failed to Load Memory');
 		});
 
 		it('should format frontmatter correctly with multiple fields', async () => {

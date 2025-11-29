@@ -4,6 +4,19 @@ import type { Resource, ResourceTemplate, ResourceResult } from 'fastmcp';
 
 type SessionAuth = Record<string, unknown> | undefined;
 
+function getFileDisplayName(fileName: string): string {
+	const names = new Map<string, string>([
+		['projectBrief', 'Project Brief'],
+		['productContext', 'Product Context'],
+		['systemPatterns', 'System Patterns'],
+		['techContext', 'Technical Context'],
+		['activeContext', 'Active Context'],
+		['progress', 'Progress'],
+	]);
+
+	return names.get(fileName) ?? fileName;
+}
+
 export function createContextResource(
 	repository: MemoryRepository,
 ): Resource<SessionAuth> {
@@ -11,7 +24,7 @@ export function createContextResource(
 		uri: 'devflow://context/memory',
 		name: 'Memory Bank Context',
 		description:
-			'Auto-loaded context from activeContext and progress files',
+			'Auto-loaded context from all 6 core memory files (Cline structure)',
 		mimeType: 'text/markdown',
 		load: async (): Promise<ResourceResult | ResourceResult[]> => {
 			console.error(
@@ -19,60 +32,69 @@ export function createContextResource(
 			);
 
 			const sections: string[] = [];
+			const coreFiles = [
+				'projectBrief',
+				'productContext',
+				'systemPatterns',
+				'techContext',
+				'activeContext',
+				'progress',
+			];
+			let filesLoaded = 0;
 
-			try {
-				const activeContext =
-					await repository.getMemory('activeContext');
-				sections.push(
-					'# Active Context\n',
-					activeContext.content,
-					'\n',
-				);
-				console.error(
-					'[DevFlow:INFO] Resource operation succeeded: context (activeContext loaded)',
-				);
-			} catch (error) {
-				if (error instanceof FileNotFoundError) {
-					console.error(
-						'[DevFlow:WARN] Resource operation partial: activeContext.md missing, returning progress only',
+			// Load all 6 core files in hierarchical order
+			for (const fileName of coreFiles) {
+				try {
+					const memory = await repository.getMemory(fileName);
+					sections.push(
+						`# ${getFileDisplayName(fileName)}\n`,
+						memory.content,
+						'\n',
 					);
-				} else {
-					const errorMessage =
-						error instanceof Error
-							? error.message
-							: 'Unknown error';
+					filesLoaded++;
 					console.error(
-						`[DevFlow:WARN] Failed to load activeContext: ${errorMessage}`,
+						`[DevFlow:INFO] Resource operation: context (${fileName} loaded)`,
 					);
+				} catch (error) {
+					if (error instanceof FileNotFoundError) {
+						console.error(
+							`[DevFlow:WARN] Resource operation partial: ${fileName}.md missing`,
+						);
+					} else {
+						const errorMessage =
+							error instanceof Error
+								? error.message
+								: 'Unknown error';
+						console.error(
+							`[DevFlow:WARN] Failed to load ${fileName}: ${errorMessage}`,
+						);
+					}
 				}
 			}
 
+			// Check for deprecated decisionLog.md
 			try {
-				const progress = await repository.getMemory('progress');
-				sections.push('# Progress\n', progress.content);
-				console.error(
-					'[DevFlow:INFO] Resource operation succeeded: context (progress loaded)',
-				);
-			} catch (error) {
-				if (error instanceof FileNotFoundError) {
+				const decisionLog = await repository.getMemory('decisionLog');
+				if (decisionLog) {
 					console.error(
-						'[DevFlow:WARN] Resource operation partial: progress.md missing, skipping',
+						`[DevFlow:WARN] Resource operation: decisionLog.md is deprecated`,
 					);
-				} else {
-					const errorMessage =
-						error instanceof Error
-							? error.message
-							: 'Unknown error';
-					console.error(
-						`[DevFlow:WARN] Failed to load progress: ${errorMessage}`,
+					sections.push(
+						'\n⚠️  DEPRECATION: decisionLog.md detected. Migrate content to systemPatterns.md "Key Technical Decisions" section.\n',
 					);
 				}
+			} catch {
+				// Ignore - decisionLog doesn't exist (which is correct)
 			}
 
 			const combinedText =
 				sections.length > 0
 					? sections.join('\n')
-					: '# Memory Bank Context\n\nNo memory files found.';
+					: '# Memory Bank Context\n\nNo memory files found. Use memory-init to create them.';
+
+			console.error(
+				`[DevFlow:INFO] Resource operation succeeded: context (loaded ${filesLoaded}/6 files)`,
+			);
 
 			return {
 				text: combinedText,
@@ -113,6 +135,13 @@ export function createMemoryResourceTemplate(
 				`[DevFlow:INFO] Resource called: devflow://memory/{name} with args: { name: "${name}" }`,
 			);
 
+			// Add deprecation warning for decisionLog
+			if (name === 'decisionLog') {
+				console.error(
+					`[DevFlow:WARN] Resource access: decisionLog.md is deprecated`,
+				);
+			}
+
 			try {
 				const memory = await repository.getMemory(name);
 
@@ -132,10 +161,17 @@ export function createMemoryResourceTemplate(
 					frontmatterLines.push('---', '');
 				}
 
-				const text =
+				let text =
 					frontmatterLines.length > 0
 						? frontmatterLines.join('\n') + memory.content
 						: memory.content;
+
+				// Add deprecation notice for decisionLog
+				if (name === 'decisionLog') {
+					text =
+						'⚠️  DEPRECATED: decisionLog.md is deprecated. Migrate content to systemPatterns.md.\n\n' +
+						text;
+				}
 
 				console.error(
 					`[DevFlow:INFO] Resource operation succeeded: memory file "${name}"`,

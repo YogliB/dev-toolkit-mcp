@@ -1,6 +1,6 @@
 {
 	"name": "devflow-mcp",
-	"version": "1.0.0",
+	"version": "0.0.1",
 	"description": "Memory-only MCP server for maintaining context across sessions with any AI agent",
 	"type": "module",
 	"main": "dist/index.js",

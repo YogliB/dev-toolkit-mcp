@@ -4,10 +4,12 @@ import { FileNotFoundError, ValidationError } from '../../core/storage/errors';
 
 function getFileDisplayName(fileName: string): string {
 	const names = new Map<string, string>([
-		['projectContext', 'Project Context'],
+		['projectBrief', 'Project Brief'],
+		['productContext', 'Product Context'],
+		['systemPatterns', 'System Patterns'],
+		['techContext', 'Technical Context'],
 		['activeContext', 'Active Context'],
 		['progress', 'Progress'],
-		['decisionLog', 'Decision Log'],
 	]);
 
 	return names.get(fileName) ?? fileName;
@@ -157,22 +159,86 @@ const MemoryListInputSchema = z.object({}).optional();
 export function createMemoryListTool(repository: MemoryRepository) {
 	return {
 		name: 'memory-list',
-		description: 'List all memory files in the memory bank',
+		description: 'List all memory files in the memory bank with metadata',
 		parameters: MemoryListInputSchema,
 		execute: async () => {
 			console.error(`[DevFlow:INFO] Memory tool called: memory:list`);
 
 			try {
-				const memories = await repository.listMemories();
-				console.error(
-					`[DevFlow:INFO] Memory operation succeeded: list (found ${memories.length} memories)`,
+				const memoryNames = await repository.listMemories();
+
+				// Define core files for Cline 6-file structure
+				const coreFiles = [
+					'projectBrief',
+					'productContext',
+					'systemPatterns',
+					'techContext',
+					'activeContext',
+					'progress',
+				];
+
+				// Detect structure
+				const hasClineStructure = coreFiles.every((name) =>
+					memoryNames.includes(name),
 				);
+				const hasLegacyFiles =
+					memoryNames.includes('projectContext') ||
+					memoryNames.includes('decisionLog');
+
+				let structure = 'unknown';
+				if (hasClineStructure) {
+					structure = 'cline-6-file';
+				} else if (hasLegacyFiles) {
+					structure = 'legacy-4-file';
+				} else if (memoryNames.length > 0) {
+					structure = 'partial';
+				}
+
+				// Add metadata to each memory
+				const memories = memoryNames.map((name) => {
+					const isCoreFile = coreFiles.includes(name);
+					const isDeprecated =
+						name === 'decisionLog' || name === 'projectContext';
+
+					return {
+						name,
+						isCoreFile,
+						deprecated: isDeprecated ? true : undefined,
+						category: isCoreFile
+							? getCategoryForFile(name)
+							: 'custom',
+					};
+				});
+
+				console.error(
+					`[DevFlow:INFO] Memory operation succeeded: list (found ${memories.length} memories, structure: ${structure})`,
+				);
+
+				const result: {
+					memories: Array<{
+						name: string;
+						isCoreFile: boolean;
+						deprecated?: boolean;
+						category: string;
+					}>;
+					count: number;
+					structure: string;
+					warning?: string;
+				} = {
+					memories,
+					count: memories.length,
+					structure,
+				};
+
+				// Add deprecation warning if legacy files detected
+				if (hasLegacyFiles) {
+					result.warning =
+						'Legacy 4-file structure detected. Consider migrating to Cline 6-file structure. See MIGRATION.md.';
+				}
+
 				return {
 					type: 'text' as const,
-					text: JSON.stringify({
-						memories,
-						count: memories.length,
-					}),
+					text: JSON.stringify(result, undefined, 2),
 				};
 			} catch (error) {
 				const errorMessage =
@@ -190,6 +256,19 @@ export function createMemoryListTool(repository: MemoryRepository) {
 			}
 		},
 	};
+}
+
+function getCategoryForFile(fileName: string): string {
+	const categories = new Map<string, string>([
+		['projectBrief', 'foundation'],
+		['productContext', 'product'],
+		['systemPatterns', 'architecture'],
+		['techContext', 'technical-setup'],
+		['activeContext', 'active-work'],
+		['progress', 'tracking'],
+	]);
+
+	return categories.get(fileName) ?? 'general';
 }
 
 const MemoryDeleteInputSchema = z.object({
@@ -259,60 +338,65 @@ export function createMemoryContextTool(repository: MemoryRepository) {
 	return {
 		name: 'memory-context',
 		description:
-			'Get combined memory context (activeContext + progress) for current session',
+			'Get combined memory context from all 6 core memory files (Cline structure)',
 		parameters: MemoryContextInputSchema,
 		execute: async () => {
 			console.error(`[DevFlow:INFO] Memory tool called: memory-context`);
 
 			const sections: string[] = [];
+			const coreFiles = [
+				'projectBrief',
+				'productContext',
+				'systemPatterns',
+				'techContext',
+				'activeContext',
+				'progress',
+			];
+			let filesLoaded = 0;
 
-			try {
-				const activeContext =
-					await repository.getMemory('activeContext');
-				sections.push(
-					'# Active Context\n',
-					activeContext.content,
-					'\n',
-				);
-				console.error(
-					`[DevFlow:INFO] Memory operation: context (activeContext loaded)`,
-				);
-			} catch (error) {
-				if (error instanceof FileNotFoundError) {
-					console.error(
-						`[DevFlow:WARN] Memory operation partial: activeContext.md missing`,
+			// Load all 6 core files in hierarchical order
+			for (const fileName of coreFiles) {
+				try {
+					const memory = await repository.getMemory(fileName);
+					sections.push(
+						`# ${getFileDisplayName(fileName)}\n`,
+						memory.content,
+						'\n',
 					);
-				} else {
-					const errorMessage =
-						error instanceof Error
-							? error.message
-							: 'Unknown error';
+					filesLoaded++;
 					console.error(
-						`[DevFlow:WARN] Failed to load activeContext: ${errorMessage}`,
+						`[DevFlow:INFO] Memory operation: context (${fileName} loaded)`,
 					);
+				} catch (error) {
+					if (error instanceof FileNotFoundError) {
+						console.error(
+							`[DevFlow:WARN] Memory operation partial: ${fileName}.md missing`,
+						);
+					} else {
+						const errorMessage =
+							error instanceof Error
+								? error.message
+								: 'Unknown error';
+						console.error(
+							`[DevFlow:WARN] Failed to load ${fileName}: ${errorMessage}`,
+						);
+					}
 				}
 			}
 
+			// Check for deprecated decisionLog.md
 			try {
-				const progress = await repository.getMemory('progress');
-				sections.push('# Progress\n', progress.content);
-				console.error(
-					`[DevFlow:INFO] Memory operation: context (progress loaded)`,
-				);
-			} catch (error) {
-				if (error instanceof FileNotFoundError) {
+				const decisionLog = await repository.getMemory('decisionLog');
+				if (decisionLog) {
 					console.error(
-						`[DevFlow:WARN] Memory operation partial: progress.md missing`,
+						`[DevFlow:WARN] Memory operation: decisionLog.md is deprecated - migrate to systemPatterns.md`,
 					);
-				} else {
-					const errorMessage =
-						error instanceof Error
-							? error.message
-							: 'Unknown error';
-					console.error(
-						`[DevFlow:WARN] Failed to load progress: ${errorMessage}`,
+					sections.push(
+						'\n⚠️  DEPRECATION: decisionLog.md detected. Migrate content to systemPatterns.md "Key Technical Decisions" section.\n',
 					);
 				}
+			} catch {
+				// Ignore - decisionLog doesn't exist (which is correct)
 			}
 
 			const combinedText =
@@ -320,7 +404,9 @@ export function createMemoryContextTool(repository: MemoryRepository) {
 					? sections.join('\n')
 					: '# Memory Bank Context\n\nNo memory files found. Use memory-init to create them.';
 
-			console.error(`[DevFlow:INFO] Memory operation succeeded: context`);
+			console.error(
+				`[DevFlow:INFO] Memory operation succeeded: context (loaded ${filesLoaded}/6 files)`,
+			);
 
 			return {
 				type: 'text' as const,
@@ -335,7 +421,8 @@ const MemoryUpdateInputSchema = z.object({}).optional();
 export function createMemoryUpdateTool(repository: MemoryRepository) {
 	return {
 		name: 'memory-update',
-		description: 'Review all memory bank files with guided update workflow',
+		description:
+			'Review all 6 core memory files with guided update workflow (Cline structure)',
 		parameters: MemoryUpdateInputSchema,
 		execute: async () => {
 			console.error(`[DevFlow:INFO] Memory tool called: memory-update`);
@@ -345,9 +432,19 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 				'',
 				'Your task: Review all memory files and update them to reflect current project state.',
 				'',
+				'## File Hierarchy',
+				'',
+				'Files are structured hierarchically:',
+				'- **projectBrief.md** (foundation) → defines scope',
+				'- **productContext.md** (why/how) → built on projectBrief',
+				'- **systemPatterns.md** (architecture + decisions) → built on projectBrief + productContext',
+				'- **techContext.md** (tech stack) → built on projectBrief',
+				'- **activeContext.md** (current work) → references all above',
+				'- **progress.md** (tracking) → archives from activeContext',
+				'',
 				'## Update Process',
 				'',
-				"1. **Review ALL files** - Read each memory file below, even if some don't need updates",
+				"1. **Review ALL 6 files** - Read each memory file below, even if some don't need updates",
 				"2. **Document Current State** - Capture what's happening right now",
 				'3. **Clarify Next Steps** - Identify immediate priorities and blockers',
 				'4. **Document Insights** - Record patterns, lessons learned, and decisions',
@@ -355,20 +452,24 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 				'## Focus Areas',
 				'',
 				'Pay particular attention to:',
+				'- **projectBrief.md**: Have core requirements or scope changed?',
+				'- **productContext.md**: Has user experience or product direction shifted?',
+				'- **systemPatterns.md**: Any new architectural decisions or patterns?',
+				'- **techContext.md**: Have technologies or setup changed?',
 				'- **activeContext.md**: Is current work accurately captured?',
 				'- **progress.md**: Are milestones and metrics up to date?',
-				'- **projectContext.md**: Have scope or constraints changed?',
-				'- **decisionLog.md**: Any new architectural decisions?',
 				'',
 				'---',
 				'',
 			];
 
 			const filesToLoad = [
-				'projectContext',
+				'projectBrief',
+				'productContext',
+				'systemPatterns',
+				'techContext',
 				'activeContext',
 				'progress',
-				'decisionLog',
 			];
 
 			let filesLoaded = 0;
@@ -420,6 +521,28 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 				}
 			}
 
+			// Check for deprecated decisionLog.md
+			try {
+				const decisionLog = await repository.getMemory('decisionLog');
+				if (decisionLog) {
+					console.error(
+						`[DevFlow:WARN] Memory operation: decisionLog.md is deprecated`,
+					);
+					sections.push(
+						'## ⚠️  decisionLog.md (DEPRECATED)',
+						'',
+						'```markdown',
+						decisionLog.content,
+						'```',
+						'',
+						'**ACTION REQUIRED:** Migrate this content to systemPatterns.md under "Key Technical Decisions" section.',
+						'',
+					);
+				}
+			} catch {
+				// Ignore - file doesn't exist
+			}
+
 			sections.push(
 				'---',
 				'',
@@ -427,12 +550,33 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 				'',
 				'### For Each File:',
 				'',
-				'**projectContext.md:**',
-				'- [ ] Project description is accurate',
-				'- [ ] Scope reflects reality (what changed?)',
-				'- [ ] Constraints are current',
-				'- [ ] Technology stack is correct',
-				'- [ ] Status and health are up-to-date',
+				'**projectBrief.md:**',
+				'- [ ] Core requirements are still accurate',
+				'- [ ] Goals reflect current direction',
+				'- [ ] Scope boundaries are correct (what changed?)',
+				'- [ ] Success criteria are still valid',
+				'- [ ] Timeline/milestones are current',
+				'',
+				'**productContext.md:**',
+				'- [ ] Problems being solved are still relevant',
+				'- [ ] User experience goals match reality',
+				'- [ ] Core workflows are documented',
+				'- [ ] Product principles guide decisions',
+				'- [ ] Success metrics are measurable',
+				'',
+				'**systemPatterns.md:**',
+				'- [ ] Architecture diagram is current',
+				'- [ ] Component relationships are accurate',
+				'- [ ] Design patterns reflect actual implementation',
+				'- [ ] Architectural decisions are documented with full context',
+				'- [ ] Technical debt is tracked',
+				'',
+				'**techContext.md:**',
+				'- [ ] Technology stack versions are current',
+				'- [ ] Development setup instructions work',
+				'- [ ] Dependencies are up to date',
+				'- [ ] Technical constraints are documented',
+				'- [ ] Build and release process is accurate',
 				'',
 				'**activeContext.md:**',
 				"- [ ] Current focus accurately describes what's being worked on NOW",
@@ -440,20 +584,16 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 				'- [ ] Recent changes (last 7 days) are documented',
 				'- [ ] Context notes reflect important patterns or considerations',
 				'- [ ] Next steps are clear priorities',
+				'- [ ] Archive entries older than 7 days to progress.md',
 				'',
 				'**progress.md:**',
-				'- [ ] Current milestone status is accurate',
+				'- [ ] Current milestone status and percentage are accurate',
 				'- [ ] Task completion status is up-to-date',
-				'- [ ] Metrics (velocity, resolution time) are current',
-				'- [ ] Known issues reflect real problems',
+				'- [ ] Metrics (velocity, resolution time, trends) are current',
+				'- [ ] Known issues reflect real problems with severity',
 				'- [ ] Lessons learned are documented',
-				'- [ ] Archive old entries (>30 days)',
-				'',
-				'**decisionLog.md:**',
-				'- [ ] Recent decisions are documented',
-				'- [ ] Each decision has context, rationale, and alternatives',
-				'- [ ] Status of decisions (Accepted/Pending/Superseded) is correct',
-				'- [ ] Any decisions that need revisiting are noted',
+				'- [ ] Risk tracking is current',
+				'- [ ] Archive old entries (>90 days)',
 				'',
 				'## Next Steps After Review',
 				'',
@@ -487,7 +627,7 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 				failedFiles.length > 0
 					? ` (missing: ${failedFiles.join(', ')})`
 					: '';
-			const successMessage = `Successfully loaded ${filesLoaded}/${filesToLoad.length} memory files${missingFilesSuffix}`;
+			const successMessage = `Successfully loaded ${filesLoaded}/6 memory files${missingFilesSuffix}`;
 			const summary =
 				filesLoaded > 0
 					? successMessage
@@ -501,6 +641,8 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 				'---',
 				'',
 				`**Status:** ${summary}`,
+				'',
+				'**Structure:** Cline 6-file hierarchy (projectBrief → productContext → systemPatterns → techContext → activeContext → progress)',
 				'',
 				'Begin by reviewing the memory files above, then use the memory-save tool to update them.',
 			);
