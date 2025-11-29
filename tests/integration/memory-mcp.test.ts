@@ -5,17 +5,19 @@ import os from 'node:os';
 import { StorageEngine } from '../../src/core/storage/engine';
 import { MemoryRepository } from '../../src/layers/memory/repository';
 import {
-	createMemoryGetTool,
-	createMemorySaveTool,
+	createMemoryFileTool,
 	createMemoryListTool,
-	createMemoryDeleteTool,
+	createMemoryInitTool,
+	createMemoryContextTool,
+	createMemoryUpdateTool,
 } from '../../src/mcp/tools/memory';
+import type { CoreMemoryFileName } from '../../src/core/schemas/memory';
 import {
 	createContextResource,
 	createMemoryResourceTemplate,
 } from '../../src/mcp/resources/memory';
 
-describe('[Integration:Memory] Memory MCP End-to-End', () => {
+describe('[Integration:Memory] Memory MCP End-to-End with File-Specific Tools', () => {
 	let temporaryDirectory: string;
 	let storageEngine: StorageEngine;
 	let repository: MemoryRepository;
@@ -43,482 +45,461 @@ describe('[Integration:Memory] Memory MCP End-to-End', () => {
 		}
 	});
 
-	// ============ HELPERS ============
+	// ============ FILE-SPECIFIC TOOL TESTS ============
 
-	async function createTestMemoryFile(
-		name: string,
-		content: string,
-		frontmatter: Record<string, unknown> = {},
-	): Promise<void> {
-		return repository.saveMemory(name, { frontmatter, content });
-	}
+	describe('File-specific composite tools', () => {
+		const coreFiles: CoreMemoryFileName[] = [
+			'projectBrief',
+			'productContext',
+			'systemPatterns',
+			'techContext',
+			'activeContext',
+			'progress',
+		];
 
-	async function getTestMemoryFile(name: string) {
-		return repository.getMemory(name);
-	}
+		describe('action: get', () => {
+			it('retrieves content for each core file', async () => {
+				// Create all 6 core files
+				for (const fileName of coreFiles) {
+					await repository.saveMemory(fileName, {
+						frontmatter: {},
+						content: `Test content for ${fileName}`,
+					});
+				}
 
-	async function listTestMemories(): Promise<string[]> {
-		return repository.listMemories();
-	}
+				// Test get action for each file
+				for (const fileName of coreFiles) {
+					const tool = createMemoryFileTool(fileName, repository);
+					const result = await tool.execute({ action: 'get' });
 
-	// ============ STEP 2: TOOL INTEGRATION TESTS ============
+					expect(result.type).toBe('text');
+					const parsed = JSON.parse(result.text);
+					expect(parsed.content).toBe(`Test content for ${fileName}`);
+					expect(parsed.frontmatter).toBeDefined();
+				}
+			});
 
-	describe('memory:list tool', () => {
-		it('returns empty array on fresh init', async () => {
-			const tool = createMemoryListTool(repository);
-			const result = await tool.execute();
+			it('returns error when file does not exist', async () => {
+				const tool = createMemoryFileTool('projectBrief', repository);
+				const result = await tool.execute({ action: 'get' });
 
-			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.memories).toEqual([]);
-			expect(parsed.count).toBe(0);
+				expect(result.type).toBe('text');
+				const parsed = JSON.parse(result.text);
+				expect(parsed.error).toBe('Memory file not found');
+				expect(parsed.name).toBe('projectBrief');
+				expect(parsed.action).toBe('get');
+			});
 		});
 
-		it('returns saved files after creation', async () => {
-			await createTestMemoryFile('test1', 'Content 1');
-			await createTestMemoryFile('test2', 'Content 2');
+		describe('action: update', () => {
+			it('creates new file with content', async () => {
+				const tool = createMemoryFileTool('activeContext', repository);
+				const result = await tool.execute({
+					action: 'update',
+					content: '# Active Context\n\nCurrent work goes here.',
+				});
 
-			const tool = createMemoryListTool(repository);
+				expect(result.type).toBe('text');
+				const parsed = JSON.parse(result.text);
+				expect(parsed.success).toBe(true);
+				expect(parsed.action).toBe('update');
+				expect(parsed.name).toBe('activeContext');
+				expect(parsed.message).toContain('Active Context updated');
+
+				// Verify file was created
+				const memory = await repository.getMemory('activeContext');
+				expect(memory.content).toBe(
+					'# Active Context\n\nCurrent work goes here.',
+				);
+			});
+
+			it('updates existing file with new content', async () => {
+				// Create initial file
+				await repository.saveMemory('progress', {
+					frontmatter: {},
+					content: 'Old progress',
+				});
+
+				// Update it
+				const tool = createMemoryFileTool('progress', repository);
+				const result = await tool.execute({
+					action: 'update',
+					content: 'New progress log',
+				});
+
+				expect(result.type).toBe('text');
+				const parsed = JSON.parse(result.text);
+				expect(parsed.success).toBe(true);
+
+				// Verify update
+				const memory = await repository.getMemory('progress');
+				expect(memory.content).toBe('New progress log');
+			});
+
+			it('returns error when content is missing', async () => {
+				const tool = createMemoryFileTool('projectBrief', repository);
+				const result = await tool.execute({
+					action: 'update',
+				} as MemoryFileActionInput);
+
+				expect(result.type).toBe('text');
+				const parsed = JSON.parse(result.text);
+				expect(parsed.error).toBe('Content required for update action');
+				expect(parsed.action).toBe('update');
+			});
+		});
+
+		describe('action: delete', () => {
+			it('deletes existing file', async () => {
+				// Create file
+				await repository.saveMemory('techContext', {
+					frontmatter: {},
+					content: 'Tech stack info',
+				});
+
+				// Delete it
+				const tool = createMemoryFileTool('techContext', repository);
+				const result = await tool.execute({ action: 'delete' });
+
+				expect(result.type).toBe('text');
+				const parsed = JSON.parse(result.text);
+				expect(parsed.success).toBe(true);
+				expect(parsed.action).toBe('delete');
+				expect(parsed.name).toBe('techContext');
+
+				// Verify deletion
+				const getTool = createMemoryFileTool('techContext', repository);
+				const getResult = await getTool.execute({ action: 'get' });
+				const getParsed = JSON.parse(getResult.text);
+				expect(getParsed.error).toBe('Memory file not found');
+			});
+
+			it('handles deletion of non-existent file gracefully', async () => {
+				const tool = createMemoryFileTool('systemPatterns', repository);
+				const result = await tool.execute({ action: 'delete' });
+
+				expect(result.type).toBe('text');
+				const parsed = JSON.parse(result.text);
+				expect(parsed.error).toBe('Memory file not found');
+				expect(parsed.action).toBe('delete');
+			});
+		});
+
+		describe('tool metadata', () => {
+			it('has correct name for each file', () => {
+				for (const fileName of coreFiles) {
+					const tool = createMemoryFileTool(fileName, repository);
+					expect(tool.name).toBe(`memory-${fileName}`);
+				}
+			});
+
+			it('includes behavioral description', () => {
+				const tool = createMemoryFileTool('activeContext', repository);
+				expect(tool.description).toContain('ACTIVE CONTEXT');
+				expect(tool.description).toContain('WHEN TO USE:');
+				expect(tool.description).toContain('CONTAINS:');
+				expect(tool.description).toContain('ACTIONS:');
+				expect(tool.description).toContain('💡 TIP:');
+				expect(tool.description).toContain('❌ NOT FOR:');
+			});
+
+			it('description includes trigger phrases', () => {
+				const tool = createMemoryFileTool('projectBrief', repository);
+				expect(tool.description).toContain('what are we building?');
+			});
+
+			it('description includes anti-patterns', () => {
+				const tool = createMemoryFileTool('systemPatterns', repository);
+				expect(tool.description).toContain('NOT FOR:');
+				expect(tool.description).toContain('techContext');
+			});
+		});
+	});
+
+	// ============ GLOBAL TOOLS TESTS ============
+
+	describe('memory-list tool', () => {
+		it('always returns 6 core files', async () => {
+			const tool = createMemoryListTool();
 			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
 			const parsed = JSON.parse(result.text);
-			expect(parsed.memories).toBeArrayOfSize(2);
+			expect(parsed.memories).toBeArrayOfSize(6);
+			expect(parsed.count).toBe(6);
+			expect(parsed.structure).toBe('cline-6-file');
+
+			// Verify all core files are present
 			const memoryNames = parsed.memories.map(
 				(m: { name: string }) => m.name,
 			);
-			expect(memoryNames).toContain('test1');
-			expect(memoryNames).toContain('test2');
-			expect(parsed.count).toBe(2);
-			expect(parsed.structure).toBe('partial');
-			// Custom files should not be marked as core files
-			for (const m of parsed.memories as Array<{
-				isCoreFile: boolean;
-				category: string;
+			expect(memoryNames).toContain('projectBrief');
+			expect(memoryNames).toContain('productContext');
+			expect(memoryNames).toContain('systemPatterns');
+			expect(memoryNames).toContain('techContext');
+			expect(memoryNames).toContain('activeContext');
+			expect(memoryNames).toContain('progress');
+		});
+
+		it('marks all files as core files', async () => {
+			const tool = createMemoryListTool();
+			const result = await tool.execute();
+
+			expect(result.type).toBe('text');
+			const parsed = JSON.parse(result.text);
+
+			for (const m of parsed.memories as Array<{ isCoreFile: boolean }>) {
+				expect(m.isCoreFile).toBe(true);
+			}
+		});
+
+		it('includes display names and categories', async () => {
+			const tool = createMemoryListTool();
+			const result = await tool.execute();
+
+			expect(result.type).toBe('text');
+			const parsed = JSON.parse(result.text);
+
+			const projectBrief = parsed.memories.find(
+				(m: { name: string }) => m.name === 'projectBrief',
+			);
+			expect(projectBrief.displayName).toBe('Project Brief');
+			expect(projectBrief.category).toBe('foundation');
+
+			const activeContext = parsed.memories.find(
+				(m: { name: string }) => m.name === 'activeContext',
+			);
+			expect(activeContext.displayName).toBe('Active Context');
+			expect(activeContext.category).toBe('working-memory');
+		});
+	});
+
+	describe('memory-init tool', () => {
+		it('creates all 6 core template files', async () => {
+			const tool = createMemoryInitTool(repository);
+			const result = await tool.execute();
+
+			expect(result.type).toBe('text');
+			const parsed = JSON.parse(result.text);
+			expect(parsed.success).toBe(true);
+			expect(parsed.message).toContain('6 of 6 core files');
+			expect(parsed.files).toBeArrayOfSize(6);
+
+			// Verify all files were created
+			for (const fileResult of parsed.files as Array<{
+				name: string;
+				success: boolean;
 			}>) {
-				expect(m.isCoreFile).toBe(false);
-				expect(m.category).toBe('custom');
+				expect(fileResult.success).toBe(true);
+
+				// Verify file exists and has template content
+				const memory = await repository.getMemory(
+					fileResult.name as CoreMemoryFileName,
+				);
+				expect(memory.content).toBeTruthy();
+				expect(memory.content.length).toBeGreaterThan(0);
 			}
 		});
-	});
 
-	describe('memory:save tool', () => {
-		it('creates new memory file successfully', async () => {
-			const tool = createMemorySaveTool(repository);
-			const result = await tool.execute({
-				name: 'new-memory',
-				content: 'This is new content',
-			});
+		it('template content includes expected sections', async () => {
+			const tool = createMemoryInitTool(repository);
+			await tool.execute();
 
-			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.success).toBe(true);
-			expect(parsed.name).toBe('new-memory');
+			// Check projectBrief template
+			const projectBrief = await repository.getMemory('projectBrief');
+			expect(projectBrief.content).toContain('# Project Brief');
+			expect(projectBrief.content).toContain('## Core Requirements');
+			expect(projectBrief.content).toContain('## Success Criteria');
 
-			const saved = await getTestMemoryFile('new-memory');
-			expect(saved.content).toBe('This is new content');
-		});
-
-		it('updates existing file (idempotency)', async () => {
-			await createTestMemoryFile('idempotent', 'Original content');
-
-			const tool = createMemorySaveTool(repository);
-			const result = await tool.execute({
-				name: 'idempotent',
-				content: 'Updated content',
-			});
-
-			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.success).toBe(true);
-
-			const updated = await getTestMemoryFile('idempotent');
-			expect(updated.content).toBe('Updated content');
-		});
-
-		it('handles frontmatter correctly (schema-valid fields)', async () => {
-			const tool = createMemorySaveTool(repository);
-			const frontmatter = {
-				tags: ['test', 'integration'],
-				category: 'memory',
-			};
-			const result = await tool.execute({
-				name: 'with-frontmatter',
-				frontmatter,
-				content: 'Content with metadata',
-			});
-
-			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.success).toBe(true);
-
-			const saved = await getTestMemoryFile('with-frontmatter');
-			expect(saved.frontmatter.tags).toEqual(['test', 'integration']);
-			expect(saved.frontmatter.category).toBe('memory');
-			expect(saved.content).toBe('Content with metadata');
-		});
-
-		it('skips invalid frontmatter fields (Zod schema filters)', async () => {
-			const tool = createMemorySaveTool(repository);
-			const invalidFrontmatter = {
-				invalidField: 'value',
-				category: 'valid',
-			};
-			const result = await tool.execute({
-				name: 'partial-fm',
-				frontmatter: invalidFrontmatter,
-				content: 'Content',
-			});
-
-			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.success).toBe(true);
-
-			const saved = await getTestMemoryFile('partial-fm');
-			expect(saved.frontmatter.category).toBe('valid');
+			// Check activeContext template
+			const activeContext = await repository.getMemory('activeContext');
+			expect(activeContext.content).toContain('# Active Context');
+			expect(activeContext.content).toContain('## Current Focus');
+			expect(activeContext.content).toContain('## Active Blockers');
 		});
 	});
 
-	describe('memory:get tool', () => {
-		it('retrieves saved file with correct content', async () => {
-			await createTestMemoryFile('retrieve-test', 'Test content here');
+	describe('memory-context tool', () => {
+		it('combines all 6 core files with separators', async () => {
+			// Create all core files
+			await repository.saveMemory('projectBrief', {
+				frontmatter: {},
+				content: 'Brief content',
+			});
+			await repository.saveMemory('productContext', {
+				frontmatter: {},
+				content: 'Product content',
+			});
+			await repository.saveMemory('systemPatterns', {
+				frontmatter: {},
+				content: 'Patterns content',
+			});
+			await repository.saveMemory('techContext', {
+				frontmatter: {},
+				content: 'Tech content',
+			});
+			await repository.saveMemory('activeContext', {
+				frontmatter: {},
+				content: 'Active content',
+			});
+			await repository.saveMemory('progress', {
+				frontmatter: {},
+				content: 'Progress content',
+			});
 
-			const tool = createMemoryGetTool(repository);
-			const result = await tool.execute({ name: 'retrieve-test' });
+			const tool = createMemoryContextTool(repository);
+			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.content).toBe('Test content here');
+			expect(result.text).toContain('# Project Brief');
+			expect(result.text).toContain('Brief content');
+			expect(result.text).toContain('# Product Context');
+			expect(result.text).toContain('Product content');
+			expect(result.text).toContain('# System Patterns');
+			expect(result.text).toContain('Patterns content');
+			expect(result.text).toContain('# Technical Context');
+			expect(result.text).toContain('Tech content');
+			expect(result.text).toContain('# Active Context');
+			expect(result.text).toContain('Active content');
+			expect(result.text).toContain('# Progress');
+			expect(result.text).toContain('Progress content');
+
+			// Verify separators
+			expect(result.text).toContain('---');
 		});
 
-		it('returns error for non-existent file', async () => {
-			const tool = createMemoryGetTool(repository);
-			const result = await tool.execute({ name: 'does-not-exist' });
+		it('handles missing files gracefully', async () => {
+			// Only create some files
+			await repository.saveMemory('projectBrief', {
+				frontmatter: {},
+				content: 'Brief only',
+			});
+
+			const tool = createMemoryContextTool(repository);
+			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.error).toBe('Memory not found');
-		});
-
-		it('includes valid frontmatter in response', async () => {
-			const frontmatter = { title: 'Test Memory', category: 'notes' };
-			await createTestMemoryFile('with-meta', 'Content', frontmatter);
-
-			const tool = createMemoryGetTool(repository);
-			const result = await tool.execute({ name: 'with-meta' });
-
-			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.frontmatter.title).toBe('Test Memory');
-			expect(parsed.frontmatter.category).toBe('notes');
-			expect(parsed.content).toBe('Content');
+			expect(result.text).toContain('# Project Brief');
+			expect(result.text).toContain('Brief only');
+			// Should not crash or fail
 		});
 	});
 
-	describe('memory:delete tool', () => {
-		it('removes file successfully', async () => {
-			await createTestMemoryFile('to-delete', 'Content');
+	describe('memory-update tool', () => {
+		it('returns workflow guide with all 6 files', async () => {
+			// Create all files
+			await repository.saveMemory('projectBrief', {
+				frontmatter: {},
+				content: 'Brief',
+			});
+			await repository.saveMemory('productContext', {
+				frontmatter: {},
+				content: 'Product',
+			});
+			await repository.saveMemory('systemPatterns', {
+				frontmatter: {},
+				content: 'Patterns',
+			});
+			await repository.saveMemory('techContext', {
+				frontmatter: {},
+				content: 'Tech',
+			});
+			await repository.saveMemory('activeContext', {
+				frontmatter: {},
+				content: 'Active',
+			});
+			await repository.saveMemory('progress', {
+				frontmatter: {},
+				content: 'Progress',
+			});
 
-			const tool = createMemoryDeleteTool(repository);
-			const result = await tool.execute({ name: 'to-delete' });
+			const tool = createMemoryUpdateTool(repository);
+			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.success).toBe(true);
-
-			const memories = await listTestMemories();
-			expect(memories).not.toContain('to-delete');
+			expect(result.text).toContain('# Memory Bank Update Workflow');
+			expect(result.text).toContain('## Project Brief');
+			expect(result.text).toContain('## Product Context');
+			expect(result.text).toContain('## System Patterns');
+			expect(result.text).toContain('## Technical Context');
+			expect(result.text).toContain('## Active Context');
+			expect(result.text).toContain('## Progress');
+			expect(result.text).toContain('memory-projectBrief');
+			expect(result.text).toContain('memory-productContext');
+			expect(result.text).toContain('## Summary');
 		});
 
-		it('returns error for non-existent file', async () => {
-			const tool = createMemoryDeleteTool(repository);
-			const result = await tool.execute({ name: 'not-there' });
+		it('indicates which files are missing', async () => {
+			// Only create one file
+			await repository.saveMemory('activeContext', {
+				frontmatter: {},
+				content: 'Active work',
+			});
+
+			const tool = createMemoryUpdateTool(repository);
+			const result = await tool.execute();
 
 			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.error).toBe('Memory not found');
+			expect(result.text).toContain('## Active Context');
+			expect(result.text).toContain('Active work');
+			expect(result.text).toContain('## Summary');
+			expect(result.text).toContain('1 of 6 files loaded');
 		});
-	});
 
-	// ============ STEP 3: RESOURCE INTEGRATION TESTS ============
+		it('includes update instructions for each file', async () => {
+			const tool = createMemoryUpdateTool(repository);
+			const result = await tool.execute();
 
-	describe('devflow://context/memory resource (Cursor only)', () => {
-		it('loads and returns combined context', async () => {
-			await createTestMemoryFile(
-				'activeContext',
-				'# Active\n\nContext here',
+			expect(result.type).toBe('text');
+			expect(result.text).toContain(
+				'memory-projectBrief { action: "update"',
 			);
-			await createTestMemoryFile('progress', '# Progress\n\nWork done');
+			expect(result.text).toContain(
+				'memory-activeContext { action: "update"',
+			);
+		});
+	});
+
+	// ============ RESOURCES TESTS ============
+
+	describe('devflow://context/memory resource', () => {
+		it('provides combined context from all files', async () => {
+			await repository.saveMemory('projectBrief', {
+				frontmatter: {},
+				content: 'Brief',
+			});
+			await repository.saveMemory('activeContext', {
+				frontmatter: {},
+				content: 'Active',
+			});
 
 			const resource = createContextResource(repository);
 			const result = await resource.load?.();
 
-			expect(result).toBeDefined();
+			expect(result).toBeTruthy();
 			if (result && !Array.isArray(result)) {
-				expect(result.mimeType).toBe('text/markdown');
-				expect(result.text).toContain('# Active Context');
-				expect(result.text).toContain('Context here');
-				expect(result.text).toContain('# Progress');
-				expect(result.text).toContain('Work done');
-			}
-		});
-
-		it('handles missing activeContext.md gracefully', async () => {
-			await createTestMemoryFile(
-				'progress',
-				'# Progress\n\nJust progress',
-			);
-
-			const resource = createContextResource(repository);
-			const result = await resource.load?.();
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('# Progress');
-				expect(result.text).toContain('Just progress');
-			}
-		});
-
-		it('handles missing progress.md gracefully', async () => {
-			await createTestMemoryFile(
-				'activeContext',
-				'# Active\n\nJust context',
-			);
-
-			const resource = createContextResource(repository);
-			const result = await resource.load?.();
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('# Active Context');
-				expect(result.text).toContain('Just context');
-			}
-		});
-
-		it('handles both files missing gracefully', async () => {
-			const resource = createContextResource(repository);
-			const result = await resource.load?.();
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('No memory files found');
-				expect(result.mimeType).toBe('text/markdown');
+				expect(result.text).toContain('Brief');
+				expect(result.text).toContain('Active');
 			}
 		});
 	});
 
-	describe('devflow://memory/{name} resource', () => {
-		it('returns individual file content', async () => {
-			await createTestMemoryFile('individual', 'Individual content');
-
-			const template = createMemoryResourceTemplate(repository);
-			const result = await template.load?.({ name: 'individual' });
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('Individual content');
-				expect(result.mimeType).toBe('text/markdown');
-				expect(result.uri).toBe('devflow://memory/individual');
-			}
-		});
-
-		it('includes frontmatter in output', async () => {
-			const frontmatter = { category: 'test', title: 'Test' };
-			await createTestMemoryFile('with-fm', 'Body content', frontmatter);
-
-			const template = createMemoryResourceTemplate(repository);
-			const result = await template.load?.({ name: 'with-fm' });
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('---');
-				expect(result.text).toContain('category: "test"');
-				expect(result.text).toContain('title: "Test"');
-				expect(result.text).toContain('Body content');
-			}
-		});
-
-		it('returns error text for non-existent file', async () => {
-			const template = createMemoryResourceTemplate(repository);
-			const result = await template.load?.({ name: 'missing' });
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('Error');
-				expect(result.uri).toBe('devflow://memory/missing');
-			}
-		});
-
-		it('returns correct mimeType', async () => {
-			await createTestMemoryFile('mime-test', 'Content');
-
-			const template = createMemoryResourceTemplate(repository);
-			const result = await template.load?.({ name: 'mime-test' });
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.mimeType).toBe('text/markdown');
-			}
-		});
-	});
-
-	// ============ STEP 3b: PROMPTS FOR ZED (RESOURCE WORKAROUND) ============
-
-	describe('memory:context prompt (Zed workaround)', () => {
-		it('returns same data as context resource', async () => {
-			await createTestMemoryFile(
-				'activeContext',
-				'# Active\n\nContext data',
-			);
-			await createTestMemoryFile(
-				'progress',
-				'# Progress\n\nProgress data',
-			);
-
-			const resource = createContextResource(repository);
-			const resourceResult = await resource.load?.();
-
-			expect(resourceResult).toBeDefined();
-			if (resourceResult && !Array.isArray(resourceResult)) {
-				const resourceText = resourceResult.text;
-				expect(resourceText).toContain('Context data');
-				expect(resourceText).toContain('Progress data');
-			}
-		});
-
-		it('handles missing files gracefully (same as resource)', async () => {
-			const resource = createContextResource(repository);
-			const result = await resource.load?.();
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('No memory files found');
-			}
-		});
-	});
-
-	describe('memory:load prompt (Zed workaround)', () => {
-		it('returns same data as dynamic resource', async () => {
-			await createTestMemoryFile('test-load', 'Load test content');
-
-			const template = createMemoryResourceTemplate(repository);
-			const result = await template.load?.({ name: 'test-load' });
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('Load test content');
-			}
-		});
-
-		it('validates file names (missing files)', async () => {
-			const template = createMemoryResourceTemplate(repository);
-			const result = await template.load?.({ name: 'invalid-name' });
-
-			expect(result).toBeDefined();
-			if (result && !Array.isArray(result)) {
-				expect(result.text).toContain('Error');
-			}
-		});
-	});
-
-	// ============ STEP 4: ERROR HANDLING TESTS ============
-
-	describe('Error handling', () => {
-		it('handles concurrent saves to same file', async () => {
-			const tool = createMemorySaveTool(repository);
-
-			const promises = [
-				tool.execute({
-					name: 'concurrent',
-					content: 'Version 1',
-				}),
-				tool.execute({
-					name: 'concurrent',
-					content: 'Version 2',
-				}),
-				tool.execute({
-					name: 'concurrent',
-					content: 'Version 3',
-				}),
-			];
-
-			const results = await Promise.all(promises);
-			for (const result of results) {
-				const parsed = JSON.parse(result.text);
-				expect(parsed.success).toBe(true);
-			}
-
-			const getTool = createMemoryGetTool(repository);
-			const finalResult = await getTool.execute({
-				name: 'concurrent',
-			});
-			const parsed = JSON.parse(finalResult.text);
-			expect(parsed.content).toBeDefined();
-		});
-
-		it('handles large files (>1MB)', async () => {
-			const largeContent = 'x'.repeat(2 * 1024 * 1024); // 2MB
-			const tool = createMemorySaveTool(repository);
-
-			const result = await tool.execute({
-				name: 'large-file',
-				content: largeContent,
+	describe('devflow://memory/{name} resource template', () => {
+		it('retrieves individual memory files', async () => {
+			await repository.saveMemory('systemPatterns', {
+				frontmatter: { title: 'Patterns' },
+				content: 'Architecture patterns',
 			});
 
-			expect(result.type).toBe('text');
-			const parsed = JSON.parse(result.text);
-			expect(parsed.success).toBe(true);
-
-			const getTool = createMemoryGetTool(repository);
-			const getResult = await getTool.execute({
-				name: 'large-file',
+			const resourceTemplate = createMemoryResourceTemplate(repository);
+			const result = await resourceTemplate.load?.({
+				name: 'systemPatterns',
 			});
-			const getParsed = JSON.parse(getResult.text);
-			expect(getParsed.content.length).toBe(largeContent.length);
-		});
-	});
 
-	// ============ USER JOURNEY TESTS ============
-
-	describe('User journey: create → list → get → delete', () => {
-		it('completes full workflow', async () => {
-			// Step 1: Create
-			const saveTool = createMemorySaveTool(repository);
-			let result = await saveTool.execute({
-				name: 'journey-test',
-				content: 'Journey content',
-				frontmatter: { title: 'Journey' },
-			});
-			expect(JSON.parse(result.text).success).toBe(true);
-
-			// Step 2: List
-			const listTool = createMemoryListTool(repository);
-			result = await listTool.execute();
-			const listParsed = JSON.parse(result.text);
-			const memoryNames = listParsed.memories.map(
-				(m: { name: string }) => m.name,
-			);
-			expect(memoryNames).toContain('journey-test');
-
-			// Step 3: Get
-			const getTool = createMemoryGetTool(repository);
-			result = await getTool.execute({ name: 'journey-test' });
-			const getParsed = JSON.parse(result.text);
-			expect(getParsed.content).toBe('Journey content');
-			expect(getParsed.frontmatter.title).toBe('Journey');
-
-			// Step 4: Delete
-			const deleteTool = createMemoryDeleteTool(repository);
-			result = await deleteTool.execute({ name: 'journey-test' });
-			expect(JSON.parse(result.text).success).toBe(true);
-
-			// Verify deletion
-			result = await listTool.execute();
-			const finalList = JSON.parse(result.text);
-			const finalNames = finalList.memories.map(
-				(m: { name: string }) => m.name,
-			);
-			expect(finalNames).not.toContain('journey-test');
+			expect(result).toBeTruthy();
+			if (result && !Array.isArray(result)) {
+				expect(result.text).toContain('Architecture patterns');
+			}
 		});
 	});
 });

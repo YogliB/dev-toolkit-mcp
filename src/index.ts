@@ -3,14 +3,13 @@ import { StorageEngine } from './core/storage/engine';
 import { MemoryRepository } from './layers/memory/repository';
 import { detectProjectRoot } from './core/config';
 import {
-	createMemoryGetTool,
-	createMemorySaveTool,
+	createMemoryFileTool,
 	createMemoryListTool,
-	createMemoryDeleteTool,
 	createMemoryInitTool,
 	createMemoryContextTool,
 	createMemoryUpdateTool,
 } from './mcp/tools/memory';
+import type { CoreMemoryFileName } from './core/schemas/memory';
 import {
 	createContextResource,
 	createMemoryResourceTemplate,
@@ -60,21 +59,26 @@ async function main(): Promise<void> {
 	});
 
 	try {
-		const memoryGetTool = createMemoryGetTool(memoryRepository);
-		server.addTool(memoryGetTool);
-		console.error('[DevFlow:INFO] Registered tool: memory-get');
+		// Register 6 file-specific tools
+		const coreFiles: CoreMemoryFileName[] = [
+			'projectBrief',
+			'productContext',
+			'systemPatterns',
+			'techContext',
+			'activeContext',
+			'progress',
+		];
 
-		const memorySaveTool = createMemorySaveTool(memoryRepository);
-		server.addTool(memorySaveTool);
-		console.error('[DevFlow:INFO] Registered tool: memory-save');
+		for (const fileName of coreFiles) {
+			const fileTool = createMemoryFileTool(fileName, memoryRepository);
+			server.addTool(fileTool);
+			console.error(`[DevFlow:INFO] Registered tool: memory-${fileName}`);
+		}
 
-		const memoryListTool = createMemoryListTool(memoryRepository);
+		// Register global tools
+		const memoryListTool = createMemoryListTool();
 		server.addTool(memoryListTool);
 		console.error('[DevFlow:INFO] Registered tool: memory-list');
-
-		const memoryDeleteTool = createMemoryDeleteTool(memoryRepository);
-		server.addTool(memoryDeleteTool);
-		console.error('[DevFlow:INFO] Registered tool: memory-delete');
 
 		const memoryInitTool = createMemoryInitTool(memoryRepository);
 		server.addTool(memoryInitTool);
@@ -89,7 +93,7 @@ async function main(): Promise<void> {
 		console.error('[DevFlow:INFO] Registered tool: memory-update');
 
 		console.error(
-			'[DevFlow:INFO] All memory tools registered successfully',
+			'[DevFlow:INFO] All memory tools registered successfully (6 file-specific + 4 global = 10 tools)',
 		);
 
 		const contextResource = createContextResource(memoryRepository);

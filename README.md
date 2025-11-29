@@ -45,13 +45,41 @@ DevFlow provides six core memory files following the Cline Memory Bank structure
 
 All tools available via MCP protocol:
 
-- `memory-save` - Create/update memory files with optional frontmatter
-- `memory-get` - Retrieve specific memory by name
-- `memory-list` - List all memories in the bank
-- `memory-delete` - Remove memory files
+**File-Specific Tools (6)** - Each handles get/update/delete for one core file:
+
+- `memory-projectBrief { action: "get" | "update" | "delete", content?: "..." }`
+- `memory-productContext { action: "get" | "update" | "delete", content?: "..." }`
+- `memory-systemPatterns { action: "get" | "update" | "delete", content?: "..." }`
+- `memory-techContext { action: "get" | "update" | "delete", content?: "..." }`
+- `memory-activeContext { action: "get" | "update" | "delete", content?: "..." }`
+- `memory-progress { action: "get" | "update" | "delete", content?: "..." }`
+
+**Global Tools (4):**
+
+- `memory-list` - List all 6 core memory files with metadata
 - `memory-init` - Initialize memory bank with core template files
 - `memory-context` - Get combined context from all 6 core files for session refresh
 - `memory-update` - Review all memory files with guided update workflow
+
+**Example Usage:**
+
+```json
+// Get a file
+{ "action": "get" }
+
+// Update a file
+{ "action": "update", "content": "# Project Brief\n\nWe're building..." }
+
+// Delete a file
+{ "action": "delete" }
+```
+
+Each file-specific tool includes behavioral guidance:
+
+- **WHEN TO USE**: Trigger phrases to help AI choose the right file
+- **CONTAINS**: What type of content belongs in this file
+- **💡 TIP**: Best practices for maintaining the file
+- **❌ NOT FOR**: Anti-patterns that redirect to correct files
 
 ### Memory Resources
 
@@ -79,7 +107,11 @@ Create `mcp.json` in your project root:
 }
 ```
 
-Then use tools like `/memory-save name=activeContext content="..."`
+Then use tools like:
+
+- `/memory-activeContext` with `{ "action": "update", "content": "..." }`
+- `/memory-list` to see all 6 core files
+- `/memory-init` to create initial templates
 
 ### Cursor
 
@@ -98,10 +130,11 @@ Create `mcp.json` in your project root:
 
 Use in Composer or Chat:
 
-- `/memory-save` - Save memory
-- `/memory-list` - List memories
+- `/memory-projectBrief`, `/memory-activeContext`, etc. - File-specific operations
+- `/memory-list` - List all 6 core files
 - `/memory-context` - Get session context
 - `/memory-update` - Review and update
+- `/memory-init` - Initialize templates
 
 Access auto-loaded context via `devflow://context/memory` resource.
 
@@ -120,12 +153,15 @@ Add to your `settings.json`:
 }
 ```
 
-Use in Assistant:
+Use in Assistant (tools only):
 
+- `/memory-projectBrief`, `/memory-activeContext`, etc. - File-specific operations
+- `/memory-list` - List all 6 core files
 - `/memory-context` - Get combined context
 - `/memory-update` - Review all files
-- `/memory-save`, `/memory-get`, `/memory-list`, `/memory-delete`
-- `/memory-init` - Initialize
+- `/memory-init` - Initialize templates
+
+**Note:** Zed currently only supports MCP tools. Resources and prompts are not available.
 
 **[Setup Guide](./docs/SETUP.md)** - Detailed configuration instructions
 

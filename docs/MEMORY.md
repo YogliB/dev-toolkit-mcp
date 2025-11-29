@@ -203,9 +203,138 @@ Files build upon each other in a clear dependency structure:
 
 ## Memory Tools
 
-DevFlow provides 7 MCP tools for working with memory:
+DevFlow provides **10 MCP tools** for working with memory:
 
-### memory-init
+- **6 file-specific tools** - One per core file, handles get/update/delete
+- **4 global tools** - List, init, context, and update
+
+### File-Specific Tools (6)
+
+Each core file has its own tool with behavioral descriptions to guide AI decision-making.
+
+#### memory-projectBrief
+
+Manage the Project Brief file (foundation document).
+
+```bash
+# Get current brief
+/memory-projectBrief action=get
+
+# Update brief
+/memory-projectBrief action=update content="# Project Brief\n\n## What We're Building\n..."
+
+# Delete brief
+/memory-projectBrief action=delete
+```
+
+**When to use:** User asks "what are we building?", starting new session, validating work aligns with goals
+
+**Contains:** High-level description, core requirements, success criteria, scope, timeline
+
+**💡 Tip:** Keep simple and high-level. This is what you'd tell someone in 5 minutes.
+
+**❌ Not for:** Technology stack details → techContext | Architecture decisions → systemPatterns
+
+---
+
+#### memory-productContext
+
+Manage the Product Context file (why it exists, how it should work).
+
+```bash
+/memory-productContext action=get
+/memory-productContext action=update content="..."
+```
+
+**When to use:** User asks "why does this exist?", discussing new features, UX questions
+
+**Contains:** Why project exists, problems solved, value proposition, UX goals, workflows
+
+**💡 Tip:** Focus on user value and experience. Informs all technical decisions.
+
+**❌ Not for:** Technical implementation → systemPatterns | Tech choices → techContext
+
+---
+
+#### memory-systemPatterns
+
+Manage the System Patterns file (architecture and technical decisions).
+
+```bash
+/memory-systemPatterns action=get
+/memory-systemPatterns action=update content="..."
+```
+
+**When to use:** User asks "why did we build it this way?", making architectural choices, documenting design patterns
+
+**Contains:** Architecture overview, component relationships, design patterns, technical decisions with context
+
+**💡 Tip:** Document decisions inline with architecture. Include WHY, not just WHAT.
+
+**❌ Not for:** Technology stack → techContext | Current tasks → activeContext | Product goals → productContext
+
+---
+
+#### memory-techContext
+
+Manage the Technical Context file (tech stack, setup, tools).
+
+```bash
+/memory-techContext action=get
+/memory-techContext action=update content="..."
+```
+
+**When to use:** User asks "what tech are we using?" or "how do I run this?", adding dependencies, updating build process
+
+**Contains:** Languages, frameworks, databases, dependencies, dev setup, environment variables, build/deployment
+
+**💡 Tip:** Everything a developer needs to know to work with the technology stack.
+
+**❌ Not for:** Why you chose this tech → systemPatterns | Current work → activeContext | Product requirements → productContext
+
+---
+
+#### memory-activeContext
+
+Manage the Active Context file (current work, last 7 days).
+
+```bash
+/memory-activeContext action=get
+/memory-activeContext action=update content="..."
+```
+
+**When to use:** User asks "what was I working on?", "what's blocking me?", "update my progress", recording current work
+
+**Contains:** Current focus, active blockers, recent changes (last 7 days), context notes, next steps
+
+**💡 Tip:** Keep last 7 days only. Archive older entries to progress.md. This is your working memory.
+
+**❌ Not for:** Long-term goals → projectBrief | Completed work (>7 days) → progress | Architecture decisions → systemPatterns
+
+---
+
+#### memory-progress
+
+Manage the Progress file (session log, append-only).
+
+```bash
+/memory-progress action=get
+/memory-progress action=update content="..."
+```
+
+**When to use:** User says "log this", "we finished X", "add to progress", recording accomplishments
+
+**Contains:** Completed work with dates, decisions made, lessons learned, milestones achieved
+
+**💡 Tip:** Always append, never overwrite. Archive entries older than 1 week if file gets large.
+
+**❌ Not for:** Current blockers → activeContext | Future plans → projectBrief | Technical decisions → systemPatterns
+
+---
+
+### Global Tools (4)
+
+#### memory-init
 
 Initialize the memory bank with 6 core template files.
 
@@ -213,53 +342,19 @@ Initialize the memory bank with 6 core template files.
 /memory-init
 ```
 
-Creates all six core memory files in `.devflow/memory/` with the Cline structure.
+Creates all six core memory files in `.devflow/memory/` from templates.
 
 **Output includes:**
 
 - Files created
-- File hierarchy visualization
-- Structure type (`cline-6-file`)
+- Success/failure status for each
+- Total count
 
 ---
 
-### memory-save
+#### memory-list
 
-Save or update a memory file.
-
-```bash
-/memory-save name=activeContext content="Working on authentication..."
-```
-
-**Parameters:**
-
-- `name` (required) - Memory file name (without .md extension)
-- `content` (required) - Content to save
-- `frontmatter` (optional) - YAML frontmatter as object
-
-**Example with frontmatter:**
-
-```bash
-/memory-save name=activeContext frontmatter='{"category":"active-work","updated":"2024-03-20"}' content="Current work..."
-```
-
----
-
-### memory-get
-
-Retrieve a specific memory file.
-
-```bash
-/memory-get name=activeContext
-```
-
-Returns the full content including frontmatter if present.
-
----
-
-### memory-list
-
-List all memory files in the bank with metadata.
+List all 6 core memory files with metadata.
 
 ```bash
 /memory-list
@@ -267,34 +362,17 @@ List all memory files in the bank with metadata.
 
 **Returns:**
 
-- List of all memory files
+- List of all 6 core files
 - Metadata for each file:
     - `name` - File name
-    - `isCoreFile` - Whether it's part of the 6 core files
-    - `category` - File category (foundation, product, architecture, etc.)
-    - `deprecated` - If file is deprecated (e.g., old `decisionLog.md`)
-- Overall structure type:
-    - `cline-6-file` - Current 6-file structure
-    - `legacy-4-file` - Old 4-file structure (deprecated)
-    - `partial` - Incomplete structure
-    - `unknown` - No core files found
-- Deprecation warnings if applicable
+    - `displayName` - Human-readable name
+    - `isCoreFile` - Always true (only core files)
+    - `category` - File category (foundation, architecture, working-memory)
+- Structure type: `cline-6-file`
 
 ---
 
-### memory-delete
-
-Delete a memory file.
-
-```bash
-/memory-delete name=oldNote
-```
-
-Permanently removes the specified memory file.
-
----
-
-### memory-context
+#### memory-context
 
 Get combined session context from all 6 core files.
 
@@ -489,8 +567,8 @@ Memory context is **automatically loaded** via the `devflow://context/memory` re
 
 Use tools in Composer or Chat:
 
-- `/memory-save` `/memory-get` `/memory-list` `/memory-delete`
-- `/memory-context` `/memory-update` `/memory-init`
+- `/memory-projectBrief`, `/memory-activeContext`, etc. - File-specific operations
+- `/memory-list` `/memory-context` `/memory-update` `/memory-init`
 
 All 6 core files are auto-loaded into context.
 
@@ -500,9 +578,10 @@ All 6 core files are auto-loaded into context.
 
 Use prompts and tools in Assistant:
 
-- `/memory:load name=activeContext` - Load specific memory
+- `/memory:load name=activeContext` - Load specific memory (legacy)
 - `/memory-context` - Get combined context (all 6 files)
-- All standard tools available
+- `/memory-projectBrief`, `/memory-activeContext`, etc. - File-specific operations
+- `/memory-list` `/memory-init` `/memory-update`
 
 ---
 
@@ -510,10 +589,9 @@ Use prompts and tools in Assistant:
 
 Use tools directly:
 
-- `/memory-save name=... content=...`
-- `/memory-get name=...`
-- `/memory-list` `/memory-delete` `/memory-init`
-- `/memory-context` `/memory-update`
+- `/memory-projectBrief { "action": "update", "content": "..." }`
+- `/memory-activeContext { "action": "get" }`
+- `/memory-list` `/memory-init` `/memory-context` `/memory-update`
 
 ---
 
@@ -624,10 +702,16 @@ If you have an older 4-file structure (`projectContext`, `activeContext`, `progr
 /memory-init
 ```
 
-**Save:**
+**Get a file:**
 
 ```bash
-/memory-save name=X content=Y
+/memory-projectBrief { "action": "get" }
+```
+
+**Update a file:**
+
+```bash
+/memory-activeContext { "action": "update", "content": "# Active Context\n\n..."me=X content=Y
 ```
 
 **Get:**

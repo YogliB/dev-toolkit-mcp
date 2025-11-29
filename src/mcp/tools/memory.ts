@@ -1,72 +1,405 @@
 import { z } from 'zod';
 import { MemoryRepository } from '../../layers/memory/repository';
 import { FileNotFoundError, ValidationError } from '../../core/storage/errors';
+import {
+	type CoreMemoryFileName,
+	MemoryFileActionInputSchema,
+	type MemoryFileActionInput,
+} from '../../core/schemas/memory';
+import { loadAllTemplates } from '../../layers/memory/templates/loader';
 
-function getFileDisplayName(fileName: string): string {
-	const names = new Map<string, string>([
-		['projectBrief', 'Project Brief'],
-		['productContext', 'Product Context'],
-		['systemPatterns', 'System Patterns'],
-		['techContext', 'Technical Context'],
-		['activeContext', 'Active Context'],
-		['progress', 'Progress'],
-	]);
+function getFileDisplayName(fileName: CoreMemoryFileName): string {
+	const names: Record<CoreMemoryFileName, string> = {
+		projectBrief: 'Project Brief',
+		productContext: 'Product Context',
+		systemPatterns: 'System Patterns',
+		techContext: 'Technical Context',
+		activeContext: 'Active Context',
+		progress: 'Progress',
+	};
 
-	return names.get(fileName) ?? fileName;
+	const entry = Object.entries(names).find(([key]) => key === fileName);
+	return entry ? entry[1] : fileName;
 }
 
-const MemoryGetInputSchema = z.object({
-	name: z.string().min(1, 'Memory name must not be empty'),
-});
+interface BehavioralDescription {
+	purpose: string;
+	updateFrequency: string;
+	triggers: string[];
+	contains: string[];
+	tip: string;
+	antiPatterns: Array<{ pattern: string; correctFile: CoreMemoryFileName }>;
+}
 
-type MemoryGetInput = z.infer<typeof MemoryGetInputSchema>;
+const behavioralDescriptions: Record<
+	CoreMemoryFileName,
+	BehavioralDescription
+> = {
+	projectBrief: {
+		purpose: 'Foundation document - source of truth for project scope',
+		updateFrequency: 'Rarely (only when scope/goals change)',
+		triggers: [
+			'User asks "what are we building?"',
+			'Need to understand project scope or goals',
+			'Starting a new session (load this first)',
+			'Validating if work aligns with project objectives',
+		],
+		contains: [
+			"What you're building (high-level description)",
+			'Core requirements and success criteria',
+			'Target users and stakeholders',
+			'Timeline and key milestones',
+			"Project scope (what's in/out)",
+		],
+		tip: "Keep it simple and high-level. This is what you'd tell someone in 5 minutes about the project.",
+		antiPatterns: [
+			{
+				pattern: 'Technology stack details',
+				correctFile: 'techContext',
+			},
+			{
+				pattern: 'Architecture decisions',
+				correctFile: 'systemPatterns',
+			},
+			{
+				pattern: 'Current work or blockers',
+				correctFile: 'activeContext',
+			},
+		],
+	},
+	productContext: {
+		purpose:
+			'Why the project exists and how it should work from a product perspective',
+		updateFrequency: 'Medium (when UX changes or product direction shifts)',
+		triggers: [
+			'User asks "why does this exist?"',
+			'Need to understand product value or user problems',
+			'Discussing new features or product direction',
+			'Questions about user experience or workflows',
+		],
+		contains: [
+			'Why this project exists',
+			'Problems being solved (with impact)',
+			'Value proposition',
+			'How it should work (UX goals)',
+			'Core user workflows and scenarios',
+			'Product principles',
+		],
+		tip: 'Focus on user value and experience. This informs all technical decisions.',
+		antiPatterns: [
+			{
+				pattern: 'Technical implementation details',
+				correctFile: 'systemPatterns',
+			},
+			{
+				pattern: 'Technology choices',
+				correctFile: 'techContext',
+			},
+			{
+				pattern: 'High-level project scope',
+				correctFile: 'projectBrief',
+			},
+		],
+	},
+	systemPatterns: {
+		purpose:
+			'Architecture, design patterns, and technical decisions (WHY you built it this way)',
+		updateFrequency:
+			'On architectural changes (when making design decisions)',
+		triggers: [
+			'User asks "why did we build it this way?"',
+			'Making architectural choices (monolith vs microservices)',
+			'Choosing design patterns (repository, factory, observer)',
+			'Documenting trade-offs and alternatives considered',
+			'Recording technical decisions with context',
+		],
+		contains: [
+			'System architecture overview',
+			'Component relationships and data flow',
+			'Design patterns in use',
+			'Key technical decisions with full context',
+			'Alternatives considered and why they were rejected',
+			'Consequences and trade-offs',
+			'Critical implementation paths',
+		],
+		tip: 'Document decisions inline with architecture. Include WHY, not just WHAT.',
+		antiPatterns: [
+			{
+				pattern: 'Technology stack (languages, frameworks)',
+				correctFile: 'techContext',
+			},
+			{
+				pattern: 'Current implementation tasks',
+				correctFile: 'activeContext',
+			},
+			{
+				pattern: 'Product goals or user value',
+				correctFile: 'productContext',
+			},
+		],
+	},
+	techContext: {
+		purpose:
+			'Technologies, development setup, constraints, and tools (WHAT tech you use)',
+		updateFrequency:
+			'On dependency changes (when adding/updating technologies)',
+		triggers: [
+			'User asks "what tech are we using?"',
+			'User asks "how do I run this?"',
+			'Adding new dependencies or frameworks',
+			'Updating build/deployment processes',
+			'Questions about development environment',
+		],
+		contains: [
+			'Technology stack (languages, frameworks, databases)',
+			'Key dependencies with versions',
+			'Development setup instructions',
+			'Environment variables and configuration',
+			'Development tools (linters, formatters, testing)',
+			'Build and release process',
+			'Technical constraints (performance, compatibility)',
+		],
+		tip: 'Everything a developer needs to know to work with the technology stack.',
+		antiPatterns: [
+			{
+				pattern: 'Why you chose this tech (architecture reasoning)',
+				correctFile: 'systemPatterns',
+			},
+			{
+				pattern: 'Current implementation work',
+				correctFile: 'activeContext',
+			},
+			{
+				pattern: 'Product requirements',
+				correctFile: 'productContext',
+			},
+		],
+	},
+	activeContext: {
+		purpose:
+			'Snapshot of current work, blockers, and recent activity (last 7 days)',
+		updateFrequency: 'Multiple times per day (this is your working memory)',
+		triggers: [
+			'User asks "what was I working on?"',
+			'User asks "what\'s blocking me?"',
+			'User says "what did we do yesterday?"',
+			'User says "update my progress" or "add this to active work"',
+			'Recording current blockers or context notes',
+		],
+		contains: [
+			"Current focus (what you're working on NOW)",
+			'Active blockers with severity and impact',
+			'Recent changes (last 7 days only)',
+			'Context notes (important patterns, considerations)',
+			'Next immediate steps',
+		],
+		tip: 'Keep last 7 days only. Archive older entries to progress.md. This is append-often, prune-weekly.',
+		antiPatterns: [
+			{
+				pattern: 'Long-term goals or project scope',
+				correctFile: 'projectBrief',
+			},
+			{
+				pattern: 'Completed accomplishments (>7 days old)',
+				correctFile: 'progress',
+			},
+			{
+				pattern: 'Architecture decisions',
+				correctFile: 'systemPatterns',
+			},
+		],
+	},
+	progress: {
+		purpose:
+			'Session log of completed work and accomplishments (append-only)',
+		updateFrequency:
+			'After significant accomplishments (multiple times per session)',
+		triggers: [
+			'User says "log this" or "we finished X"',
+			'User says "add to progress" or "mark as done"',
+			'Recording completed work or milestones',
+			'Documenting lessons learned',
+		],
+		contains: [
+			'Completed work with dates',
+			'Decisions made during implementation',
+			'Lessons learned and insights',
+			'Milestones achieved',
+			'Problems solved',
+		],
+		tip: 'Always append, never overwrite. Archive entries older than 1 week if file gets large.',
+		antiPatterns: [
+			{
+				pattern: 'Current blockers or active work',
+				correctFile: 'activeContext',
+			},
+			{
+				pattern: 'Future plans or roadmap',
+				correctFile: 'projectBrief',
+			},
+			{
+				pattern: 'Technical decisions (why you did something)',
+				correctFile: 'systemPatterns',
+			},
+		],
+	},
+};
 
-export function createMemoryGetTool(repository: MemoryRepository) {
+function createBehavioralDescription(fileName: CoreMemoryFileName): string {
+	const displayName = getFileDisplayName(fileName);
+	const descEntry = Object.entries(behavioralDescriptions).find(
+		([key]) => key === fileName,
+	);
+	if (!descEntry) {
+		throw new Error(`No behavioral description found for ${fileName}`);
+	}
+	const desc = descEntry[1];
+
+	const triggers = desc.triggers.map((t) => `- ${t}`).join('\n');
+	const contains = desc.contains.map((c) => `- ${c}`).join('\n');
+	const antiPatterns = desc.antiPatterns
+		.map((ap) => `${ap.pattern} (→ ${ap.correctFile})`)
+		.join(' | ');
+
+	return `**${displayName.toUpperCase()}** - ${desc.purpose} (${desc.updateFrequency})
+
+WHEN TO USE:
+${triggers}
+
+CONTAINS:
+${contains}
+
+ACTIONS:
+- get: Retrieve current content
+- update: Save new content (requires content param)
+- delete: Remove file
+
+USAGE: { action: "get" }
+USAGE: { action: "update", content: "New content here..." }
+
+💡 TIP: ${desc.tip}
+❌ NOT FOR: ${antiPatterns}`.trim();
+}
+
+export function createMemoryFileTool(
+	fileName: CoreMemoryFileName,
+	repository: MemoryRepository,
+) {
+	const displayName = getFileDisplayName(fileName);
+
 	return {
-		name: 'memory-get',
-		description: 'Get a memory file by name',
-		parameters: MemoryGetInputSchema,
-		execute: async (input: MemoryGetInput) => {
-			const { name } = input;
+		name: `memory-${fileName}`,
+		description: createBehavioralDescription(fileName),
+		parameters: MemoryFileActionInputSchema,
+		execute: async (input: MemoryFileActionInput) => {
+			const { action, content } = input;
 			console.error(
-				`[DevFlow:INFO] Memory tool called: memory:get with input: { name: "${name}" }`,
+				`[DevFlow:INFO] memory-${fileName} called with action: ${action}`,
 			);
 
 			try {
-				const memory = await repository.getMemory(name);
-				console.error(
-					`[DevFlow:INFO] Memory operation succeeded: get for ${name}`,
-				);
-				return {
-					type: 'text' as const,
-					text: JSON.stringify({
-						frontmatter: memory.frontmatter,
-						content: memory.content,
-					}),
-				};
+				switch (action) {
+					case 'get': {
+						const memory = await repository.getMemory(fileName);
+						console.error(
+							`[DevFlow:INFO] Memory operation succeeded: get for ${fileName}`,
+						);
+						return {
+							type: 'text' as const,
+							text: JSON.stringify({
+								frontmatter: memory.frontmatter,
+								content: memory.content,
+							}),
+						};
+					}
+
+					case 'update': {
+						if (!content) {
+							console.error(
+								`[DevFlow:ERROR] memory-${fileName} failed: update action requires content parameter`,
+							);
+							return {
+								type: 'text' as const,
+								text: JSON.stringify({
+									error: 'Content required for update action',
+									action,
+								}),
+							};
+						}
+
+						await repository.saveMemory(fileName, {
+							frontmatter: {},
+							content,
+						});
+						console.error(
+							`[DevFlow:INFO] Memory operation succeeded: update for ${fileName}`,
+						);
+						return {
+							type: 'text' as const,
+							text: JSON.stringify({
+								success: true,
+								action: 'update',
+								name: fileName,
+								message: `${displayName} updated successfully`,
+							}),
+						};
+					}
+
+					case 'delete': {
+						await repository.deleteMemory(fileName);
+						console.error(
+							`[DevFlow:INFO] Memory operation succeeded: delete for ${fileName}`,
+						);
+						return {
+							type: 'text' as const,
+							text: JSON.stringify({
+								success: true,
+								action: 'delete',
+								name: fileName,
+								message: `${displayName} deleted successfully`,
+							}),
+						};
+					}
+
+					default: {
+						const exhaustiveCheck: never = action;
+						console.error(
+							`[DevFlow:ERROR] Invalid action for memory-${fileName}: ${exhaustiveCheck}`,
+						);
+						return {
+							type: 'text' as const,
+							text: JSON.stringify({
+								error: 'Invalid action',
+								validActions: ['get', 'update', 'delete'],
+							}),
+						};
+					}
+				}
 			} catch (error) {
 				if (error instanceof FileNotFoundError) {
 					console.error(
-						`[DevFlow:ERROR] Memory tool failed: memory:get - FileNotFoundError: ${error.message}`,
+						`[DevFlow:ERROR] memory-${fileName} failed: FileNotFoundError: ${error.message}`,
 					);
 					return {
 						type: 'text' as const,
 						text: JSON.stringify({
-							error: 'Memory not found',
-							name,
+							error: 'Memory file not found',
+							name: fileName,
+							action,
 						}),
 					};
 				}
 
 				if (error instanceof ValidationError) {
 					console.error(
-						`[DevFlow:ERROR] Memory tool failed: memory:get - ValidationError: ${error.message}`,
+						`[DevFlow:ERROR] memory-${fileName} failed: ValidationError: ${error.message}`,
 					);
 					return {
 						type: 'text' as const,
 						text: JSON.stringify({
 							error: 'Invalid memory file',
 							message: error.message,
+							action,
 						}),
 					};
 				}
@@ -74,13 +407,14 @@ export function createMemoryGetTool(repository: MemoryRepository) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Unknown error';
 				console.error(
-					`[DevFlow:ERROR] Memory tool failed: memory:get - Error: ${errorMessage}`,
+					`[DevFlow:ERROR] memory-${fileName} failed: ${errorMessage}`,
 				);
 				return {
 					type: 'text' as const,
 					text: JSON.stringify({
-						error: 'Failed to get memory',
+						error: `Failed to ${action} memory`,
 						message: errorMessage,
+						action,
 					}),
 				};
 			}
@@ -88,87 +422,21 @@ export function createMemoryGetTool(repository: MemoryRepository) {
 	};
 }
 
-const MemorySaveInputSchema = z.object({
-	name: z.string().min(1, 'Memory name must not be empty'),
-	frontmatter: z.record(z.string(), z.any()).optional(),
-	content: z.string(),
-});
-
-type MemorySaveInput = z.infer<typeof MemorySaveInputSchema>;
-
-export function createMemorySaveTool(repository: MemoryRepository) {
-	return {
-		name: 'memory-save',
-		description: 'Save or update a memory file',
-		parameters: MemorySaveInputSchema,
-		execute: async (input: MemorySaveInput) => {
-			const { name, frontmatter, content } = input;
-			console.error(
-				`[DevFlow:INFO] Memory tool called: memory:save with input: { name: "${name}", content: ${content.length} chars }`,
-			);
-
-			try {
-				await repository.saveMemory(name, {
-					frontmatter: frontmatter ?? {},
-					content,
-				});
-				console.error(
-					`[DevFlow:INFO] Memory operation succeeded: save for ${name}`,
-				);
-				return {
-					type: 'text' as const,
-					text: JSON.stringify({
-						success: true,
-						message: 'Memory saved',
-						name,
-					}),
-				};
-			} catch (error) {
-				if (error instanceof ValidationError) {
-					console.error(
-						`[DevFlow:ERROR] Memory tool failed: memory:save - ValidationError: ${error.message}`,
-					);
-					return {
-						type: 'text' as const,
-						text: JSON.stringify({
-							error: 'Validation failed',
-							message: error.message,
-						}),
-					};
-				}
-
-				const errorMessage =
-					error instanceof Error ? error.message : 'Unknown error';
-				console.error(
-					`[DevFlow:ERROR] Memory tool failed: memory:save - Error: ${errorMessage}`,
-				);
-				return {
-					type: 'text' as const,
-					text: JSON.stringify({
-						error: 'Failed to save memory',
-						message: errorMessage,
-					}),
-				};
-			}
-		},
-	};
-}
+// Global tools
 
 const MemoryListInputSchema = z.object({}).optional();
 
-export function createMemoryListTool(repository: MemoryRepository) {
+export function createMemoryListTool() {
 	return {
 		name: 'memory-list',
-		description: 'List all memory files in the memory bank with metadata',
+		description:
+			'List all 6 core memory files in the memory bank with metadata',
 		parameters: MemoryListInputSchema,
 		execute: async () => {
-			console.error(`[DevFlow:INFO] Memory tool called: memory:list`);
+			console.error(`[DevFlow:INFO] Memory tool called: memory-list`);
 
 			try {
-				const memoryNames = await repository.listMemories();
-
-				// Define core files for Cline 6-file structure
-				const coreFiles = [
+				const coreFiles: CoreMemoryFileName[] = [
 					'projectBrief',
 					'productContext',
 					'systemPatterns',
@@ -177,74 +445,34 @@ export function createMemoryListTool(repository: MemoryRepository) {
 					'progress',
 				];
 
-				// Detect structure
-				const hasClineStructure = coreFiles.every((name) =>
-					memoryNames.includes(name),
-				);
-				const hasLegacyFiles =
-					memoryNames.includes('projectContext') ||
-					memoryNames.includes('decisionLog');
-
-				let structure = 'unknown';
-				if (hasClineStructure) {
-					structure = 'cline-6-file';
-				} else if (hasLegacyFiles) {
-					structure = 'legacy-4-file';
-				} else if (memoryNames.length > 0) {
-					structure = 'partial';
-				}
-
-				// Add metadata to each memory
-				const memories = memoryNames.map((name) => {
-					const isCoreFile = coreFiles.includes(name);
-					const isDeprecated =
-						name === 'decisionLog' || name === 'projectContext';
-
-					return {
-						name,
-						isCoreFile,
-						deprecated: isDeprecated ? true : undefined,
-						category: isCoreFile
-							? getCategoryForFile(name)
-							: 'custom',
-					};
-				});
+				const memories = coreFiles.map((name) => ({
+					name,
+					displayName: getFileDisplayName(name),
+					isCoreFile: true,
+					category: getCategoryForFile(name),
+				}));
 
 				console.error(
-					`[DevFlow:INFO] Memory operation succeeded: list (found ${memories.length} memories, structure: ${structure})`,
+					`[DevFlow:INFO] Memory operation succeeded: list (6 core files)`,
 				);
-
-				const result: {
-					memories: Array<{
-						name: string;
-						isCoreFile: boolean;
-						deprecated?: boolean;
-						category: string;
-					}>;
-					count: number;
-					structure: string;
-					warning?: string;
-				} = {
-					memories,
-					count: memories.length,
-					structure,
-				};
-
-				// Add deprecation warning if legacy files detected
-				if (hasLegacyFiles) {
-					result.warning =
-						'Legacy 4-file structure detected. Consider migrating to Cline 6-file structure. See MIGRATION.md.';
-				}
 
 				return {
 					type: 'text' as const,
-					text: JSON.stringify(result, undefined, 2),
+					text: JSON.stringify(
+						{
+							memories,
+							count: memories.length,
+							structure: 'cline-6-file',
+						},
+						undefined,
+						2,
+					),
 				};
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Unknown error';
 				console.error(
-					`[DevFlow:ERROR] Memory tool failed: memory:list - Error: ${errorMessage}`,
+					`[DevFlow:ERROR] Memory tool failed: memory-list - Error: ${errorMessage}`,
 				);
 				return {
 					type: 'text' as const,
@@ -258,78 +486,18 @@ export function createMemoryListTool(repository: MemoryRepository) {
 	};
 }
 
-function getCategoryForFile(fileName: string): string {
-	const categories = new Map<string, string>([
-		['projectBrief', 'foundation'],
-		['productContext', 'product'],
-		['systemPatterns', 'architecture'],
-		['techContext', 'technical-setup'],
-		['activeContext', 'active-work'],
-		['progress', 'tracking'],
-	]);
-
-	return categories.get(fileName) ?? 'general';
-}
-
-const MemoryDeleteInputSchema = z.object({
-	name: z.string().min(1, 'Memory name must not be empty'),
-});
-
-type MemoryDeleteInput = z.infer<typeof MemoryDeleteInputSchema>;
-
-export function createMemoryDeleteTool(repository: MemoryRepository) {
-	return {
-		name: 'memory-delete',
-		description: 'Delete a memory file by name',
-		parameters: MemoryDeleteInputSchema,
-		execute: async (input: MemoryDeleteInput) => {
-			const { name } = input;
-			console.error(
-				`[DevFlow:INFO] Memory tool called: memory:delete with input: { name: "${name}" }`,
-			);
-
-			try {
-				await repository.deleteMemory(name);
-				console.error(
-					`[DevFlow:INFO] Memory operation succeeded: delete for ${name}`,
-				);
-				return {
-					type: 'text' as const,
-					text: JSON.stringify({
-						success: true,
-						message: 'Memory deleted',
-						name,
-					}),
-				};
-			} catch (error) {
-				if (error instanceof FileNotFoundError) {
-					console.error(
-						`[DevFlow:ERROR] Memory tool failed: memory:delete - FileNotFoundError: ${error.message}`,
-					);
-					return {
-						type: 'text' as const,
-						text: JSON.stringify({
-							error: 'Memory not found',
-							name,
-						}),
-					};
-				}
-
-				const errorMessage =
-					error instanceof Error ? error.message : 'Unknown error';
-				console.error(
-					`[DevFlow:ERROR] Memory tool failed: memory:delete - Error: ${errorMessage}`,
-				);
-				return {
-					type: 'text' as const,
-					text: JSON.stringify({
-						error: 'Failed to delete memory',
-						message: errorMessage,
-					}),
-				};
-			}
-		},
+function getCategoryForFile(fileName: CoreMemoryFileName): string {
+	const categories: Record<CoreMemoryFileName, string> = {
+		projectBrief: 'foundation',
+		productContext: 'foundation',
+		systemPatterns: 'architecture',
+		techContext: 'architecture',
+		activeContext: 'working-memory',
+		progress: 'working-memory',
 	};
+
+	const entry = Object.entries(categories).find(([key]) => key === fileName);
+	return entry ? entry[1] : 'unknown';
 }
 
 const MemoryContextInputSchema = z.object({}).optional();
@@ -344,7 +512,7 @@ export function createMemoryContextTool(repository: MemoryRepository) {
 			console.error(`[DevFlow:INFO] Memory tool called: memory-context`);
 
 			const sections: string[] = [];
-			const coreFiles = [
+			const coreFiles: CoreMemoryFileName[] = [
 				'projectBrief',
 				'productContext',
 				'systemPatterns',
@@ -352,57 +520,36 @@ export function createMemoryContextTool(repository: MemoryRepository) {
 				'activeContext',
 				'progress',
 			];
+
 			let filesLoaded = 0;
 
-			// Load all 6 core files in hierarchical order
 			for (const fileName of coreFiles) {
 				try {
 					const memory = await repository.getMemory(fileName);
+					const displayName = getFileDisplayName(fileName);
+
 					sections.push(
-						`# ${getFileDisplayName(fileName)}\n`,
+						`# ${displayName}`,
+						'',
 						memory.content,
-						'\n',
+						'',
+						'---',
+						'',
 					);
+
 					filesLoaded++;
-					console.error(
-						`[DevFlow:INFO] Memory operation: context (${fileName} loaded)`,
-					);
 				} catch (error) {
-					if (error instanceof FileNotFoundError) {
-						console.error(
-							`[DevFlow:WARN] Memory operation partial: ${fileName}.md missing`,
-						);
-					} else {
-						const errorMessage =
-							error instanceof Error
-								? error.message
-								: 'Unknown error';
-						console.error(
-							`[DevFlow:WARN] Failed to load ${fileName}: ${errorMessage}`,
-						);
-					}
-				}
-			}
-
-			// Check for deprecated decisionLog.md
-			try {
-				const decisionLog = await repository.getMemory('decisionLog');
-				if (decisionLog) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: 'Unknown error';
 					console.error(
-						`[DevFlow:WARN] Memory operation: decisionLog.md is deprecated - migrate to systemPatterns.md`,
-					);
-					sections.push(
-						'\n⚠️  DEPRECATION: decisionLog.md detected. Migrate content to systemPatterns.md "Key Technical Decisions" section.\n',
+						`[DevFlow:WARN] Could not load ${fileName}: ${errorMessage}`,
 					);
 				}
-			} catch {
-				// Ignore - decisionLog doesn't exist (which is correct)
 			}
 
-			const combinedText =
-				sections.length > 0
-					? sections.join('\n')
-					: '# Memory Bank Context\n\nNo memory files found. Use memory-init to create them.';
+			const combinedText = sections.join('\n');
 
 			console.error(
 				`[DevFlow:INFO] Memory operation succeeded: context (loaded ${filesLoaded}/6 files)`,
@@ -430,222 +577,93 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 			const sections: string[] = [
 				'# Memory Bank Update Workflow',
 				'',
-				'Your task: Review all memory files and update them to reflect current project state.',
+				'Review each core memory file below. Update files as needed using the memory-{fileName} tools.',
 				'',
-				'## File Hierarchy',
-				'',
-				'Files are structured hierarchically:',
-				'- **projectBrief.md** (foundation) → defines scope',
-				'- **productContext.md** (why/how) → built on projectBrief',
-				'- **systemPatterns.md** (architecture + decisions) → built on projectBrief + productContext',
-				'- **techContext.md** (tech stack) → built on projectBrief',
-				'- **activeContext.md** (current work) → references all above',
-				'- **progress.md** (tracking) → archives from activeContext',
-				'',
-				'## Update Process',
-				'',
-				"1. **Review ALL 6 files** - Read each memory file below, even if some don't need updates",
-				"2. **Document Current State** - Capture what's happening right now",
-				'3. **Clarify Next Steps** - Identify immediate priorities and blockers',
-				'4. **Document Insights** - Record patterns, lessons learned, and decisions',
-				'',
-				'## Focus Areas',
-				'',
-				'Pay particular attention to:',
-				'- **projectBrief.md**: Have core requirements or scope changed?',
-				'- **productContext.md**: Has user experience or product direction shifted?',
-				'- **systemPatterns.md**: Any new architectural decisions or patterns?',
-				'- **techContext.md**: Have technologies or setup changed?',
-				'- **activeContext.md**: Is current work accurately captured?',
-				'- **progress.md**: Are milestones and metrics up to date?',
+				'**Available tools for updates:**',
+				'- `memory-projectBrief { action: "update", content: "..." }`',
+				'- `memory-productContext { action: "update", content: "..." }`',
+				'- `memory-systemPatterns { action: "update", content: "..." }`',
+				'- `memory-techContext { action: "update", content: "..." }`',
+				'- `memory-activeContext { action: "update", content: "..." }`',
+				'- `memory-progress { action: "update", content: "..." }`',
 				'',
 				'---',
 				'',
 			];
 
-			const filesToLoad = [
-				'projectBrief',
-				'productContext',
-				'systemPatterns',
-				'techContext',
-				'activeContext',
-				'progress',
+			const filesToLoad: Array<{
+				name: CoreMemoryFileName;
+				displayName: string;
+			}> = [
+				{ name: 'projectBrief', displayName: 'Project Brief' },
+				{ name: 'productContext', displayName: 'Product Context' },
+				{ name: 'systemPatterns', displayName: 'System Patterns' },
+				{ name: 'techContext', displayName: 'Technical Context' },
+				{ name: 'activeContext', displayName: 'Active Context' },
+				{ name: 'progress', displayName: 'Progress' },
 			];
 
 			let filesLoaded = 0;
 			const failedFiles: string[] = [];
 
-			for (const fileName of filesToLoad) {
+			for (const { name, displayName } of filesToLoad) {
 				try {
-					const memory = await repository.getMemory(fileName);
+					const memory = await repository.getMemory(name);
+
 					sections.push(
-						`## ${getFileDisplayName(fileName)}`,
+						`## ${displayName}`,
+						'',
+						`**File:** \`${name}.md\` | **Update:** \`memory-${name} { action: "update", content: "..." }\``,
+						'',
+						'### Current Content',
 						'',
 						'```markdown',
 						memory.content,
 						'```',
 						'',
+						'---',
+						'',
 					);
+
 					filesLoaded++;
-					console.error(
-						`[DevFlow:INFO] Memory operation: loaded ${fileName}`,
-					);
 				} catch (error) {
-					if (error instanceof FileNotFoundError) {
-						console.error(
-							`[DevFlow:WARN] Memory operation partial: ${fileName}.md missing`,
-						);
-						failedFiles.push(fileName);
-						sections.push(
-							`## ${getFileDisplayName(fileName)} (Not Found)`,
-							'',
-							`*Note: ${fileName}.md does not exist yet. Use memory-init to create it or memory-save to initialize it.*`,
-							'',
-						);
-					} else {
-						const errorMessage =
-							error instanceof Error
-								? error.message
-								: 'Unknown error';
-						console.error(
-							`[DevFlow:WARN] Memory operation partial: failed to load ${fileName} - ${errorMessage}`,
-						);
-						failedFiles.push(fileName);
-						sections.push(
-							`## ${getFileDisplayName(fileName)} (Error Loading)`,
-							'',
-							`*Note: Could not load ${fileName}.md - ${errorMessage}*`,
-							'',
-						);
-					}
-				}
-			}
-
-			// Check for deprecated decisionLog.md
-			try {
-				const decisionLog = await repository.getMemory('decisionLog');
-				if (decisionLog) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: 'Unknown error';
 					console.error(
-						`[DevFlow:WARN] Memory operation: decisionLog.md is deprecated`,
+						`[DevFlow:WARN] Could not load ${name}: ${errorMessage}`,
 					);
-					sections.push(
-						'## ⚠️  decisionLog.md (DEPRECATED)',
-						'',
-						'```markdown',
-						decisionLog.content,
-						'```',
-						'',
-						'**ACTION REQUIRED:** Migrate this content to systemPatterns.md under "Key Technical Decisions" section.',
-						'',
-					);
-				}
-			} catch {
-				// Ignore - file doesn't exist
-			}
 
-			sections.push(
-				'---',
-				'',
-				'## What to Update',
-				'',
-				'### For Each File:',
-				'',
-				'**projectBrief.md:**',
-				'- [ ] Core requirements are still accurate',
-				'- [ ] Goals reflect current direction',
-				'- [ ] Scope boundaries are correct (what changed?)',
-				'- [ ] Success criteria are still valid',
-				'- [ ] Timeline/milestones are current',
-				'',
-				'**productContext.md:**',
-				'- [ ] Problems being solved are still relevant',
-				'- [ ] User experience goals match reality',
-				'- [ ] Core workflows are documented',
-				'- [ ] Product principles guide decisions',
-				'- [ ] Success metrics are measurable',
-				'',
-				'**systemPatterns.md:**',
-				'- [ ] Architecture diagram is current',
-				'- [ ] Component relationships are accurate',
-				'- [ ] Design patterns reflect actual implementation',
-				'- [ ] Architectural decisions are documented with full context',
-				'- [ ] Technical debt is tracked',
-				'',
-				'**techContext.md:**',
-				'- [ ] Technology stack versions are current',
-				'- [ ] Development setup instructions work',
-				'- [ ] Dependencies are up to date',
-				'- [ ] Technical constraints are documented',
-				'- [ ] Build and release process is accurate',
-				'',
-				'**activeContext.md:**',
-				"- [ ] Current focus accurately describes what's being worked on NOW",
-				'- [ ] All active blockers are listed with current status',
-				'- [ ] Recent changes (last 7 days) are documented',
-				'- [ ] Context notes reflect important patterns or considerations',
-				'- [ ] Next steps are clear priorities',
-				'- [ ] Archive entries older than 7 days to progress.md',
-				'',
-				'**progress.md:**',
-				'- [ ] Current milestone status and percentage are accurate',
-				'- [ ] Task completion status is up-to-date',
-				'- [ ] Metrics (velocity, resolution time, trends) are current',
-				'- [ ] Known issues reflect real problems with severity',
-				'- [ ] Lessons learned are documented',
-				'- [ ] Risk tracking is current',
-				'- [ ] Archive old entries (>90 days)',
-				'',
-				'## Next Steps After Review',
-				'',
-				'After reviewing, update files using memory-save tool:',
-				'',
-				'```json',
-				'{',
-				'  "name": "activeContext",',
-				'  "content": "# Updated content...",',
-				'  "frontmatter": {',
-				'    "category": "active-work",',
-				'    "updated": "2024-03-20T14:30:00Z"',
-				'  }',
-				'}',
-				'```',
-				'',
-				'Use memory-list to see all files, memory-get to retrieve specific files.',
-				'',
-				'## Tips',
-				'',
-				'- **Be specific:** Use dates, file names, and concrete examples',
-				'- **Link decisions:** Reference decision numbers when relevant',
-				'- **Archive old work:** Move entries >30 days old from activeContext to progress',
-				'- **Update timestamps:** Mark when updates occur',
-				'- **Document blockers:** Severity, impact, and workarounds',
-				'- **Track metrics:** Velocity helps predict future milestones',
-				'',
-			);
+					sections.push(
+						`## ${displayName}`,
+						'',
+						`**Status:** ⚠️ File not found or error loading`,
+						'',
+						`**Create:** \`memory-${name} { action: "update", content: "..." }\``,
+						'',
+						'---',
+						'',
+					);
+
+					failedFiles.push(name);
+				}
+			}
 
 			const missingFilesSuffix =
 				failedFiles.length > 0
-					? ` (missing: ${failedFiles.join(', ')})`
+					? ` (${failedFiles.length} files missing or failed to load)`
 					: '';
-			const successMessage = `Successfully loaded ${filesLoaded}/6 memory files${missingFilesSuffix}`;
-			const summary =
-				filesLoaded > 0
-					? successMessage
-					: 'No memory files found. Use memory-init to create them.';
+			const successMessage = `Memory operation succeeded: update workflow (loaded ${filesLoaded}/6 files${missingFilesSuffix})`;
+			const summary = `Review complete. ${filesLoaded} of 6 files loaded.${
+				failedFiles.length > 0
+					? ` Missing: ${failedFiles.join(', ')}`
+					: ''
+			}`;
 
-			console.error(
-				`[DevFlow:INFO] Memory operation succeeded: update loaded ${filesLoaded} files`,
-			);
+			sections.push('## Summary', '', summary, '');
 
-			sections.push(
-				'---',
-				'',
-				`**Status:** ${summary}`,
-				'',
-				'**Structure:** Cline 6-file hierarchy (projectBrief → productContext → systemPatterns → techContext → activeContext → progress)',
-				'',
-				'Begin by reviewing the memory files above, then use the memory-save tool to update them.',
-			);
+			console.error(`[DevFlow:INFO] ${successMessage}`);
 
 			return {
 				type: 'text' as const,
@@ -655,4 +673,78 @@ export function createMemoryUpdateTool(repository: MemoryRepository) {
 	};
 }
 
-export { createMemoryInitTool } from './memory-init';
+const MemoryInitInputSchema = z.object({}).optional();
+
+export function createMemoryInitTool(repository: MemoryRepository) {
+	return {
+		name: 'memory-init',
+		description:
+			'Initialize memory bank with 6 core template files (Cline structure)',
+		parameters: MemoryInitInputSchema,
+		execute: async () => {
+			console.error(`[DevFlow:INFO] Memory tool called: memory-init`);
+
+			try {
+				const loadedTemplates = await loadAllTemplates();
+				const results: Array<{ name: string; success: boolean }> = [];
+
+				for (const template of loadedTemplates) {
+					try {
+						await repository.saveMemory(
+							template.name as CoreMemoryFileName,
+							{
+								frontmatter: template.frontmatter,
+								content: template.content,
+							},
+						);
+						results.push({ name: template.name, success: true });
+						console.error(
+							`[DevFlow:INFO] Created template for ${template.name}`,
+						);
+					} catch (error) {
+						results.push({ name: template.name, success: false });
+						const errorMessage =
+							error instanceof Error
+								? error.message
+								: 'Unknown error';
+						console.error(
+							`[DevFlow:ERROR] Failed to create ${template.name}: ${errorMessage}`,
+						);
+					}
+				}
+
+				const successCount = results.filter((r) => r.success).length;
+				const message = `Memory bank initialized with ${successCount} of 6 core files`;
+
+				console.error(`[DevFlow:INFO] ${message}`);
+
+				return {
+					type: 'text' as const,
+					text: JSON.stringify(
+						{
+							success: true,
+							message,
+							files: results,
+						},
+						undefined,
+						2,
+					),
+				};
+			} catch (error) {
+				const errorMessage =
+					error instanceof Error ? error.message : 'Unknown error';
+				console.error(
+					`[DevFlow:ERROR] Failed to load templates: ${errorMessage}`,
+				);
+				return {
+					type: 'text' as const,
+					text: JSON.stringify({
+						success: false,
+						error: 'Failed to initialize memory bank',
+						message: errorMessage,
+					}),
+				};
+			}
+		},
+	};
+}

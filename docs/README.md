@@ -79,8 +79,14 @@ projectBrief.md (foundation)
 # Initialize memory bank (creates 6 files)
 devflow memory-init
 
-# Save memory
-devflow memory-save name=activeContext content="Working on..."
+# Update a file
+/memory-activeContext action=update content="Working on..."
+
+# Get a file
+/memory-projectBrief action=get
+
+# Delete a file
+/memory-progress action=delete
 
 # Get full session context (all 6 files)
 devflow memory-context
@@ -88,7 +94,7 @@ devflow memory-context
 # Review all memories with guided workflow
 devflow memory-update
 
-# List memories with structure detection
+# List all 6 core files
 devflow memory-list
 ```
 
@@ -131,6 +137,8 @@ Add to `settings.json`:
 ```
 
 Use `/memory-context` to load all 6 files.
+
+**Note:** Zed only supports MCP tools (no resources or prompts).
 
 ### Claude Desktop
 
@@ -212,9 +220,10 @@ src/
 
 ## Key Features
 
-- **7 Memory Tools** - init, save, get, list, delete, context, update
+- **10 Memory Tools** - 6 file-specific (get/update/delete per file) + 4 global (list, init, context, update)
 - **2 Resources** - Combined context (all 6 files) + individual files
 - **1 Prompt** - Zed workaround for dynamic resources
+- **Behavioral Descriptions** - Each tool guides AI on when/how to use it
 - **Type-Safe** - Full TypeScript with Zod validation
 - **Git-Friendly** - Plain Markdown, human-readable
 - **Cross-Platform** - Works with Claude, Cursor, Zed
