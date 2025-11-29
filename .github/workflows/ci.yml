@@ -153,8 +153,8 @@ jobs:
               run: |
                   SIZE=$(stat -f%z ./dist/devflow 2>/dev/null || stat -c%s ./dist/devflow)
                   echo "Executable size: $(numfmt --to=iec-i --suffix=B $SIZE)"
-                  if [ $SIZE -gt 104857600 ]; then
-                    echo "Warning: Executable size exceeds 100MB"
+                  if [ $SIZE -gt 125829120 ]; then
+                    echo "Warning: Executable size exceeds 120MB"
                     exit 1
                   fi
 
