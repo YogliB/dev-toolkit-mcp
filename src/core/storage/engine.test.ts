@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdir, rm } from 'node:fs/promises';
-import { createStorageEngine, StorageEngine } from './engine';
+import { createStorageEngine, type StorageEngine } from './engine';
 import { PathValidationError, FileNotFoundError } from './errors';
 
 const baseTestDirectory = '.test-storage';
