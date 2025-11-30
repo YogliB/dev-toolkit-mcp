@@ -34,7 +34,8 @@
 		"check:circular:verbose": "dpdm ./src/server.ts",
 		"check:circular:ci": "dpdm --no-warning --no-tree --no-progress --exit-code circular:1 --tsconfig ./tsconfig.json ./src/server.ts",
 		"prepare": "husky",
-		"knip": "knip"
+		"knip": "knip",
+		"ci": "bash scripts/ci.sh"
 	},
 	"keywords": [
 		"mcp",
