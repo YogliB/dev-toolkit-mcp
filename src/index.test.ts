@@ -14,9 +14,4 @@ describe('DevFlow MCP Server', () => {
 		const { StorageEngine } = await import('./core/storage/engine');
 		expect(typeof StorageEngine).toBe('function');
 	});
-
-	it('should have MemoryRepository available', async () => {
-		const { MemoryRepository } = await import('./layers/memory/repository');
-		expect(typeof MemoryRepository).toBe('function');
-	});
 });

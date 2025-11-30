@@ -1,40 +1,19 @@
 import { FastMCP } from 'fastmcp';
 import { StorageEngine } from './core/storage/engine';
-import { MemoryRepository } from './layers/memory/repository';
 import { detectProjectRoot } from './core/config';
-import {
-	createMemoryFileTool,
-	createMemoryListTool,
-	createMemoryInitTool,
-	createMemoryContextTool,
-	createMemoryUpdateTool,
-} from './mcp/tools/memory';
-import type { CoreMemoryFileName } from './core/schemas/memory';
-import {
-	createContextResource,
-	createMemoryResourceTemplate,
-} from './mcp/resources/memory';
-import { createMemoryLoadPrompt } from './mcp/prompts/memory';
 
-let memoryRepository: MemoryRepository;
+let storageEngine: StorageEngine;
 
 async function initializeServer(): Promise<void> {
 	try {
 		const projectRoot = await detectProjectRoot();
 		console.error(`[DevFlow:INFO] Project root detected: ${projectRoot}`);
 
-		const storageEngine = new StorageEngine({
+		storageEngine = new StorageEngine({
 			rootPath: projectRoot,
 			debug: false,
 		});
 		console.error('[DevFlow:INFO] StorageEngine initialized');
-
-		memoryRepository = new MemoryRepository({
-			storageEngine,
-		});
-		console.error(
-			'[DevFlow:INFO] MemoryRepository initialized (path: .devflow/memory)',
-		);
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error
@@ -58,74 +37,9 @@ async function main(): Promise<void> {
 		version: '0.1.0',
 	});
 
-	try {
-		// Register 6 file-specific tools
-		const coreFiles: CoreMemoryFileName[] = [
-			'projectBrief',
-			'productContext',
-			'systemPatterns',
-			'techContext',
-			'activeContext',
-			'progress',
-		];
-
-		for (const fileName of coreFiles) {
-			const fileTool = createMemoryFileTool(fileName, memoryRepository);
-			server.addTool(fileTool);
-			console.error(`[DevFlow:INFO] Registered tool: memory-${fileName}`);
-		}
-
-		// Register global tools
-		const memoryListTool = createMemoryListTool();
-		server.addTool(memoryListTool);
-		console.error('[DevFlow:INFO] Registered tool: memory-list');
-
-		const memoryInitTool = createMemoryInitTool(memoryRepository);
-		server.addTool(memoryInitTool);
-		console.error('[DevFlow:INFO] Registered tool: memory-init');
-
-		const memoryContextTool = createMemoryContextTool(memoryRepository);
-		server.addTool(memoryContextTool);
-		console.error('[DevFlow:INFO] Registered tool: memory-context');
-
-		const memoryUpdateTool = createMemoryUpdateTool(memoryRepository);
-		server.addTool(memoryUpdateTool);
-		console.error('[DevFlow:INFO] Registered tool: memory-update');
-
-		console.error(
-			'[DevFlow:INFO] All memory tools registered successfully (6 file-specific + 4 global = 10 tools)',
-		);
-
-		const contextResource = createContextResource(memoryRepository);
-		server.addResource(contextResource);
-		console.error(
-			'[DevFlow:INFO] Registered resource: devflow://context/memory',
-		);
-
-		const memoryResourceTemplate =
-			createMemoryResourceTemplate(memoryRepository);
-		server.addResourceTemplate(memoryResourceTemplate);
-		console.error(
-			'[DevFlow:INFO] Registered resource template: devflow://memory/{name}',
-		);
-
-		console.error(
-			'[DevFlow:INFO] All memory resources registered successfully',
-		);
-
-		const memoryLoadPrompt = createMemoryLoadPrompt(memoryRepository);
-		server.addPrompt(memoryLoadPrompt);
-		console.error('[DevFlow:INFO] Registered prompt: memory:load');
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error
-				? error.message
-				: 'Unknown error during tool/resource/prompt registration';
-		console.error(
-			`[DevFlow:ERROR] Failed to register tools/resources/prompts: ${errorMessage}`,
-		);
-		throw error;
-	}
+	console.error(
+		'[DevFlow:INFO] Server initialized (no tools registered yet)',
+	);
 
 	await server.start({
 		transportType: 'stdio',
@@ -142,4 +56,4 @@ async function main(): Promise<void> {
 	});
 })();
 
-export { memoryRepository };
+export { storageEngine };
