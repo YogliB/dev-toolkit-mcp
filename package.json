@@ -3,10 +3,8 @@
 	"version": "0.0.1",
 	"description": "Memory-only MCP server for maintaining context across sessions with any AI agent",
 	"type": "module",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
 	"bin": {
-		"devflow": "dist/devflow"
+		"devflow": "dist/server.js"
 	},
 	"engines": {
 		"bun": "1.3.2"
@@ -14,7 +12,7 @@
 	"packageManager": "bun@1.3.2",
 	"scripts": {
 		"dev": "bun run src/server.ts",
-		"build": "bun build --compile --minify --bytecode --target node ./src/server.ts  --outdir ./dist --external effect --external @valibot/to-json-schema --external sury && rm -f ./.*.bun-build",
+		"build": "bun run scripts/build.ts",
 		"test": "bun test",
 		"test:unit": "bun test tests/unit",
 		"test:integration": "bun test tests/integration",
