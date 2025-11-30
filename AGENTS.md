@@ -12,6 +12,10 @@
 - Use **closures** for encapsulation instead of private class members.
 - Return new data structures rather than modifying existing ones.
 
+## File Editing
+
+- **NEVER** edit config files unless specifically requested to.
+
 ## Testing
 
 - Run tests using the `test:ai` script: `bun run test:ai`
