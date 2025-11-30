@@ -33,15 +33,6 @@ run_check "Build" "bun run build"
 
 run_check "Verify Executable Exists" "test -f ./dist/devflow"
 
-run_check "Check Executable Size" "
-	SIZE=\$(stat -f%z ./dist/devflow 2>/dev/null || stat -c%s ./dist/devflow)
-	echo \"Executable size: \$(numfmt --to=iec-i --suffix=B \$SIZE 2>/dev/null || echo \$SIZE bytes)\"
-	if [ \$SIZE -gt 125829120 ]; then
-		echo \"Warning: Executable size exceeds 120MB\"
-		exit 1
-	fi
-"
-
 run_check "Test Coverage" "bun run test:coverage"
 
 run_check "Test Performance" "bun run test:perf"

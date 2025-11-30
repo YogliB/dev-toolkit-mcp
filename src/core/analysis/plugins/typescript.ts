@@ -289,6 +289,9 @@ export class TypeScriptPlugin implements LanguagePlugin {
 		tsSourceFile: ReturnType<Project['getSourceFile']>,
 		filePath: string,
 	): Relationship[] {
+		if (!tsSourceFile) {
+			return [];
+		}
 		const relationships: Relationship[] = [];
 		const imports = tsSourceFile.getImportDeclarations();
 		for (const imp of imports) {
@@ -313,6 +316,9 @@ export class TypeScriptPlugin implements LanguagePlugin {
 		tsSourceFile: ReturnType<Project['getSourceFile']>,
 		filePath: string,
 	): Relationship[] {
+		if (!tsSourceFile) {
+			return [];
+		}
 		const relationships: Relationship[] = [];
 		const exports = tsSourceFile.getExportedDeclarations();
 		for (const [name, declarations] of exports) {
@@ -340,6 +346,9 @@ export class TypeScriptPlugin implements LanguagePlugin {
 		tsSourceFile: ReturnType<Project['getSourceFile']>,
 		filePath: string,
 	): Relationship[] {
+		if (!tsSourceFile) {
+			return [];
+		}
 		const relationships: Relationship[] = [];
 		const classes = tsSourceFile.getClasses();
 		for (const cls of classes) {

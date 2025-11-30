@@ -14,7 +14,7 @@
 	"packageManager": "bun@1.3.2",
 	"scripts": {
 		"dev": "bun run src/server.ts",
-		"build": "bun build --compile --minify --bytecode ./src/server.ts --outfile ./dist/devflow --external effect --external @valibot/to-json-schema --external sury && rm -f ./.*.bun-build",
+		"build": "bun build --compile --minify --bytecode --target node ./src/server.ts  --outdir ./dist --external effect --external @valibot/to-json-schema --external sury && rm -f ./.*.bun-build",
 		"test": "bun test",
 		"test:unit": "bun test tests/unit",
 		"test:integration": "bun test tests/integration",
