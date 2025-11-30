@@ -133,7 +133,10 @@ export function createStorageEngine(
 			const { access } = await import('node:fs/promises');
 			await access(validatedPath);
 			return true;
-		} catch {
+		} catch (error) {
+			if (error instanceof PathValidationError) {
+				throw error;
+			}
 			return false;
 		}
 	};
