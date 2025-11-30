@@ -190,11 +190,9 @@ jobs:
 
             - name: Run tests with coverage
               run: bun run test:coverage
-              continue-on-error: false
 
             - name: Check test performance
               run: bun run test:perf
-              continue-on-error: true
 
             - name: Upload performance report
               if: always()
@@ -202,7 +200,6 @@ jobs:
               with:
                   name: performance-report
                   path: .bun-test/results.xml
-              continue-on-error: true
 
             - name: Upload coverage artifacts
               if: always()
@@ -210,7 +207,6 @@ jobs:
               with:
                   name: coverage-report
                   path: coverage/
-              continue-on-error: true
 
     circular-deps:
         name: Circular Dependencies

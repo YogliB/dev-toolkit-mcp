@@ -19,14 +19,14 @@ Real-world examples of using DevFlow memory tools and resources in Cursor and Ze
 **Use case:** Store current work context for later retrieval.
 
 ```json
-// In Cursor or Zed, use the memory:save tool
+// In Cursor the devflow resource auto-loads. To update a memory via MCP tools call the specific memory file tool:
+//
+// Example: update the active context via the `memory-activeContext` tool
 {
-	"name": "activeContext",
-	"content": "# Current Work\n\nImplementing user authentication with JWT tokens.\n\n## Progress\n- ✅ Created User model\n- ✅ Added password hashing\n- 🔄 Working on token generation\n- ⏳ TODO: Refresh token logic",
-	"frontmatter": {
-		"title": "Authentication Implementation",
-		"category": "feature-work",
-		"tags": ["auth", "jwt", "security"]
+	"tool": "memory-activeContext",
+	"input": {
+		"action": "update",
+		"content": "# Current Work\n\nImplementing user authentication with JWT tokens.\n\n## Progress\n- ✅ Created User model\n- ✅ Added password hashing\n- 🔄 Working on token generation\n- ⏳ TODO: Refresh token logic"
 	}
 }
 ```
@@ -46,9 +46,12 @@ Real-world examples of using DevFlow memory tools and resources in Cursor and Ze
 **Use case:** Retrieve previously saved context.
 
 ```json
-// Use memory:get tool
+// Retrieve a core memory file using its specific tool
 {
-	"name": "activeContext"
+	"tool": "memory-activeContext",
+	"input": {
+		"action": "get"
+	}
 }
 ```
 
@@ -70,8 +73,8 @@ Real-world examples of using DevFlow memory tools and resources in Cursor and Ze
 **Use case:** See what context is available.
 
 ```json
-// Use memory:list tool (no parameters needed)
-{}
+// List core memory files via the global `memory-list` tool (no parameters needed)
+{ "tool": "memory-list" }
 ```
 
 **Expected response:**
@@ -88,9 +91,10 @@ Real-world examples of using DevFlow memory tools and resources in Cursor and Ze
 **Use case:** Remove outdated context.
 
 ```json
-// Use memory:delete tool
+// Delete a core memory file (example deletes the `progress` file) via its specific tool
 {
-	"name": "outdated-context"
+	"tool": "memory-progress",
+	"input": { "action": "delete" }
 }
 ```
 
@@ -153,7 +157,7 @@ token generation. The next step is implementing refresh token logic.
 
 **Scenario:** Same as above, but in Zed (manual prompt required).
 
-**Step 1:** Type `@` in Zed Assistant and select `memory:context`
+**Step 1:** Type `@` in Zed Assistant and select the `memory:load` prompt (Zed workaround). Provide the `name` argument (for example `name=activeContext`) to load a single memory file.
 
 **Step 2:** Ask the AI:
 
