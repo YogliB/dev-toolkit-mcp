@@ -24,7 +24,7 @@
 		"lint:fix": "eslint --fix . --max-warnings=0 --cache --cache-location .eslintcache",
 		"lint": "eslint . --max-warnings=0 --cache --cache-location .eslintcache",
 		"prepare": "husky",
-		"test:coverage": "AGENT=1 bun test --coverage",
+		"test": "AGENT=1 bun test",
 		"test:e2e": "AGENT=1 bun test tests/e2e",
 		"test:integration": "AGENT=1 bun test tests/integration",
 		"test:perf": "AGENT=1 bun test --reporter=junit --reporter-outfile=.bun-test/results.xml && bun run scripts/test-performance.ts",

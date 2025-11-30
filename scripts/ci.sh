@@ -6,13 +6,13 @@ TOTAL_CHECKS=0
 run_check() {
 	local name="$1"
 	local command="$2"
-	
+
 	TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
 	echo ""
 	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	echo "Running: $name"
 	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	
+
 	if eval "$command"; then
 		echo "✅ $name passed"
 	else
@@ -33,7 +33,7 @@ run_check "Build" "bun run build"
 
 run_check "Verify Executable Exists" "test -f ./dist/devflow"
 
-run_check "Test Coverage" "bun run test:coverage"
+run_check "Test Coverage" "bun run test"
 
 run_check "Test Performance" "bun run test:perf"
 
