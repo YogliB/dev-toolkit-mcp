@@ -5,7 +5,6 @@ import type {
 	Pattern,
 } from '../../src/core/analysis/types';
 import type { LanguagePlugin } from '../../src/core/analysis/plugins/base';
-import type { GitAnalyzer } from '../../src/core/analysis/git/git-analyzer';
 
 export class MockLanguagePlugin implements LanguagePlugin {
 	readonly name: string;
@@ -62,97 +61,5 @@ export class MockLanguagePlugin implements LanguagePlugin {
 		return this.mockPatterns.filter(
 			() => _ast.kind && _symbols && _filePath,
 		);
-	}
-}
-
-export class MockGitAnalyzer implements GitAnalyzer {
-	private mockCommitSHA: string = 'mock-commit-sha';
-	private mockFileHash: string = 'mock-file-hash';
-	private mockDecisions: Array<{
-		commitSHA: string;
-		message: string;
-		author: string;
-		date: string;
-		files: string[];
-	}> = [];
-	private mockChangeVelocity: {
-		path: string;
-		commitCount: number;
-		lastModified: string;
-		authors: string[];
-	} = {
-		path: '',
-		commitCount: 0,
-		lastModified: '',
-		authors: [],
-	};
-
-	constructor(_projectRoot: string) {
-		if (_projectRoot) {
-			// Mock constructor
-		}
-	}
-
-	setMockCommitSHA(sha: string): void {
-		this.mockCommitSHA = sha;
-	}
-
-	setMockFileHash(hash: string): void {
-		this.mockFileHash = hash;
-	}
-
-	setMockDecisions(decisions: typeof this.mockDecisions): void {
-		this.mockDecisions = decisions;
-	}
-
-	setMockChangeVelocity(velocity: typeof this.mockChangeVelocity): void {
-		this.mockChangeVelocity = velocity;
-	}
-
-	async getFileHash(_filePath: string): Promise<string> {
-		return _filePath && this.mockFileHash;
-	}
-
-	async getCurrentCommitSHA(): Promise<string> {
-		return this.mockCommitSHA;
-	}
-
-	async getRecentDecisions(
-		_since: string,
-		_workspace?: string,
-	): Promise<
-		Array<{
-			commitSHA: string;
-			message: string;
-			author: string;
-			date: string;
-			files: string[];
-		}>
-	> {
-		return this.mockDecisions.filter(
-			() => _since && (_workspace !== undefined || true),
-		);
-	}
-
-	async analyzeChangeVelocity(
-		filePath: string,
-		_since: string,
-	): Promise<{
-		path: string;
-		commitCount: number;
-		lastModified: string;
-		authors: string[];
-	}> {
-		return {
-			...this.mockChangeVelocity,
-			path: filePath,
-			lastModified: _since || this.mockChangeVelocity.lastModified,
-		};
-	}
-
-	async getCommitMessages(_since: string): Promise<string[]> {
-		return this.mockDecisions
-			.filter(() => _since !== '')
-			.map((d) => d.message);
 	}
 }

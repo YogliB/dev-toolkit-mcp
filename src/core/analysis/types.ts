@@ -58,9 +58,3 @@ export interface FileAnalysis {
 	readonly patterns: Pattern[];
 	readonly ast: AST;
 }
-
-export interface AnalysisContext {
-	readonly projectRoot: string;
-	readonly scope?: string;
-	readonly workspace?: string;
-}

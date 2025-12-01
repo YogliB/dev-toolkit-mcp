@@ -19,7 +19,11 @@
 
 ## File Editing
 
-- **NEVER** edit config files unless specifically requested to (for example: `eslint.config.mjs`)
+- **NEVER** edit config files unless specifically requested to. Forbidden files:
+    - `bunfig.toml`
+        - `eslint.config.mjs`
+    - `knip.json`
+    - `tsconfig.json`
 - **NEVER** disable eslint rules unless given a direct and clear instruction to do so
 
 ## Documentation Structure
