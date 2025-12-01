@@ -224,4 +224,86 @@ describe('detectProjectRoot', () => {
 		expect(path.isAbsolute(result)).toBe(true);
 		expect(result).toBe(resolvedCustomRoot);
 	});
+
+	it('should accept startFrom parameter', async () => {
+		const projectRootName = 'start-from-test';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
+		await mkdir(gitDirectory, { recursive: true });
+		const resolvedRoot = await realpath(projectRoot);
+
+		process.chdir(temporaryDirectory);
+		const result = await detectProjectRoot(projectRoot);
+
+		expect(result).toBe(resolvedRoot);
+	});
+
+	it('should prefer validated devflow project root', async () => {
+		const devflowProjectName = 'devflow-project';
+		const devflowProject = path.resolve(
+			temporaryDirectory,
+			devflowProjectName,
+		);
+		const otherProjectName = 'other-project';
+		const otherProject = path.resolve(temporaryDirectory, otherProjectName);
+
+		await mkdir(devflowProject, { recursive: true });
+		await mkdir(otherProject, { recursive: true });
+
+		const devflowGitDirectory = path.resolve(devflowProject, '.git');
+		const otherGitDirectory = path.resolve(otherProject, '.git');
+		await mkdir(devflowGitDirectory, { recursive: true });
+		await mkdir(otherGitDirectory, { recursive: true });
+
+		const devflowPackageJson = path.resolve(devflowProject, 'package.json');
+		const otherPackageJson = path.resolve(otherProject, 'package.json');
+		await writeFile(
+			devflowPackageJson,
+			JSON.stringify({ name: 'devflow-mcp' }),
+		);
+		await writeFile(
+			otherPackageJson,
+			JSON.stringify({ name: 'other-project' }),
+		);
+
+		const resolvedDevflow = await realpath(devflowProject);
+		process.chdir(otherProject);
+
+		const result = await detectProjectRoot();
+
+		expect(result).toBe(resolvedDevflow);
+	});
+
+	it('should warn when detected root is not a devflow project', async () => {
+		const projectRootName = 'non-devflow-project';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
+		await mkdir(gitDirectory, { recursive: true });
+		const packageJsonName = 'package.json';
+		const packageJsonPath = path.resolve(projectRoot, packageJsonName);
+		await writeFile(
+			packageJsonPath,
+			JSON.stringify({ name: 'other-project' }),
+		);
+		const resolvedRoot = await realpath(projectRoot);
+
+		process.chdir(projectRoot);
+		const originalError = console.error;
+		const errorMessages: string[] = [];
+		console.error = (...arguments_: unknown[]) => {
+			errorMessages.push(String(arguments_[0]));
+			originalError(...arguments_);
+		};
+
+		const result = await detectProjectRoot();
+
+		expect(result).toBe(resolvedRoot);
+		expect(
+			errorMessages.some((message) => message.includes('[DevFlow:WARN]')),
+		).toBe(true);
+
+		console.error = originalError;
+	});
 });

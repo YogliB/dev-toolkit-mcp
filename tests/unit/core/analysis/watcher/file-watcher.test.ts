@@ -1,11 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { FileWatcher } from '../../../../../src/core/analysis/watcher/file-watcher';
+import {
+	FileWatcher,
+	estimateDirectorySize,
+	MAX_FILE_COUNT_THRESHOLD,
+} from '../../../../../src/core/analysis/watcher/file-watcher';
 import { GitAwareCache } from '../../../../../src/core/analysis/cache/git-aware';
 import {
 	createTestProject,
 	writeTestFile,
 } from '../../../../setup/test-helpers';
 import { sampleTypeScriptFile } from '../../../../setup/fixtures';
+import path from 'node:path';
+import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 
 const handleChange = () => {};
 
@@ -20,20 +27,20 @@ describe('FileWatcher', () => {
 		await testProject.cleanup();
 	});
 
-	it('should watch directory', () => {
+	it('should watch directory', async () => {
 		const watcher = new FileWatcher();
-		expect(() => {
-			watcher.watchDirectory(testProject.root);
-		}).not.toThrow();
+		await expect(
+			watcher.watchDirectory(testProject.root),
+		).resolves.not.toThrow();
 		watcher.stop();
 	});
 
-	it('should not watch same directory twice', () => {
+	it('should not watch same directory twice', async () => {
 		const watcher = new FileWatcher();
-		watcher.watchDirectory(testProject.root);
-		expect(() => {
-			watcher.watchDirectory(testProject.root);
-		}).not.toThrow();
+		await watcher.watchDirectory(testProject.root);
+		await expect(
+			watcher.watchDirectory(testProject.root),
+		).resolves.not.toThrow();
 		watcher.stop();
 	});
 
@@ -47,7 +54,7 @@ describe('FileWatcher', () => {
 			callbackPaths.push(filePath);
 		});
 
-		watcher.watchDirectory(testProject.root);
+		await watcher.watchDirectory(testProject.root);
 
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -93,7 +100,7 @@ describe('FileWatcher', () => {
 		};
 
 		await cache.set(filePath, analysis);
-		watcher.watchDirectory(testProject.root);
+		await watcher.watchDirectory(testProject.root);
 
 		await writeTestFile(
 			testProject.root,
@@ -118,7 +125,7 @@ describe('FileWatcher', () => {
 
 		watcher.onChange(handleChange);
 
-		watcher.watchDirectory(testProject.root);
+		await watcher.watchDirectory(testProject.root);
 
 		await writeTestFile(testProject.root, 'test.ts', sampleTypeScriptFile);
 		await writeTestFile(
@@ -140,7 +147,7 @@ describe('FileWatcher', () => {
 
 	it('should stop watching and clear timers', async () => {
 		const watcher = new FileWatcher();
-		watcher.watchDirectory(testProject.root);
+		await watcher.watchDirectory(testProject.root);
 
 		await writeTestFile(testProject.root, 'test.ts', sampleTypeScriptFile);
 
@@ -150,5 +157,91 @@ describe('FileWatcher', () => {
 		await new Promise((resolve) => setTimeout(resolve, 100));
 
 		expect(watcher).toBeDefined();
+	});
+
+	it('should exclude node_modules from watching', async () => {
+		const watcher = new FileWatcher(50);
+		const callbackPaths: string[] = [];
+
+		await mkdir(path.join(testProject.root, 'node_modules'), {
+			recursive: true,
+		});
+		await writeTestFile(
+			testProject.root,
+			'node_modules/test.js',
+			'console.log("test");',
+		);
+
+		watcher.onChange((filePath) => {
+			callbackPaths.push(filePath);
+		});
+
+		await watcher.watchDirectory(testProject.root);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+
+		await writeTestFile(
+			testProject.root,
+			'node_modules/another.js',
+			'console.log("another");',
+		);
+		await writeTestFile(
+			testProject.root,
+			'src/valid.ts',
+			sampleTypeScriptFile,
+		);
+
+		await new Promise((resolve) => setTimeout(resolve, 200));
+
+		watcher.stop();
+		expect(callbackPaths.some((p) => p.includes('node_modules'))).toBe(
+			false,
+		);
+		expect(callbackPaths.some((p) => p.includes('valid.ts'))).toBe(true);
+	});
+
+	it('should estimate directory size correctly', async () => {
+		const testDirectory = path.join(tmpdir(), `devflow-test-${Date.now()}`);
+		await mkdir(testDirectory, { recursive: true });
+
+		for (let index = 0; index < 100; index++) {
+			await writeFile(
+				path.join(testDirectory, `file-${index}.txt`),
+				`Content ${index}`,
+			);
+		}
+
+		const size = await estimateDirectorySize(testDirectory);
+		expect(size).toBeGreaterThanOrEqual(100);
+		expect(size).toBeLessThan(MAX_FILE_COUNT_THRESHOLD);
+
+		await rm(testDirectory, { recursive: true, force: true });
+	});
+
+	it('should throw error when directory exceeds threshold', async () => {
+		const testDirectory = path.join(
+			tmpdir(),
+			`devflow-large-test-${Date.now()}`,
+		);
+		await mkdir(testDirectory, { recursive: true });
+
+		for (let index = 0; index < 2000; index++) {
+			const subDirectory = path.join(
+				testDirectory,
+				`dir-${Math.floor(index / 100)}`,
+			);
+			await mkdir(subDirectory, { recursive: true });
+			await writeFile(
+				path.join(subDirectory, `file-${index}.txt`),
+				`Content ${index}`,
+			);
+		}
+
+		const watcher = new FileWatcher();
+		await expect(watcher.watchDirectory(testDirectory)).rejects.toThrow(
+			'Directory too large',
+		);
+
+		watcher.stop();
+		await rm(testDirectory, { recursive: true, force: true });
 	});
 });

@@ -104,58 +104,25 @@ async function main(): Promise<void> {
 
 **Location**: `src/core/config.ts`
 
-The config module handles project root detection with intelligent fallback logic. It searches for project indicators (`.git`, `package.json`, `pyproject.toml`) by traversing up the directory tree:
+The config module handles project root detection with intelligent fallback logic. It searches for project indicators (`.git`, `package.json`, `pyproject.toml`) by traversing up the directory tree, starting from both the current working directory and the server script's directory:
 
-```4:44:src/core/config.ts
-export async function detectProjectRoot(): Promise<string> {
-	const devflowRoot = process.env.DEVFLOW_ROOT;
-	if (devflowRoot) {
-		console.error(
-			`[DevFlow:DEBUG] Using DEVFLOW_ROOT override: ${devflowRoot}`,
-		);
-		return path.resolve(devflowRoot);
-	}
+**Detection Strategy**:
 
-	const indicators = ['.git', 'package.json', 'pyproject.toml'];
-	const originalCurrentDirectory = await realpath('.');
-	let currentDirectory = originalCurrentDirectory;
-
-	while (true) {
-		for (const indicator of indicators) {
-			try {
-				const { readdir } = await import('node:fs/promises');
-				const entries = await readdir(currentDirectory);
-				if (entries.includes(indicator)) {
-					console.error(
-						`[DevFlow:DEBUG] Found project indicator (${indicator}) at: ${currentDirectory}`,
-					);
-					return currentDirectory;
-				}
-			} catch {
-				// Continue checking other indicators
-			}
-		}
-
-		const parentDirectory = path.dirname(currentDirectory);
-		if (parentDirectory === currentDirectory) {
-			// Reached filesystem root, use original cwd as fallback
-			console.error(
-				`[DevFlow:DEBUG] No project indicator found, falling back to cwd: ${originalCurrentDirectory}`,
-			);
-			return originalCurrentDirectory;
-		}
-
-		currentDirectory = parentDirectory;
-	}
-}
-```
+1. **Environment Variable Override**: If `DEVFLOW_ROOT` is set, it takes precedence
+2. **Primary Search**: Starts from current working directory (CWD)
+3. **Fallback Search**: If CWD doesn't yield a validated result, searches from server script directory
+4. **Validation**: Prefers roots that contain a `package.json` with `devflow` in the name
+5. **Warning**: Logs warnings when detected root doesn't appear to be a devflow project
 
 **Features**:
 
 - Environment variable override support (`DEVFLOW_ROOT`)
-- Multiple indicator detection
+- Multiple indicator detection (`.git`, `package.json`, `pyproject.toml`)
+- Server script directory detection using `import.meta.url` for reliable MCP context detection
+- Project validation to prefer devflow projects over generic git repositories
 - Graceful fallback to current working directory
 - Path resolution with `realpath` to handle symlinks
+- Optional `startFrom` parameter for custom search starting points
 
 ### Storage Engine
 
@@ -772,92 +739,50 @@ export class GitAwareCache {
 
 **Location**: `src/core/analysis/watcher/file-watcher.ts`
 
-The file watcher monitors the project directory for changes and invalidates cache entries:
+The file watcher monitors the project directory for changes and invalidates cache entries. It includes safeguards to prevent memory exhaustion when watching large directory trees.
 
-```11:92:src/core/analysis/watcher/file-watcher.ts
-export class FileWatcher {
-	private watchers: Map<string, FSWatcher> = new Map();
-	private callbacks: Set<FileChangeCallback> = new Set();
-	private debounceTime: number;
-	private debounceTimers: Map<string, NodeJS.Timeout> = new Map();
-	private cache?: GitAwareCache;
+**Features**:
 
-	constructor(debounceTime = 100, cache?: GitAwareCache) {
-		this.debounceTime = debounceTime;
-		this.cache = cache;
-	}
+- **Directory Size Validation**: Estimates directory size before watching (samples up to 10k files)
+- **Size Threshold**: Rejects directories with >100k files to prevent memory exhaustion
+- **Exclusion Patterns**: Automatically excludes common large directories:
+    - `node_modules`, `.git`, `.cache`, `.npm`
+    - `dist`, `build`, `.next`, `.turbo`, `coverage`
+- **Event Filtering**: Filters out file change events for excluded paths
+- **Debounced Changes**: Configurable debounce time (default 100ms) to batch rapid changes
+- **Warning Logs**: Warns when watching large directories (>10k files)
 
-	watchDirectory(directoryPath: string): void {
-		if (this.watchers.has(directoryPath)) {
-			return;
-		}
+**API**:
 
-		const resolvedDirectoryPath = path.resolve(directoryPath);
-		const watcher = boundWatch(
-			resolvedDirectoryPath,
-			{ recursive: true },
-			(eventType, filename) => {
-				if (!filename) {
-					return;
-				}
+- `watchDirectory(directoryPath)`: Start watching a directory (async, validates size)
+- `onChange(callback)`: Register callback for file changes
+- `offChange(callback)`: Unregister callback
+- `stop()`: Stop all watchers and clear timers
 
-				const filePath = path.join(resolvedDirectoryPath, filename);
+**Memory Safety**:
 
-				const existingTimer = this.debounceTimers.get(filePath);
-				if (existingTimer) {
-					clearTimeout(existingTimer);
-				}
+The watcher prevents watching excessively large directories by:
 
-				const timer = setTimeout(() => {
-					this.handleFileChange(filePath);
-					this.debounceTimers.delete(filePath);
-				}, this.debounceTime);
+1.  Estimating file count before watching (lightweight, stops at 10k sample)
+2.  Throwing descriptive errors for directories exceeding 100k files
+3.  Filtering events from excluded paths to reduce memory usage
+4.  Logging warnings for large but acceptable directories
 
-				this.debounceTimers.set(filePath, timer);
-			},
-		);
+        stop(): void {
+        	for (const watcher of this.watchers.values()) {
+        		watcher.close();
+        	}
+        	this.watchers.clear();
 
-		this.watchers.set(resolvedDirectoryPath, watcher);
-	}
+        	for (const timer of this.debounceTimers.values()) {
+        		clearTimeout(timer);
+        	}
+        	this.debounceTimers.clear();
+        }
 
-	onChange(callback: FileChangeCallback): void {
-		this.callbacks.add(callback);
-	}
+    }
 
-	offChange(callback: FileChangeCallback): void {
-		this.callbacks.delete(callback);
-	}
-
-	private async handleFileChange(filePath: string): Promise<void> {
-		if (this.cache) {
-			this.cache.invalidate(filePath);
-		}
-
-		for (const callback of this.callbacks) {
-			try {
-				await callback(filePath);
-			} catch (error) {
-				console.error(
-					`[FileWatcher] Error in callback for ${filePath}:`,
-					error,
-				);
-			}
-		}
-	}
-
-	stop(): void {
-		for (const watcher of this.watchers.values()) {
-			watcher.close();
-		}
-		this.watchers.clear();
-
-		for (const timer of this.debounceTimers.values()) {
-			clearTimeout(timer);
-		}
-		this.debounceTimers.clear();
-	}
-}
-```
+````
 
 **Features**:
 
@@ -892,7 +817,7 @@ export function registerAllTools(
 	registerGitTools(server, gitAnalyzer);
 	registerContextTools(server, engine);
 }
-```
+````
 
 ### Available Tools
 

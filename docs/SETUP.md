@@ -112,6 +112,37 @@ bun install --frozen-lockfile
 - [ ] Run `bun run lint` to check code quality
 - [ ] Create a feature branch and start coding
 
+## Configuration
+
+### Project Root Detection
+
+DevFlow automatically detects the project root by searching for indicators (`.git`, `package.json`, `pyproject.toml`) starting from:
+
+1. Current working directory (CWD)
+2. Server script directory (as fallback)
+
+**Setting Custom Project Root**
+
+If automatic detection fails or selects the wrong directory (e.g., when running as MCP server), set the `DEVFLOW_ROOT` environment variable:
+
+```bash
+export DEVFLOW_ROOT=/path/to/your/project
+```
+
+In MCP configuration (e.g., Cursor's `mcp.json`):
+
+```json
+{
+	"devflow": {
+		"command": "node",
+		"args": ["/path/to/devflow/dist/server.js"],
+		"env": {
+			"DEVFLOW_ROOT": "/path/to/your/project"
+		}
+	}
+}
+```
+
 ## Troubleshooting
 
 **Command not found: bun**
@@ -147,6 +178,36 @@ bun run type-check
 bun test --reporter=verbose
 bun run test:ui  # Interactive debugging
 ```
+
+**Memory exhaustion / Server crashes on startup**
+
+If the server crashes with "JavaScript heap out of memory" errors, the detected project root is likely too large (>100k files). Solutions:
+
+1. **Set DEVFLOW_ROOT** to a more specific directory:
+
+    ```bash
+    export DEVFLOW_ROOT=/path/to/specific/project/subdirectory
+    ```
+
+2. **Check detected root**: Look for log messages like:
+
+    ```
+    [DevFlow:INFO] Project root detected: /path/to/root
+    ```
+
+    If this points to your home directory or a very large repository, set `DEVFLOW_ROOT` explicitly.
+
+3. **Verify project structure**: Ensure your project has a `package.json` with `"name": "devflow-mcp"` or contains "devflow" in the name for better detection.
+
+**Server detects wrong project root**
+
+When running as an MCP server, the current working directory may not be your project directory. The server will:
+
+- Try CWD first
+- Fall back to server script directory
+- Prefer roots with devflow project indicators
+
+If detection fails, set `DEVFLOW_ROOT` explicitly in your MCP configuration.
 
 ## Continuous Integration
 

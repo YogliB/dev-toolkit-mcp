@@ -6,7 +6,11 @@ import { AnalysisEngine } from './core/analysis/engine';
 import { TypeScriptPlugin } from './core/analysis/plugins/typescript';
 import { GitAnalyzer } from './core/analysis/git/git-analyzer';
 import { GitAwareCache } from './core/analysis/cache/git-aware';
-import { FileWatcher } from './core/analysis/watcher/file-watcher';
+import {
+	FileWatcher,
+	estimateDirectorySize,
+	MAX_FILE_COUNT_THRESHOLD,
+} from './core/analysis/watcher/file-watcher';
 import { registerAllTools } from './mcp/tools';
 
 let storageEngine: StorageEngine;
@@ -15,10 +19,31 @@ let gitAnalyzer: GitAnalyzer;
 let cache: GitAwareCache;
 let fileWatcher: FileWatcher;
 
+async function validateProjectRoot(projectRoot: string): Promise<void> {
+	const estimatedSize = await estimateDirectorySize(projectRoot);
+
+	if (estimatedSize >= MAX_FILE_COUNT_THRESHOLD) {
+		throw new Error(
+			`Project root directory is too large (estimated ${estimatedSize} files). ` +
+				`Watching this directory would cause memory exhaustion. ` +
+				`Please set DEVFLOW_ROOT environment variable to point to a smaller project directory.`,
+		);
+	}
+
+	if (estimatedSize > 10_000) {
+		console.error(
+			`[DevFlow:WARN] Large project root detected (estimated ${estimatedSize} files). ` +
+				`File watching may impact performance. Consider setting DEVFLOW_ROOT to a more specific directory.`,
+		);
+	}
+}
+
 async function initializeServer(): Promise<void> {
 	try {
 		const projectRoot = await detectProjectRoot();
 		console.error(`[DevFlow:INFO] Project root detected: ${projectRoot}`);
+
+		await validateProjectRoot(projectRoot);
 
 		storageEngine = createStorageEngine({
 			rootPath: projectRoot,
@@ -38,7 +63,7 @@ async function initializeServer(): Promise<void> {
 		console.error('[DevFlow:INFO] Cache initialized');
 
 		fileWatcher = new FileWatcher(100, cache);
-		fileWatcher.watchDirectory(projectRoot);
+		await fileWatcher.watchDirectory(projectRoot);
 		console.error('[DevFlow:INFO] FileWatcher initialized');
 	} catch (error) {
 		const errorMessage =

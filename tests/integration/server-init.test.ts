@@ -137,7 +137,7 @@ describe('Server Initialization Integration', () => {
 		const gitAnalyzer = new GitAnalyzer(projectRoot);
 		const cache = new GitAwareCache();
 		const fileWatcher = new FileWatcher(100, cache);
-		fileWatcher.watchDirectory(projectRoot);
+		await fileWatcher.watchDirectory(projectRoot);
 
 		const server = new FastMCP({
 			name: 'devflow-mcp',
@@ -173,5 +173,44 @@ describe('Server Initialization Integration', () => {
 		} finally {
 			delete process.env.DEVFLOW_ROOT;
 		}
+	});
+
+	it('should reject initialization with directory exceeding size threshold', async () => {
+		const largeTestDirectory = path.resolve(
+			'.test-integration',
+			`large-test-${Date.now()}`,
+		);
+		await mkdir(largeTestDirectory, { recursive: true });
+
+		for (let index = 0; index < 2000; index++) {
+			const subDirectory = path.join(
+				largeTestDirectory,
+				`dir-${Math.floor(index / 100)}`,
+			);
+			await mkdir(subDirectory, { recursive: true });
+			await writeFile(
+				path.join(subDirectory, `file-${index}.txt`),
+				`Content ${index}`,
+			);
+		}
+
+		process.env.DEVFLOW_ROOT = largeTestDirectory;
+
+		const { FileWatcher } =
+			await import('../../src/core/analysis/watcher/file-watcher');
+		const { GitAwareCache } =
+			await import('../../src/core/analysis/cache/git-aware');
+
+		const cache = new GitAwareCache();
+		const fileWatcher = new FileWatcher(100, cache);
+
+		await expect(
+			fileWatcher.watchDirectory(largeTestDirectory),
+		).rejects.toThrow('Directory too large');
+
+		fileWatcher.stop();
+		delete process.env.DEVFLOW_ROOT;
+
+		await rm(largeTestDirectory, { recursive: true, force: true });
 	});
 });
