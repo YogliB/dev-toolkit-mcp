@@ -49,6 +49,8 @@ describe('FileWatcher', () => {
 
 		watcher.watchDirectory(testProject.root);
 
+		await new Promise((resolve) => setTimeout(resolve, 50));
+
 		await writeTestFile(
 			testProject.root,
 			'src/test.ts',
