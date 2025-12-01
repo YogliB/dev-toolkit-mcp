@@ -1,7 +1,6 @@
 [install]
 exact = true
-frozen = false
-trust = true
+buntrust = true
 
 [test]
 concurrent = true
