@@ -182,6 +182,9 @@ jobs:
             - name: Run tests with coverage
               run: bun run test
 
+            - name: Create test results directory
+              run: mkdir -p .bun-test
+
             - name: Check test performance
               run: bun run test:perf
 
