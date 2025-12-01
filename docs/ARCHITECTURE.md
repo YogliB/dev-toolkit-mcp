@@ -1170,7 +1170,7 @@ All file operations go through the storage engine's path validation:
 - **[Setup Guide](./SETUP.md)** - Installation and development setup
 - **[Testing Guide](./TESTING.md)** - Testing strategies and practices
 - **[Security Policy](./SECURITY.md)** - Security best practices
-- **[Memory System](./MEMORY.md)** - Memory system documentation (if applicable)
+- **[Usage Guide](./USAGE.md)** - Usage examples and workflows
 
 ---
 

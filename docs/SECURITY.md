@@ -31,7 +31,7 @@ This project is in active development (Phase 1). Before production use, ensure:
 
 - ✅ Run with appropriate file system permissions
 - ✅ Store project directories in secure locations
-- ✅ Don't commit sensitive data to `.devflow/memory/` or `.devflow/rules/`
+- ✅ Review analysis outputs before sharing sensitive code information
 - ✅ Use `.gitignore` to exclude sensitive decision logs or contexts
 - ✅ Review all generated files before committing to git
 - ⚠️ SQLite indexing (Phase 2) will need security review before enabling
@@ -41,7 +41,7 @@ This project is in active development (Phase 1). Before production use, ensure:
 - **No encryption at rest** - Files stored as plaintext Markdown/JSON
 - **No authentication** - MCP server runs locally; assumes trusted environment
 - **No access control** - File system permissions determine access
-- **Memory persistence** - Decisions and context stored indefinitely (configure `.gitignore` as needed)
+- **Analysis results** - Analysis outputs are transient and not persisted by default
 
 ## Reporting Security Vulnerabilities
 
@@ -95,19 +95,16 @@ npm install --save-exact devflow-mcp@0.1.0
 
 ### Configuration
 
-- Store `.devflow/` in a directory with restricted file permissions
-- Never commit `.devflow/memory/` files containing sensitive decisions
-- Review and sanitize all context before sharing with team members
+- Review analysis outputs before committing or sharing
+- Use appropriate file permissions for project directories
 
 ### Git Integration
 
 Add to `.gitignore` if storing sensitive information:
 
 ```
-# DevFlow sensitive data
-.devflow/memory/activeContext.md
-.devflow/memory/decisionLog.md
-.devflow/memory/projectContext.md
+# DevFlow analysis cache (if using persistent cache)
+.devflow/cache/
 ```
 
 ### Runtime Security
@@ -115,7 +112,7 @@ Add to `.gitignore` if storing sensitive information:
 - Run the MCP server in a trusted environment
 - Don't expose the server to untrusted networks (currently no auth)
 - Monitor file system access to `.devflow/` directories
-- Keep dependencies updated (see `docs/maintenance/PINNED_VERSIONS.md`)
+- Keep dependencies updated (all versions are pinned in `package.json`)
 
 ## Dependency Security
 
@@ -143,7 +140,7 @@ All dependencies are pinned to exact versions to prevent supply chain attacks:
 bun add --exact package@X.Y.Z --save-dev
 ```
 
-See `docs/maintenance/PINNED_VERSIONS.md` for complete version strategy.
+All dependencies use exact versions (no ranges) in `package.json` for reproducibility.
 
 ### Vulnerability Scanning
 
@@ -196,7 +193,7 @@ All 232 transitive dependencies are locked in `bun.lock`. Review major version u
 
 - Monitor GitHub Security Advisories
 - Subscribe to dependency updates via Dependabot
-- Review `docs/maintenance/` for version management guidance
+- Review `package.json` for version management strategy
 - Participate in community security discussions
 
 ## Future Security Enhancements
@@ -217,6 +214,6 @@ As DevFlow evolves (Phase 2+), planned security improvements include:
 
 ---
 
-**Last Updated:** 2024-03-20  
+**Last Updated:** 2024-12-28  
 **Status:** Phase 1 - Foundation (Pre-Release)  
 **License:** MIT

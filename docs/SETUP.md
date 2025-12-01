@@ -1,6 +1,6 @@
 # Project Setup Guide
 
-**DevFlow MCP** - A memory-only MCP server for maintaining context across sessions.
+**DevFlow MCP** - A code analysis MCP server for understanding project structure and code relationships.
 
 Uses Bun as the package manager with strict, pinned dependency versions for reproducibility.
 
@@ -46,14 +46,10 @@ bun run dev
 src/
 ├── core/              # Core infrastructure
 │   ├── config.ts     # Project root detection
-│   ├── schemas/      # Memory file validation
-│   └── storage/      # File I/O engine
-├── layers/
-│   └── memory/       # Memory system
+│   ├── storage/      # File I/O engine
+│   └── analysis/     # Analysis engine and plugins
 ├── mcp/              # MCP server
-│   ├── tools/        # Memory tools
-│   ├── resources/    # Memory resources
-│   └── prompts/      # Memory prompts
+│   └── tools/        # Analysis tools
 ├── cli/              # CLI interface
 ├── utils/            # Utilities
 ├── index.ts          # Entry point
@@ -175,7 +171,7 @@ bun run type-check # Validate types
 bun test           # Run tests
 ```
 
-See [CI Workflow Documentation](./CI.md) for detailed troubleshooting and branch protection setup.
+See the [Testing Guide](./TESTING.md) for testing strategies and CI integration details.
 
 ## Git Hooks
 
@@ -202,16 +198,16 @@ See `docs/SECURITY.md` for security best practices and version management strate
 
 ## Next Steps
 
-1. Review the [Memory System Documentation](./MEMORY.md)
-2. Review the [CI Workflow Documentation](./CI.md)
-3. Review the [Testing Guide](./TESTING.md)
-4. Start working with the memory tools and integration
+1. Review the [Usage Guide](./USAGE.md) for examples and workflows
+2. Review the [Architecture Documentation](./ARCHITECTURE.md) for technical details
+3. Review the [Testing Guide](./TESTING.md) for testing strategies
+4. Start using DevFlow analysis tools in your AI agent
 
 ---
 
 **Last updated:** 2024-12-28  
-**For security considerations:** See `docs/SECURITY.md`  
-**For CI/CD details:** See `docs/CI.md`
+**For security considerations:** See [Security Policy](./SECURITY.md)  
+**For testing details:** See [Testing Guide](./TESTING.md)
 
 ```
 

@@ -1,6 +1,6 @@
 # DevFlow Documentation
 
-**Memory-only MCP server for maintaining context across AI agent sessions.**
+**Code analysis MCP server for understanding project structure, symbols, patterns, and dependencies.**
 
 ---
 
@@ -9,8 +9,8 @@
 New to DevFlow? Start here:
 
 1. **[Setup Guide](./SETUP.md)** - Installation and configuration
-2. **[Memory System](./MEMORY.md)** - Complete memory documentation
-3. **[Custom Instructions](./CUSTOM-INSTRUCTIONS.md)** - AI agent guidance
+2. **[Usage Guide](./USAGE.md)** - Usage examples and workflows
+3. **[Architecture](./ARCHITECTURE.md)** - Technical architecture documentation
 
 ---
 
@@ -18,87 +18,43 @@ New to DevFlow? Start here:
 
 ### Core Guides
 
-| Document                                           | Purpose                                        |
-| -------------------------------------------------- | ---------------------------------------------- |
-| [MEMORY.md](./MEMORY.md)                           | Memory system guide and API reference          |
-| [CUSTOM-INSTRUCTIONS.md](./CUSTOM-INSTRUCTIONS.md) | AI agent guidance for Memory Bank              |
-| [SETUP.md](./SETUP.md)                             | Installation, configuration, development setup |
-| [TESTING.md](./TESTING.md)                         | Testing strategies and performance monitoring  |
-
-### Migration & Deprecation
-
-| Document                           | Purpose                                       |
-| ---------------------------------- | --------------------------------------------- |
-| [MIGRATION.md](./MIGRATION.md)     | Upgrade guide from 4-file to 6-file structure |
-| [DEPRECATION.md](./DEPRECATION.md) | Deprecation timeline and affected features    |
+| Document                             | Purpose                                        |
+| ------------------------------------ | ---------------------------------------------- |
+| [SETUP.md](./SETUP.md)               | Installation, configuration, development setup |
+| [USAGE.md](./USAGE.md)               | Usage examples, workflows, and integration     |
+| [TESTING.md](./TESTING.md)           | Testing strategies and performance monitoring  |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical architecture and design patterns     |
 
 ### Reference
 
-| Document                                             | Purpose                                   |
-| ---------------------------------------------------- | ----------------------------------------- |
-| [STORAGE-ARCHITECTURE.md](./STORAGE-ARCHITECTURE.md) | Storage engine and repository design      |
-| [SECURITY.md](./SECURITY.md)                         | Security policy and best practices        |
-| [CI.md](./CI.md)                                     | CI/CD workflow and troubleshooting        |
-| [CI-QUICK-REF.md](./CI-QUICK-REF.md)                 | Quick CI reference and pre-push checklist |
-
-### Templates
-
-| Document                                                    | Purpose                             |
-| ----------------------------------------------------------- | ----------------------------------- |
-| [TEMPLATES.md](../src/layers/memory/templates/TEMPLATES.md) | Memory bank templates documentation |
+| Document                             | Purpose                            |
+| ------------------------------------ | ---------------------------------- |
+| [SECURITY.md](./SECURITY.md)         | Security policy and best practices |
+| [CHANGELOG.md](./CHANGELOG.md)       | Version history and changes        |
+| [ROADMAP.md](./ROADMAP.md)           | Project roadmap and future plans   |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Contribution guidelines            |
 
 ---
 
-## Memory System Overview
+## Analysis Capabilities
 
-DevFlow provides persistent context across sessions through **six core memory files**:
+DevFlow provides comprehensive code analysis through AST parsing and pattern detection:
 
-### File Hierarchy
+### Analysis Tools
 
-```
-projectBrief.md (foundation)
-├── productContext.md (why/how)
-├── systemPatterns.md (architecture + decisions)
-└── techContext.md (tech stack)
-    ├── activeContext.md (current work)
-    └── progress.md (tracking)
-```
+- **Project Analysis** - Extract metadata, dependencies, and structure
+- **Architecture Analysis** - Understand project organization and layers
+- **Symbol Analysis** - Find and track symbols across the codebase
+- **Pattern Detection** - Identify design patterns and anti-patterns
+- **Dependency Graphs** - Visualize relationships between modules
+- **Git Analysis** - Extract decisions and track change velocity
+- **Context Analysis** - Get comprehensive file context and summaries
 
-### Core Files
+### Supported Languages
 
-- **projectBrief.md** - Foundation document (what you're building)
-- **productContext.md** - Why it exists and how it should work
-- **systemPatterns.md** - Architecture, design patterns, and decisions
-- **techContext.md** - Technologies, setup, and constraints
-- **activeContext.md** - Current work and immediate focus
-- **progress.md** - Tasks, milestones, and metrics
+Currently supports **TypeScript** and **JavaScript** via the TypeScript plugin.
 
-### Quick Commands
-
-```bash
-# Initialize memory bank (creates 6 files)
-devflow memory-init
-
-# Update a file
-/memory-activeContext action=update content="Working on..."
-
-# Get a file
-/memory-projectBrief action=get
-
-# Delete a file
-/memory-progress action=delete
-
-# Get full session context (all 6 files)
-devflow memory-context
-
-# Review all memories with guided workflow
-devflow memory-update
-
-# List all 6 core files
-devflow memory-list
-```
-
-**[Full Memory Documentation →](./MEMORY.md)**
+**Coming Soon:** Python, Go, Rust, and more via language plugins.
 
 ---
 
@@ -119,7 +75,7 @@ Add to `mcp.json`:
 }
 ```
 
-Memory context auto-loads via `devflow://context/memory` resource (all 6 files).
+DevFlow tools are available via MCP protocol for code analysis.
 
 ### Zed
 
@@ -136,9 +92,9 @@ Add to `settings.json`:
 }
 ```
 
-Use `/memory-context` to load all 6 files.
+Use DevFlow tools for code analysis and project understanding.
 
-**Note:** Zed only supports MCP tools (no resources or prompts).
+**Note:** Zed supports MCP tools for code analysis.
 
 ### Claude Desktop
 
@@ -163,20 +119,13 @@ Add to `mcp.json`:
 
 If you're an AI agent working with DevFlow:
 
-1. **Read [CUSTOM-INSTRUCTIONS.md](./CUSTOM-INSTRUCTIONS.md)** for complete guidance
-2. **Load ALL 6 files** at session start using `/memory-context`
-3. **Update activeContext.md** frequently during work
-4. **Document decisions** in systemPatterns.md with full context
-5. **Archive aggressively** - keep activeContext.md to last 7 days only
+1. **Start with project overview** - Use `getProjectOnboarding` to understand the project
+2. **Analyze architecture** - Use `getArchitecture` to understand structure
+3. **Find symbols** - Use `findSymbol` and `findReferences` to locate code
+4. **Understand context** - Use `getContextForFile` for detailed file analysis
+5. **Track changes** - Use `getRecentDecisions` and `analyzeChangeVelocity` for git insights
 
-**File Reading Order:**
-
-1. projectBrief.md - Understand what you're building
-2. productContext.md - Understand why and how
-3. systemPatterns.md - Understand architecture
-4. techContext.md - Understand technologies
-5. activeContext.md - Understand current work
-6. progress.md - Understand project status
+See [Usage Guide](./USAGE.md) for detailed examples and workflows.
 
 ---
 
@@ -206,12 +155,14 @@ bun run build
 
 ```
 src/
-├── core/              # Config, schemas, storage
-├── layers/memory/     # Memory repository
-│   └── templates/     # 6 core template files
-├── mcp/               # MCP tools, resources, prompts
-├── cli/               # CLI interface
-└── index.ts          # Main server
+├── core/              # Core infrastructure
+│   ├── config.ts     # Project root detection
+│   ├── storage/       # File I/O engine
+│   └── analysis/     # Analysis engine and plugins
+├── mcp/               # MCP server
+│   └── tools/         # Analysis tools
+├── server.ts          # Main server entry point
+└── index.ts          # Public API
 ```
 
 **[Full Setup Guide →](./SETUP.md)**
@@ -220,63 +171,19 @@ src/
 
 ## Key Features
 
-- **10 Memory Tools** - 6 file-specific (get/update/delete per file) + 4 global (list, init, context, update)
-- **2 Resources** - Combined context (all 6 files) + individual files
-- **1 Prompt** - Zed workaround for dynamic resources
-- **Behavioral Descriptions** - Each tool guides AI on when/how to use it
+- **7 Tool Categories** - Project, architecture, symbols, patterns, graph, git, and context analysis
+- **Plugin Architecture** - Extensible language support via plugins
+- **AST-Based Analysis** - Deep code understanding through AST parsing
+- **Pattern Detection** - Identify design patterns and code smells
+- **Dependency Analysis** - Visualize relationships and dependencies
+- **Git Integration** - Extract decisions and track change velocity
 - **Type-Safe** - Full TypeScript with Zod validation
-- **Git-Friendly** - Plain Markdown, human-readable
-- **Cross-Platform** - Works with Claude, Cursor, Zed
-- **Zero Config** - Works immediately after `memory-init`
-
----
-
-## Migration from Legacy Structure
-
-If you have the old 4-file structure (`projectContext`, `activeContext`, `progress`, `decisionLog`):
-
-**Quick Check:**
-
-```bash
-devflow memory-list
-```
-
-If output shows `"structure": "legacy-4-file"`, you should migrate.
-
-**Migration Steps:**
-
-1. Backup: `cp -r .devflow/memory .devflow/memory-backup`
-2. Initialize: `devflow memory-init`
-3. Split `projectContext.md` → 3 files (projectBrief, productContext, techContext)
-4. Create `systemPatterns.md` from architecture sections
-5. Migrate `decisionLog.md` → `systemPatterns.md` "Key Technical Decisions"
-6. Update `activeContext.md` and `progress.md`
-7. Verify: `devflow memory-list` shows `6-file`
-
-**[Complete Migration Guide →](./MIGRATION.md)**
-
-**[Deprecation Timeline →](./DEPRECATION.md)**
+- **Cross-Platform** - Works with Claude Desktop, Cursor, Zed
+- **Fast & Efficient** - Caching and incremental analysis support
 
 ---
 
 ## Troubleshooting
-
-### Memory not loading
-
-```bash
-ls -la .devflow/memory/
-devflow memory-list
-```
-
-Run `devflow memory-init` if missing or incomplete.
-
-### Legacy structure detected
-
-```bash
-devflow memory-list
-```
-
-If shows `"structure": "legacy-4-file"`, see [MIGRATION.md](./MIGRATION.md).
 
 ### Server won't start
 
@@ -304,16 +211,14 @@ bun test --reporter=verbose
 
 **Documentation:**
 
-- [Memory System](./MEMORY.md)
-- [Custom Instructions](./CUSTOM-INSTRUCTIONS.md)
-- [Migration Guide](./MIGRATION.md)
-- [Storage Architecture](./STORAGE-ARCHITECTURE.md)
-- [Security Policy](./SECURITY.md)
+- [Setup Guide](./SETUP.md) - Installation and configuration
+- [Usage Guide](./USAGE.md) - Usage examples and workflows
+- [Architecture](./ARCHITECTURE.md) - Technical architecture
+- [Testing Guide](./TESTING.md) - Testing strategies
+- [Security Policy](./SECURITY.md) - Security best practices
 
 ---
 
-**Ready to start?** Follow the [Setup Guide](./SETUP.md) or dive into the [Memory System](./MEMORY.md).
+**Ready to start?** Follow the [Setup Guide](./SETUP.md) or check out the [Usage Guide](./USAGE.md) for examples.
 
-**Using AI agents?** Read [Custom Instructions](./CUSTOM-INSTRUCTIONS.md) for guidance.
-
-**Migrating?** See [Migration Guide](./MIGRATION.md) for upgrade instructions.
+**Want to contribute?** See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.

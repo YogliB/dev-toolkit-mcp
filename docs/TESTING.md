@@ -461,7 +461,7 @@ Performance check:
 | `bun test`                 | Run all tests (with concurrent execution)   |
 | `bun run test:unit`        | Unit tests only                             |
 | `bun run test:integration` | Integration tests only                      |
-| `bun run test:watch`       | Watch mode                                  |
+| `bun test --watch`         | Watch mode (re-runs on file changes)        |
 | `bun run test:coverage`    | Run tests with coverage                     |
 | `bun run test:ai`          | AI agent mode (quiet output, only failures) |
 | `bun run test:perf`        | Performance tracking with baseline          |

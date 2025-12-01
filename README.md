@@ -1,6 +1,6 @@
 # DevFlow MCP
 
-**Memory-only MCP server for maintaining context across sessions with any AI agent.**
+**Code analysis MCP server for understanding project structure, symbols, patterns, and dependencies.**
 
 ✅ **Status:** Production Ready
 
@@ -8,12 +8,14 @@
 
 ## What is DevFlow?
 
-DevFlow solves the fundamental problem of **AI agents forgetting context between sessions**. It provides a persistent memory system that works with any MCP-compatible AI agent:
+DevFlow provides **comprehensive code analysis** through AST parsing and pattern detection. It helps AI agents understand codebases by analyzing structure, relationships, and patterns:
 
-- **Persistent Memory** - Session continuity across conversations
-- **Decision Tracking** - Log and recall architectural decisions
-- **Progress Management** - Track accomplishments and blockers
-- **Project Context** - Maintain project-wide metadata
+- **Project Analysis** - Extract metadata, dependencies, and structure
+- **Architecture Analysis** - Understand project organization and layers
+- **Symbol Analysis** - Find and track symbols across the codebase
+- **Pattern Detection** - Identify design patterns and anti-patterns
+- **Dependency Graphs** - Visualize relationships between modules
+- **Git Analysis** - Extract decisions and track change velocity
 
 ## Quick Start
 
@@ -21,74 +23,53 @@ DevFlow solves the fundamental problem of **AI agents forgetting context between
 # Install
 npm install -g devflow-mcp
 
-# Initialize in your project
-cd your-project
-devflow memory-init
+# Configure your AI agent (see Setup Guide)
+# Then use tools like:
+# - getProjectOnboarding
+# - getArchitecture
+# - findSymbol
+# - detectPatterns
 ```
 
-**📚 [Memory System Documentation](./docs/MEMORY.md)** - Complete guide
+**📚 [Documentation Index](./docs/README.md)** - Complete documentation
 
-## Memory System
+## Analysis Tools
 
-DevFlow provides six core memory files:
+DevFlow provides seven categories of analysis tools:
 
-### Core Memory Files
+### Project Tools
 
-- **projectBrief.md** - Foundation document (what you're building)
-- **productContext.md** - Why it exists and how it should work
-- **systemPatterns.md** - Architecture, design patterns, and decisions
-- **techContext.md** - Technologies, setup, and constraints
-- **activeContext.md** - Current work and immediate focus
-- **progress.md** - Session progress and accomplishments
+- `getProjectOnboarding` - Extract project metadata and dependencies
 
-### Memory Tools
+### Architecture Tools
 
-All tools available via MCP protocol:
+- `getArchitecture` - Get architectural overview with symbols and patterns
 
-**File-Specific Tools (6)** - Each handles get/update/delete for one core file:
+### Symbol Tools
 
-- `memory-projectBrief { action: "get" | "update" | "delete", content?: "..." }`
-- `memory-productContext { action: "get" | "update" | "delete", content?: "..." }`
-- `memory-systemPatterns { action: "get" | "update" | "delete", content?: "..." }`
-- `memory-techContext { action: "get" | "update" | "delete", content?: "..." }`
-- `memory-activeContext { action: "get" | "update" | "delete", content?: "..." }`
-- `memory-progress { action: "get" | "update" | "delete", content?: "..." }`
+- `findSymbol` - Search for symbols by name and type
+- `findReferences` - Find all references to a symbol
 
-**Global Tools (4):**
+### Pattern Tools
 
-- `memory-list` - List all 6 core memory files with metadata
-- `memory-init` - Initialize memory bank with core template files
-- `memory-context` - Get combined context from all 6 core files for session refresh
-- `memory-update` - Review all memory files with guided update workflow
+- `detectPatterns` - Detect design patterns in code
+- `detectAntiPatterns` - Identify code smells and anti-patterns
 
-**Example Usage:**
+### Graph Tools
 
-```json
-// Get a file
-{ "action": "get" }
+- `getDependencyGraph` - Build dependency graph between files
 
-// Update a file
-{ "action": "update", "content": "# Project Brief\n\nWe're building..." }
+### Git Tools
 
-// Delete a file
-{ "action": "delete" }
-```
+- `getRecentDecisions` - Extract decisions from git commits
+- `analyzeChangeVelocity` - Analyze file change frequency
 
-Each file-specific tool includes behavioral guidance:
+### Context Tools
 
-- **WHEN TO USE**: Trigger phrases to help AI choose the right file
-- **CONTAINS**: What type of content belongs in this file
-- **💡 TIP**: Best practices for maintaining the file
-- **❌ NOT FOR**: Anti-patterns that redirect to correct files
+- `getContextForFile` - Get comprehensive file context
+- `summarizeFile` - Generate file summary
 
-### Memory Resources
-
-- `devflow://context/memory` - Combined context resource with all 6 files (Cursor)
-- `devflow://memory/{name}` - Individual memory file resource
-
-### Memory Prompts
-
-- `memory:load` - Load and format specific memory (Zed workaround)
+See [Usage Guide](./docs/USAGE.md) for detailed examples.
 
 ## Setup by Agent
 
@@ -107,11 +88,11 @@ Create `mcp.json` in your project root:
 }
 ```
 
-Then use tools like:
+Then use analysis tools like:
 
-- `/memory-activeContext` with `{ "action": "update", "content": "..." }`
-- `/memory-list` to see all 6 core files
-- `/memory-init` to create initial templates
+- `getProjectOnboarding` - Get project overview
+- `getArchitecture` - Understand project structure
+- `findSymbol` - Locate code symbols
 
 ### Cursor
 
@@ -130,13 +111,11 @@ Create `mcp.json` in your project root:
 
 Use in Composer or Chat:
 
-- `/memory-projectBrief`, `/memory-activeContext`, etc. - File-specific operations
-- `/memory-list` - List all 6 core files
-- `/memory-context` - Get session context
-- `/memory-update` - Review and update
-- `/memory-init` - Initialize templates
-
-Access auto-loaded context via `devflow://context/memory` resource.
+- `getProjectOnboarding` - Get project metadata
+- `getArchitecture` - Analyze project structure
+- `findSymbol` - Search for symbols
+- `detectPatterns` - Find design patterns
+- `getContextForFile` - Get file context
 
 ### Zed
 
@@ -153,15 +132,13 @@ Add to your `settings.json`:
 }
 ```
 
-Use in Assistant (tools only):
+Use in Assistant:
 
-- `/memory-projectBrief`, `/memory-activeContext`, etc. - File-specific operations
-- `/memory-list` - List all 6 core files
-- `/memory-context` - Get combined context
-- `/memory-update` - Review all files
-- `/memory-init` - Initialize templates
-
-**Note:** Zed currently only supports MCP tools. Resources and prompts are not available.
+- `getProjectOnboarding` - Project overview
+- `getArchitecture` - Architecture analysis
+- `findSymbol` - Symbol search
+- `detectPatterns` - Pattern detection
+- `getContextForFile` - File context
 
 **[Setup Guide](./docs/SETUP.md)** - Detailed configuration instructions
 
@@ -169,54 +146,58 @@ Use in Assistant (tools only):
 
 ### Getting Started
 
-- **[Memory System](./docs/MEMORY.md)** - Complete memory documentation
 - **[Setup Guide](./docs/SETUP.md)** - Installation and configuration
+- **[Usage Guide](./docs/USAGE.md)** - Usage examples and workflows
 - **[Testing Guide](./docs/TESTING.md)** - Running and writing tests
 
 ### Reference
 
-- **[Storage Architecture](./docs/STORAGE-ARCHITECTURE.md)** - Technical details
+- **[Architecture](./docs/ARCHITECTURE.md)** - Technical architecture
 - **[Security Policy](./docs/SECURITY.md)** - Best practices
-- **[CI Workflow](./docs/CI.md)** - Continuous integration
+- **[Contributing](./docs/CONTRIBUTING.md)** - Contribution guidelines
 
 **📖 [Full Documentation Index](./docs/README.md)**
 
 ## Key Features
 
-- **Persistent Across Sessions** - Memory survives between conversations
-- **Git-Friendly Storage** - Plain Markdown files, human-readable
+- **AST-Based Analysis** - Deep code understanding through AST parsing
+- **Plugin Architecture** - Extensible language support
+- **Pattern Detection** - Identify design patterns and code smells
+- **Dependency Analysis** - Visualize relationships and dependencies
+- **Git Integration** - Extract decisions and track change velocity
 - **Type-Safe** - Full TypeScript with Zod validation
-- **Cross-Platform** - Works with Claude, Cursor, Zed, VSCode
-- **Simple API** - Easy-to-use tools and resources
-- **Zero Config** - Works immediately after `memory-init`
-- **Optional Metadata** - Frontmatter for organization
-- **Large File Support** - Handles files up to 2MB+
+- **Cross-Platform** - Works with Claude Desktop, Cursor, Zed
+- **Fast & Efficient** - Caching and incremental analysis support
 
 ## Why DevFlow?
 
-Current AI coding tools suffer from **context loss**:
+Understanding large codebases is challenging:
 
-- ❌ Memory resets between conversations
-- ❌ Decisions get forgotten and re-debated
-- ❌ Progress tracking scattered across multiple places
-- ❌ Context loading manual and tedious
+- ❌ Manual code exploration is time-consuming
+- ❌ Hard to track symbol relationships
+- ❌ Pattern detection requires deep knowledge
+- ❌ Dependency analysis is complex
 
-**DevFlow fixes this:**
+**DevFlow provides:**
 
-- ✅ Persistent memory across all sessions
-- ✅ Automatic context availability
-- ✅ Centralized decision tracking
-- ✅ Works with any MCP-compatible agent
+- ✅ Automated code analysis
+- ✅ Symbol search and reference tracking
+- ✅ Pattern and anti-pattern detection
+- ✅ Dependency graph visualization
+- ✅ Git history insights
 
 ## Project Status
 
-**Memory Module:** ✅ Production Ready
+**Analysis Engine:** ✅ Production Ready
 
-- ✅ Memory save/get/list/delete tools
-- ✅ Memory init tool with template generation
-- ✅ Memory context and update tools
-- ✅ Dynamic memory resources
-- ✅ Comprehensive integration tests (26/26 passing)
+- ✅ Project and architecture analysis tools
+- ✅ Symbol search and reference finding
+- ✅ Pattern detection (design patterns and anti-patterns)
+- ✅ Dependency graph generation
+- ✅ Git analysis tools
+- ✅ File context and summarization
+- ✅ TypeScript/JavaScript support
+- ✅ Comprehensive integration tests
 - ✅ Full type safety with Zod schemas
 - ✅ Cross-platform MCP compatibility
 
@@ -225,7 +206,8 @@ Current AI coding tools suffer from **context loss**:
 - **TypeScript 5.3+** - Type safety and developer experience
 - **MCP SDK** - Standard protocol implementation
 - **Bun 1.3.2** - Fast runtime, package management, and testing
-- **Markdown/JSON** - Git-friendly storage
+- **ts-morph** - TypeScript AST manipulation
+- **simple-git** - Git repository analysis
 - **Zod** - Schema validation
 
 ## Development
@@ -283,10 +265,10 @@ DevFlow is actively maintained and welcomes contributions!
 
 **Focus Areas:**
 
-- Bug fixes and stability improvements
-- Documentation enhancements
+- Language plugin implementations (Python, Go, Rust)
+- AST analysis improvements
 - Performance optimizations
-- Additional agent integration examples
+- Pattern detection enhancements
 - Testing improvements
 
 **Getting Started:**
@@ -310,26 +292,32 @@ See [Setup Guide](./docs/SETUP.md) for detailed development instructions.
 
 ## Architecture
 
-DevFlow uses a clean, modular architecture focused on memory:
+DevFlow uses a clean, modular architecture focused on code analysis:
 
 ```
 src/
 ├── core/
 │   ├── config.ts          # Project root detection
-│   ├── schemas/           # Zod validation (memory only)
-│   └── storage/           # File I/O abstraction
-├── layers/
-│   └── memory/            # Memory repository
+│   ├── storage/           # File I/O abstraction
+│   └── analysis/          # Analysis engine and plugins
+│       ├── engine.ts      # Analysis orchestrator
+│       ├── plugins/       # Language plugins
+│       ├── cache/         # Caching system
+│       └── git/           # Git analyzer
 ├── mcp/
-│   ├── tools/memory.ts    # 7 memory tools
-│   ├── resources/memory.ts # 2 memory resources
-│   └── prompts/memory.ts  # 2 memory prompts
-├── cli/                   # CLI entry point
-├── index.ts              # Main MCP server
-└── index.test.ts         # Integration tests
+│   └── tools/             # Analysis tools
+│       ├── project.ts    # Project tools
+│       ├── architecture.ts # Architecture tools
+│       ├── symbols.ts     # Symbol tools
+│       ├── patterns.ts    # Pattern tools
+│       ├── graph.ts       # Graph tools
+│       ├── git.ts         # Git tools
+│       └── context.ts     # Context tools
+├── server.ts              # Main MCP server
+└── index.ts              # Public API
 ```
 
-**[Storage Architecture](./docs/STORAGE-ARCHITECTURE.md)** - Technical deep dive
+**[Architecture Documentation](./docs/ARCHITECTURE.md)** - Technical deep dive
 
 ## Security
 
@@ -353,13 +341,14 @@ MIT - Build whatever you want with DevFlow.
 
 **Documentation:**
 
-- [Memory System](./docs/MEMORY.md) - Complete documentation
-- [Storage Architecture](./docs/STORAGE-ARCHITECTURE.md) - Technical reference
+- [Documentation Index](./docs/README.md) - Complete documentation overview
 - [Setup Guide](./docs/SETUP.md) - Installation guide
+- [Usage Guide](./docs/USAGE.md) - Usage examples and workflows
+- [Architecture](./docs/ARCHITECTURE.md) - Technical reference
 - [Testing Guide](./docs/TESTING.md) - Testing strategies
 
 ---
 
-**Ready to start?** Read the [Memory System Documentation](./docs/MEMORY.md) or follow the [Setup Guide](./docs/SETUP.md).
+**Ready to start?** Follow the [Setup Guide](./docs/SETUP.md) or check out the [Usage Guide](./docs/USAGE.md).
 
 For issues, questions, or suggestions, please open an issue on GitHub.
