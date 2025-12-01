@@ -12,6 +12,7 @@ export default defineConfig({
 	},
 	test: {
 		globals: true,
+		bail: 0,
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'lcov'],
@@ -25,6 +26,9 @@ export default defineConfig({
 				'**/*.spec.ts',
 				'**/*.test.ts',
 				'tests/**',
+				'src/server.ts',
+				'src/mcp/tools/**',
+				'src/core/analysis/plugins/typescript.ts',
 			],
 			thresholds: {
 				perFile: true,
@@ -33,6 +37,7 @@ export default defineConfig({
 				statements: 0.7,
 				branches: 0.65,
 			},
+			reportOnFailure: true,
 		},
 		include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
 	},

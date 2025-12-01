@@ -1,10 +1,8 @@
-/* eslint-disable security/detect-non-literal-fs-filename */
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { detectProjectRoot } from '../../src/core/config';
 import { createStorageEngine } from '../../src/core/storage/engine';
 import path from 'node:path';
 import { mkdir, writeFile, rm, realpath } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 
 describe('Server Initialization Integration', () => {
 	let originalCurrentDirectory: string;
@@ -14,16 +12,22 @@ describe('Server Initialization Integration', () => {
 	beforeEach(async () => {
 		originalCurrentDirectory = process.cwd();
 		originalEnvironment = process.env.DEVFLOW_ROOT;
-		testProjectRoot = path.join(
-			tmpdir(),
-			`devflow-init-test-${Date.now()}`,
-		);
+		const testRootName = `devflow-init-test-${Date.now()}`;
+		testProjectRoot = path.resolve('.test-integration', testRootName);
 
-		const gitDirectory = path.join(testProjectRoot, '.git');
+		await mkdir(path.resolve('.test-integration', testRootName), {
+			recursive: true,
+		});
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(testProjectRoot, gitDirectoryName);
 		await mkdir(gitDirectory, { recursive: true });
-		await writeFile(path.join(testProjectRoot, 'package.json'), '{}');
+		const packageJsonName = 'package.json';
+		const packageJsonPath = path.resolve(testProjectRoot, packageJsonName);
+		await writeFile(packageJsonPath, '{}');
 
-		testProjectRoot = await realpath(testProjectRoot);
+		testProjectRoot = await realpath(
+			path.resolve('.test-integration', testRootName),
+		);
 		process.chdir(testProjectRoot);
 	});
 
@@ -103,6 +107,71 @@ describe('Server Initialization Integration', () => {
 			expect(true).toBe(false); // Should not reach here
 		} catch (error) {
 			expect(error).toBeDefined();
+		}
+	});
+
+	it('should initialize full server components', async () => {
+		const projectRoot = await detectProjectRoot();
+		const { AnalysisEngine } =
+			await import('../../src/core/analysis/engine');
+		const { TypeScriptPlugin } =
+			await import('../../src/core/analysis/plugins/typescript');
+		const { GitAnalyzer } =
+			await import('../../src/core/analysis/git/git-analyzer');
+		const { GitAwareCache } =
+			await import('../../src/core/analysis/cache/git-aware');
+		const { FileWatcher } =
+			await import('../../src/core/analysis/watcher/file-watcher');
+		const { FastMCP } = await import('fastmcp');
+		const { registerAllTools } = await import('../../src/mcp/tools');
+
+		const storageEngine = createStorageEngine({
+			rootPath: projectRoot,
+			debug: false,
+		});
+
+		const analysisEngine = new AnalysisEngine(projectRoot);
+		const tsPlugin = new TypeScriptPlugin(projectRoot);
+		analysisEngine.registerPlugin(tsPlugin);
+
+		const gitAnalyzer = new GitAnalyzer(projectRoot);
+		const cache = new GitAwareCache();
+		const fileWatcher = new FileWatcher(100, cache);
+		fileWatcher.watchDirectory(projectRoot);
+
+		const server = new FastMCP({
+			name: 'devflow-mcp',
+			version: '0.1.0',
+		});
+
+		registerAllTools(server, analysisEngine, storageEngine, gitAnalyzer);
+
+		expect(analysisEngine).toBeDefined();
+		expect(gitAnalyzer).toBeDefined();
+		expect(cache).toBeDefined();
+		expect(fileWatcher).toBeDefined();
+		expect(server).toBeDefined();
+
+		fileWatcher.stop();
+	});
+
+	it('should handle initialization errors gracefully', async () => {
+		const invalidPath = path.resolve(
+			'.test-integration',
+			`invalid-${Date.now()}`,
+		);
+		process.env.DEVFLOW_ROOT = invalidPath;
+
+		try {
+			const projectRoot = await detectProjectRoot();
+			const storageEngine = createStorageEngine({
+				rootPath: projectRoot,
+				debug: false,
+			});
+
+			expect(storageEngine.getRootPath()).toBe(invalidPath);
+		} finally {
+			delete process.env.DEVFLOW_ROOT;
 		}
 	});
 });

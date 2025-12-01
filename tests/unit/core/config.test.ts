@@ -1,9 +1,7 @@
-/* eslint-disable security/detect-non-literal-fs-filename */
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { detectProjectRoot } from '../../../src/core/config';
 import path from 'node:path';
-import { mkdir, writeFile, realpath } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile, realpath, rm } from 'node:fs/promises';
 
 describe('detectProjectRoot', () => {
 	let originalCurrentDirectory: string;
@@ -13,8 +11,18 @@ describe('detectProjectRoot', () => {
 	beforeEach(async () => {
 		originalCurrentDirectory = process.cwd();
 		originalEnvironment = process.env.DEVFLOW_ROOT;
-		temporaryDirectory = path.join(tmpdir(), `devflow-test-${Date.now()}`);
-		await mkdir(temporaryDirectory, { recursive: true });
+		const testBasePathLiteral = '.test-config';
+		await mkdir(testBasePathLiteral, {
+			recursive: true,
+		});
+		const testDirectoryName = `devflow-test-${Date.now()}`;
+		temporaryDirectory = path.resolve(
+			testBasePathLiteral,
+			testDirectoryName,
+		);
+		await mkdir(temporaryDirectory, {
+			recursive: true,
+		});
 		temporaryDirectory = await realpath(temporaryDirectory);
 	});
 
@@ -26,7 +34,6 @@ describe('detectProjectRoot', () => {
 		}
 
 		try {
-			const { rm } = await import('node:fs/promises');
 			await rm(temporaryDirectory, { recursive: true, force: true });
 		} catch {
 			// Cleanup might fail in some cases, but that's okay for tests
@@ -34,7 +41,8 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should use DEVFLOW_ROOT env var when set', async () => {
-		const customRoot = path.join(temporaryDirectory, 'custom-root');
+		const customRootName = 'custom-root';
+		const customRoot = path.resolve(temporaryDirectory, customRootName);
 		await mkdir(customRoot, { recursive: true });
 		const resolvedCustomRoot = await realpath(customRoot);
 
@@ -46,8 +54,10 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should find .git directory', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'project-with-git');
-		const gitDirectory = path.join(projectRoot, '.git');
+		const projectRootName = 'project-with-git';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
 		await mkdir(gitDirectory, { recursive: true });
 		const resolvedRoot = await realpath(projectRoot);
 
@@ -58,9 +68,12 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should find package.json file', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'project-with-pkg');
+		const projectRootName = 'project-with-pkg';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
 		await mkdir(projectRoot, { recursive: true });
-		await writeFile(path.join(projectRoot, 'package.json'), '{}');
+		const packageJsonName = 'package.json';
+		const packageJsonPath = path.resolve(projectRoot, packageJsonName);
+		await writeFile(packageJsonPath, '{}');
 		const resolvedRoot = await realpath(projectRoot);
 
 		process.chdir(projectRoot);
@@ -70,9 +83,12 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should find pyproject.toml file', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'project-with-py');
+		const projectRootName = 'project-with-py';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
 		await mkdir(projectRoot, { recursive: true });
-		await writeFile(path.join(projectRoot, 'pyproject.toml'), '');
+		const pyProjectName = 'pyproject.toml';
+		const pyProjectPath = path.resolve(projectRoot, pyProjectName);
+		await writeFile(pyProjectPath, '');
 		const resolvedRoot = await realpath(projectRoot);
 
 		process.chdir(projectRoot);
@@ -82,9 +98,12 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should traverse upward to find .git in parent directory', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'project-root');
-		const gitDirectory = path.join(projectRoot, '.git');
-		const subDirectory = path.join(projectRoot, 'src', 'nested');
+		const projectRootName = 'project-root';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
+		const subDirectoryName = 'nested';
+		const subDirectory = path.resolve(projectRoot, 'src', subDirectoryName);
 
 		await mkdir(gitDirectory, { recursive: true });
 		await mkdir(subDirectory, { recursive: true });
@@ -97,11 +116,15 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should traverse upward to find package.json in parent directory', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'project-pkg-root');
-		const subDirectory = path.join(projectRoot, 'src', 'nested');
+		const projectRootName = 'project-pkg-root';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const subDirectoryName = 'nested';
+		const subDirectory = path.resolve(projectRoot, 'src', subDirectoryName);
 
 		await mkdir(subDirectory, { recursive: true });
-		await writeFile(path.join(projectRoot, 'package.json'), '{}');
+		const packageJsonName = 'package.json';
+		const packageJsonPath = path.resolve(projectRoot, packageJsonName);
+		await writeFile(packageJsonPath, '{}');
 		const resolvedRoot = await realpath(projectRoot);
 
 		process.chdir(subDirectory);
@@ -111,11 +134,15 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should prefer .git over package.json when both exist', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'project-both');
-		const gitDirectory = path.join(projectRoot, '.git');
+		const projectRootName = 'project-both';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
 
 		await mkdir(gitDirectory, { recursive: true });
-		await writeFile(path.join(projectRoot, 'package.json'), '{}');
+		const packageJsonName = 'package.json';
+		const packageJsonPath = path.resolve(projectRoot, packageJsonName);
+		await writeFile(packageJsonPath, '{}');
 		const resolvedRoot = await realpath(projectRoot);
 
 		process.chdir(projectRoot);
@@ -125,7 +152,11 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should fallback to cwd when no indicators found', async () => {
-		const emptyDirectory = path.join(temporaryDirectory, 'empty-project');
+		const emptyDirectoryName = 'empty-project';
+		const emptyDirectory = path.resolve(
+			temporaryDirectory,
+			emptyDirectoryName,
+		);
 		await mkdir(emptyDirectory, { recursive: true });
 		const resolvedEmpty = await realpath(emptyDirectory);
 
@@ -136,9 +167,11 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should traverse up multiple levels to find project root', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'deep-project');
-		const deepNested = path.join(projectRoot, 'a', 'b', 'c', 'd', 'e');
-		const gitDirectory = path.join(projectRoot, '.git');
+		const projectRootName = 'deep-project';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const deepNested = path.resolve(projectRoot, 'a', 'b', 'c', 'd', 'e');
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
 
 		await mkdir(deepNested, { recursive: true });
 		await mkdir(gitDirectory, { recursive: true });
@@ -151,8 +184,10 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should return absolute path', async () => {
-		const projectRoot = path.join(temporaryDirectory, 'absolute-test');
-		const gitDirectory = path.join(projectRoot, '.git');
+		const projectRootName = 'absolute-test';
+		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const gitDirectoryName = '.git';
+		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
 
 		await mkdir(gitDirectory, { recursive: true });
 		process.chdir(projectRoot);
@@ -163,7 +198,8 @@ describe('detectProjectRoot', () => {
 	});
 
 	it('should handle DEVFLOW_ROOT with trailing slash', async () => {
-		const customRoot = path.join(temporaryDirectory, 'trailing-slash');
+		const customRootName = 'trailing-slash';
+		const customRoot = path.resolve(temporaryDirectory, customRootName);
 		await mkdir(customRoot, { recursive: true });
 		const resolvedCustomRoot = await realpath(customRoot);
 

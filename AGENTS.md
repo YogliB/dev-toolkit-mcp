@@ -19,7 +19,8 @@
 
 ## File Editing
 
-- **NEVER** edit config files unless specifically requested to.
+- **NEVER** edit config files unless specifically requested to (for example: `eslint.config.mjs`)
+- **NEVER** disable eslint rules unless given a direct and clear instruction to do so
 
 ## Documentation Structure
 

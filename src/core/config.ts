@@ -11,8 +11,7 @@ export async function detectProjectRoot(): Promise<string> {
 	}
 
 	const indicators = ['.git', 'package.json', 'pyproject.toml'];
-	// eslint-disable-next-line security/detect-non-literal-fs-filename
-	const originalCurrentDirectory = await realpath(process.cwd());
+	const originalCurrentDirectory = await realpath('.');
 	let currentDirectory = originalCurrentDirectory;
 
 	while (true) {

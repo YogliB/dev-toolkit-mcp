@@ -133,5 +133,11 @@ export default [
 			'index-exports/index-exports-only': 'error',
 		},
 	},
+	{
+		files: ['tests/**/*.ts', '**/*.test.ts'],
+		rules: {
+			'security/detect-non-literal-fs-filename': 'off',
+		},
+	},
 	prettier,
 ];
