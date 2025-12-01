@@ -2,7 +2,10 @@
 
 ## Overview
 
-This project uses Bun's native test runner for fast, reliable testing with built-in coverage support.
+This project uses a hybrid testing approach:
+
+- **Bun's native test runner** for fast, reliable test execution during development
+- **Vitest** for code coverage checks (CI and coverage reporting)
 
 Testing strategy includes:
 
@@ -10,8 +13,9 @@ Testing strategy includes:
 2. **Test Segmentation** - Tests organized by tier (unit/integration/e2e)
 3. **CI Performance Monitoring** - Track regressions with baseline comparison
 4. **AI Agent Mode** - Quiet output optimized for AI coding assistants
+5. **Hybrid Coverage** - Vitest handles coverage reporting while Bun handles test execution
 
-All powered by Bun's native test runner - no external test framework needed.
+Regular test runs use Bun's native test runner for optimal performance. Coverage checks use Vitest to generate detailed coverage reports.
 
 ## Test Structure
 
@@ -50,12 +54,14 @@ bun run test:ai
 ### CI / Performance Checking
 
 ```bash
-# Run tests with coverage
+# Run tests with coverage (uses Vitest)
 bun run test:coverage
 
 # Performance report with baseline comparison
 bun run test:perf
 ```
+
+**Note:** The `test:coverage` script uses Vitest to generate coverage reports. Regular test runs (`bun test`) continue to use Bun's native test runner for faster execution.
 
 ## Performance Tiers
 
@@ -262,13 +268,20 @@ CI generates performance reports automatically. Check:
 
 ## Configuration
 
+### Hybrid Testing Setup
+
+This project uses both Bun and Vitest:
+
+- **Bun** (`bunfig.toml`) - Test execution configuration
+- **Vitest** (`vitest.config.ts`) - Coverage reporting configuration
+
 ### `bunfig.toml`
 
-Key settings for testing and coverage:
+Key settings for Bun test execution:
 
 ```toml
 [test]
-# Enable coverage by default
+# Enable coverage by default (for Bun's built-in coverage)
 coverage = true
 
 # Coverage reporters (text for console, lcov for tools)
@@ -289,7 +302,58 @@ coverageExclude = [
   "**/*.test.ts",
   "tests/**"
 ]
+
+# Concurrent execution
+concurrent = true
+maxConcurrency = 20
 ```
+
+### `vitest.config.ts`
+
+Vitest configuration for coverage checks:
+
+```typescript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+	test: {
+		globals: true,
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'lcov'],
+			reportsDirectory: './coverage',
+			exclude: [
+				'node_modules/**',
+				'dist/**',
+				'scripts/**',
+				'**/*.spec.ts',
+				'**/*.test.ts',
+				'tests/**',
+			],
+			thresholds: {
+				lines: 0.75,
+				functions: 0.8,
+				statements: 0.75,
+			},
+		},
+	},
+});
+```
+
+**Compatibility Layer:** Tests written with `bun:test` imports work with both Bun and Vitest through a compatibility layer (`tests/setup/vitest-compat.ts`) that maps Bun's test API to Vitest's API.
+
+### When to Use Which Tool
+
+- **Use Bun** (`bun test`) for:
+    - Regular test runs during development
+    - Fast test execution
+    - Watch mode
+    - Unit/integration/e2e test execution
+
+- **Use Vitest** (`bun run test:coverage`) for:
+    - Generating coverage reports
+    - CI coverage checks
+    - Detailed coverage analysis
 
 ## Writing Performant Tests
 
@@ -387,7 +451,8 @@ Performance check:
 - [Bun Test Documentation](https://bun.sh/docs/cli/test)
 - [Bun Coverage](https://bun.sh/docs/cli/test#coverage)
 - [Bun Test API](https://bun.sh/docs/test/writing)
-- [Bun Test Runner Documentation](https://bun.sh/docs/cli/test)
+- [Vitest Documentation](https://vitest.dev/)
+- [Vitest Coverage Guide](https://vitest.dev/guide/coverage.html)
 
 ## Scripts Reference
 

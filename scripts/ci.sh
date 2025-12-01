@@ -33,7 +33,7 @@ run_check "Build" "bun run build"
 
 run_check "Verify Executable Exists" "test -f ./dist/devflow"
 
-run_check "Test Coverage" "bun run test"
+run_check "Test Coverage" "bun run test:coverage"
 
 run_check "Test Performance" "bun run test:perf"
 
