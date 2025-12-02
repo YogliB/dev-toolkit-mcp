@@ -5,16 +5,16 @@
 echo "Running type check..."
 bun run type-check || exit 1
 
-# Get changed files (staged + modified)
-CHANGED_FILES=$(git diff --name-only --cached --diff-filter=d HEAD)
+# Get changed files (committed, not staged)
+CHANGED_FILES=$(git diff --name-only --diff-filter=d origin/main...HEAD)
 
-# If there are changed files, run related tests
+# Run tests for changed files using Vitest's 'related' command
 if [ -n "$CHANGED_FILES" ]; then
   echo "Running tests related to changed files..."
-  AGENT=1 bun test --related $CHANGED_FILES || exit 1
+  AGENT=1 bunx vitest related $CHANGED_FILES || exit 1
 else
   echo "No changed files detected, running all tests..."
-  bun test || exit 1
+  AGENT=1 bunx vitest run || exit 1
 fi
 
 echo "✓ Pre-push checks passed"
