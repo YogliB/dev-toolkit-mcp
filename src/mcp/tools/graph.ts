@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
+import { createToolDescription } from './description';
 
 interface SymbolGraph {
 	readonly nodes: Array<{
@@ -82,8 +83,39 @@ export function registerGraphTools(
 ): void {
 	server.addTool({
 		name: 'getSymbolGraph',
-		description:
-			'Build a dependency graph of symbols and their relationships within a scope',
+		description: createToolDescription({
+			summary:
+				'Build a dependency graph showing how symbols connect across files.',
+			whenToUse: {
+				triggers: [
+					'Visualizing architecture and component relationships',
+					'Understanding data flow across modules',
+					'Planning large refactors that affect multiple files',
+				],
+				skipIf: 'Need simple reference search (use findReferencingSymbols)',
+			},
+			parameters: {
+				scope: 'Optional directory path to limit graph scope',
+			},
+			returns:
+				'Graph structure with nodes (symbols) and edges (relationships) for visualization or impact analysis',
+			workflow: {
+				after: [
+					'Visualize nodes and edges to understand dependencies',
+					'Identify tightly coupled components',
+					'Plan refactoring to reduce coupling',
+				],
+			},
+			example: {
+				scenario: 'Map dependencies in core module',
+				params: { scope: 'src/core' },
+				next: 'Visualize graph to find circular dependencies',
+			},
+			antiPatterns: {
+				dont: 'Use for finding specific symbol references',
+				do: 'Use findReferencingSymbols for targeted reference searches',
+			},
+		}),
 		parameters: z.object({
 			scope: z
 				.string()

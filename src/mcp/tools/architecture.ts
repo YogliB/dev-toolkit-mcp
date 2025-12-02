@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
+import { createToolDescription } from './description';
 
 interface Architecture {
 	readonly scope?: string;
@@ -27,8 +28,39 @@ export function registerArchitectureTools(
 ): void {
 	server.addTool({
 		name: 'getArchitecture',
-		description:
-			'Get architectural overview including symbols, patterns, and relationships for a given scope',
+		description: createToolDescription({
+			summary:
+				'Get high-level architectural overview of a directory: symbol counts, top exports, and pattern distribution.',
+			whenToUse: {
+				triggers: [
+					'Starting work on unfamiliar codebases or modules',
+					'Planning refactors and need structural understanding',
+					'Understanding module organization and patterns',
+				],
+				skipIf: 'Need single-file details (use getContextForFile instead)',
+			},
+			parameters: {
+				scope: 'Optional directory path (omit for entire project)',
+			},
+			returns:
+				'File counts, symbol counts, top-level symbols, pattern distribution',
+			workflow: {
+				after: [
+					'Review top-level symbols for entry points',
+					'Check pattern distribution for consistency',
+					'Use scope to drill into specific modules',
+				],
+			},
+			example: {
+				scenario: 'Understand API module structure',
+				params: { scope: 'src/api' },
+				next: 'Identify main controllers and patterns used',
+			},
+			antiPatterns: {
+				dont: 'Use for single file analysis',
+				do: 'Use getContextForFile for individual files',
+			},
+		}),
 		parameters: z.object({
 			scope: z
 				.string()

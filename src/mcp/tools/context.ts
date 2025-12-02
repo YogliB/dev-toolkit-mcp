@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
+import { createToolDescription } from './description';
 
 export function registerContextTools(
 	server: FastMCP,
@@ -10,8 +11,40 @@ export function registerContextTools(
 ): void {
 	server.addTool({
 		name: 'getContextForFile',
-		description:
-			'Get comprehensive context for a file including symbols, relationships, and related files',
+		description: createToolDescription({
+			summary:
+				'Extract all symbols, relationships, and patterns from a single file for comprehensive understanding.',
+			whenToUse: {
+				triggers: [
+					'Exploring unfamiliar code before making edits',
+					'Understanding file dependencies and exports',
+					'Identifying design patterns in a specific module',
+				],
+				skipIf: 'Need directory-level overview (use getArchitecture)',
+			},
+			parameters: {
+				file: 'Path to the file (relative or absolute)',
+			},
+			returns:
+				'Structured JSON with symbols, relationships, patterns, and metadata',
+			workflow: {
+				before: ['Know the file path you want to analyze'],
+				after: [
+					'Review symbols to understand exports/imports',
+					'Check relationships to see dependencies',
+					'Identify patterns for consistency',
+				],
+			},
+			example: {
+				scenario: 'Pre-edit analysis of authentication module',
+				params: { file: 'src/auth/validator.ts' },
+				next: 'Review exported functions before refactoring',
+			},
+			antiPatterns: {
+				dont: 'Use for entire directories (too slow)',
+				do: 'Use getArchitecture for directory-level analysis',
+			},
+		}),
 		parameters: z.object({
 			file: z.string().describe('Path to the file'),
 		}),
@@ -34,8 +67,30 @@ export function registerContextTools(
 
 	server.addTool({
 		name: 'summarizeFile',
-		description:
-			'Generate a summary of a file including its purpose, exports, and key symbols',
+		description: createToolDescription({
+			summary:
+				'Get high-level file overview with exported symbols and pattern counts.',
+			whenToUse: {
+				triggers: [
+					'Need quick orientation without full relationship details',
+					'Scanning multiple files for initial exploration',
+					'Want faster analysis than getContextForFile',
+				],
+				skipIf: 'Need complete relationship mapping (use getContextForFile)',
+			},
+			parameters: {
+				path: 'Path to the file',
+				depth: 'Analysis depth: 1=shallow, 2=medium, 3=deep (default: 2)',
+			},
+			returns:
+				'Exported symbols, pattern counts, relationship/symbol totals',
+			workflow: {
+				after: [
+					'Use exported symbols to understand public API',
+					'Check pattern counts for architectural style',
+				],
+			},
+		}),
 		parameters: z.object({
 			path: z.string().describe('Path to the file'),
 			depth: z
@@ -76,7 +131,32 @@ export function registerContextTools(
 
 	server.addTool({
 		name: 'getTestCoverage',
-		description: 'Analyze test coverage for a given scope',
+		description: createToolDescription({
+			summary:
+				'Calculate test-to-source file ratio for a directory or entire project.',
+			whenToUse: {
+				triggers: [
+					'Assessing code quality and test completeness',
+					'Planning where to add new tests',
+					'Identifying under-tested areas before releases',
+				],
+			},
+			parameters: {
+				scope: 'Optional directory path (omit for entire project)',
+			},
+			returns: 'Test file count, source file count, coverage ratio',
+			workflow: {
+				after: [
+					'Compare ratio to project goals (e.g., >0.5)',
+					'Target low-coverage directories for test additions',
+				],
+			},
+			example: {
+				scenario: 'Check API module test coverage',
+				params: { scope: 'src/api' },
+				next: 'Add tests if ratio < 0.5',
+			},
+		}),
 		parameters: z.object({
 			scope: z
 				.string()

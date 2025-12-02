@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
+import { createToolDescription } from './description';
 
 function matchesSymbol(relationship: { to: string }, symbol: string): boolean {
 	return relationship.to === symbol || relationship.to.includes(symbol);
@@ -65,7 +66,37 @@ export function registerSymbolTools(
 ): void {
 	server.addTool({
 		name: 'getSymbolsInFile',
-		description: 'Get all symbols in a file, optionally filtered by type',
+		description: createToolDescription({
+			summary:
+				'List all symbols in a file with optional type filtering (class, function, interface, etc.).',
+			whenToUse: {
+				triggers: [
+					'Need complete symbol inventory before refactoring',
+					'Finding specific symbol types in a file',
+					'Understanding all declarations in a module',
+				],
+			},
+			parameters: {
+				path: 'Path to the file',
+				filterByType:
+					'Optional filter: class, function, interface, type, variable, enum, namespace, method, property',
+			},
+			returns: 'Array of symbols with name, type, path, and line numbers',
+			workflow: {
+				after: [
+					'Use symbols for refactoring planning',
+					'Filter by type to find specific declarations',
+				],
+			},
+			example: {
+				scenario: 'Find all functions in a utility file',
+				params: {
+					path: 'src/utils/helpers.ts',
+					filterByType: 'function',
+				},
+				next: 'Review functions for consolidation opportunities',
+			},
+		}),
 		parameters: z.object({
 			path: z.string().describe('Path to the file'),
 			filterByType: z
@@ -108,7 +139,44 @@ export function registerSymbolTools(
 
 	server.addTool({
 		name: 'findReferencingSymbols',
-		description: 'Find all symbols that reference the given symbol',
+		description: createToolDescription({
+			summary:
+				'Discover all locations where a symbol is referenced across the codebase.',
+			whenToUse: {
+				triggers: [
+					'Before renaming or removing a symbol (impact analysis)',
+					'Tracking API usage across the project',
+					'Understanding symbol dependencies',
+				],
+				skipIf: 'Doing broad text search (use grep instead)',
+			},
+			parameters: {
+				symbol: 'Exact name of the symbol to find references for',
+				type: 'Optional symbol type filter for more precise results',
+			},
+			returns:
+				'Array of referencing symbols with file paths and line numbers',
+			workflow: {
+				before: [
+					'Know the exact symbol name',
+					'Symbol likely used in multiple files',
+				],
+				after: [
+					'Assess impact scope (number of files affected)',
+					'Review each usage context',
+					'Plan refactoring strategy if modifying symbol',
+				],
+			},
+			example: {
+				scenario: 'Pre-refactor impact analysis',
+				params: { symbol: 'validateUser', type: 'function' },
+				next: 'Determine how many files need updates',
+			},
+			antiPatterns: {
+				dont: 'Use for broad searches or partial matches',
+				do: 'Combine with getSymbolsInFile to discover exact symbol names first',
+			},
+		}),
 		parameters: z.object({
 			symbol: z
 				.string()

@@ -1,6 +1,7 @@
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import type { StorageEngine } from '../../core/storage/engine';
+import { createToolDescription } from './description';
 
 interface ProjectOnboarding {
 	projectType: string;
@@ -20,8 +21,32 @@ export function registerProjectTools(
 ): void {
 	server.addTool({
 		name: 'getProjectOnboarding',
-		description:
-			'Extract project metadata including type, build/test commands, dependencies, and main packages from package.json, README, and tsconfig.json',
+		description: createToolDescription({
+			summary:
+				'Extract project metadata: type, build/test commands, dependencies, and main packages from package.json and tsconfig.json.',
+			whenToUse: {
+				triggers: [
+					'First time exploring a codebase',
+					'Understanding tech stack and dependencies',
+					'Finding available build/test scripts',
+				],
+			},
+			returns:
+				'Project type, build/test commands, dependencies, dev dependencies, and main packages',
+			workflow: {
+				before: ['Ensure package.json exists in project root'],
+				after: [
+					'Review scripts for available commands',
+					'Check dependencies for main technologies',
+					'Use build/test commands in development',
+				],
+			},
+			example: {
+				scenario: 'Initial project orientation',
+				params: {},
+				next: 'Run build command to verify setup',
+			},
+		}),
 		execute: async () => {
 			const onboarding: ProjectOnboarding = {
 				projectType: 'unknown',

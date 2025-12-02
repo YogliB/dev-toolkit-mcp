@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
+import { createToolDescription } from './description';
 
 function checkSymbolForAntiPatterns(
 	symbols: Array<{ name: string; path: string; line: number }>,
@@ -54,7 +55,35 @@ export function registerPatternTools(
 ): void {
 	server.addTool({
 		name: 'findCodePatterns',
-		description: 'Find code patterns of a specific type within a scope',
+		description: createToolDescription({
+			summary:
+				'Search for specific architectural patterns (middleware, controller, service, error-handler) within a directory.',
+			whenToUse: {
+				triggers: [
+					'Standardizing code structure across modules',
+					'Finding examples to follow for consistency',
+					'Auditing pattern usage and distribution',
+				],
+			},
+			parameters: {
+				type: 'Pattern type to search for (e.g., middleware, controller, service, error-handler)',
+				scope: 'Optional directory path to limit search',
+			},
+			returns:
+				'Array of patterns with type, name, path, line number, and confidence score',
+			workflow: {
+				after: [
+					'Review patterns for consistency',
+					'Use found examples as templates',
+					'Identify areas needing standardization',
+				],
+			},
+			example: {
+				scenario: 'Find all middleware patterns in API module',
+				params: { type: 'middleware', scope: 'src/api' },
+				next: 'Ensure all middleware follows the same structure',
+			},
+		}),
 		parameters: z.object({
 			type: z
 				.string()
@@ -128,7 +157,31 @@ export function registerPatternTools(
 
 	server.addTool({
 		name: 'detectAntiPatterns',
-		description: 'Detect common anti-patterns in the codebase',
+		description: createToolDescription({
+			summary:
+				'Scan codebase for common code smells: problematic naming (any, todo, fixme) and other anti-patterns.',
+			whenToUse: {
+				triggers: [
+					'During code reviews or pre-commit checks',
+					'Before releases to ensure code quality',
+					'When improving codebase health',
+				],
+			},
+			returns:
+				'Array of anti-patterns with type, description, file path, and line number',
+			workflow: {
+				after: [
+					'Review each issue with file path and line number',
+					'Fix critical anti-patterns immediately',
+					'Plan refactoring for lower-priority issues',
+				],
+			},
+			example: {
+				scenario: 'Pre-release quality check',
+				params: {},
+				next: 'Address all naming issues and TODOs',
+			},
+		}),
 		execute: async () => {
 			const projectRoot = engine.getProjectRoot();
 			const antiPatterns: Array<{
