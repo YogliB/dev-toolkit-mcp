@@ -25,6 +25,7 @@
 		"lint": "eslint . --max-warnings=0 --cache --cache-location .eslintcache",
 		"prepare": "husky",
 		"test": "AGENT=1 bun test",
+		"test:cleanup": "bun run scripts/cleanup-tests.ts",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "AGENT=1 bun test tests/e2e",
 		"test:integration": "AGENT=1 bun test tests/integration",

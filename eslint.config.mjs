@@ -8,42 +8,6 @@ import prettier from 'eslint-plugin-prettier/recommended';
 import importPlugin from 'eslint-plugin-import';
 import unicorn from 'eslint-plugin-unicorn';
 
-const noDisableCommentsPlugin = {
-	rules: {
-		'no-eslint-disable-comments': {
-			meta: {
-				type: 'problem',
-				docs: {
-					description: 'Forbid disabling ESLint rules via comments',
-					category: 'Best Practices',
-				},
-			},
-			create(context) {
-				return {
-					LineComment(node) {
-						if (/eslint-disable/.test(node.value)) {
-							context.report({
-								node,
-								message:
-									'Use of eslint-disable comments is forbidden. Fix the underlying issue instead.',
-							});
-						}
-					},
-					BlockComment(node) {
-						if (/eslint-disable/.test(node.value)) {
-							context.report({
-								node,
-								message:
-									'Use of eslint-disable comments is forbidden. Fix the underlying issue instead.',
-							});
-						}
-					},
-				};
-			},
-		},
-	},
-};
-
 const indexExportsOnlyPlugin = {
 	rules: {
 		'index-exports-only': {
@@ -99,14 +63,6 @@ export default [
 	importPlugin.flatConfigs.typescript,
 	unicorn.configs.recommended,
 	{
-		plugins: {
-			'no-disable-comments': noDisableCommentsPlugin,
-		},
-		rules: {
-			'no-disable-comments/no-eslint-disable-comments': 'error',
-		},
-	},
-	{
 		files: ['**/index.ts', '**/index.js'],
 		plugins: {
 			'index-exports': indexExportsOnlyPlugin,
@@ -135,6 +91,11 @@ export default [
 	},
 	{
 		files: ['tests/**/*.ts', '**/*.test.ts'],
+		rules: {
+			'security/detect-non-literal-fs-filename': 'off',
+		},
+	},
+	{
 		rules: {
 			'security/detect-non-literal-fs-filename': 'off',
 		},

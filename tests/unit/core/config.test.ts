@@ -31,7 +31,7 @@ describe('detectProjectRoot', () => {
 		}
 
 		try {
-			await rm(testBaseDirectory, { recursive: true, force: true });
+			await rm(temporaryDirectory, { recursive: true, force: true });
 		} catch {
 			// Cleanup might fail in some cases, but that's okay for tests
 		}
@@ -230,7 +230,10 @@ describe('detectProjectRoot', () => {
 	it('should prefer validated devflow project root', async () => {
 		const testTimestamp = Date.now();
 		const testBaseName = `test-config-sibling-${testTimestamp}`;
-		const testBaseDirectory = path.resolve(testBaseName);
+		const testBaseDirectory = path.resolve(
+			temporaryDirectory,
+			testBaseName,
+		);
 		await mkdir(testBaseDirectory, { recursive: true });
 
 		const devflowProjectName = 'devflow-project';
@@ -267,7 +270,7 @@ describe('detectProjectRoot', () => {
 		expect(result).toBe(resolvedDevflow);
 
 		try {
-			await rm(testBaseDir, {
+			await rm(testBaseDirectory, {
 				recursive: true,
 				force: true,
 			});
@@ -279,7 +282,10 @@ describe('detectProjectRoot', () => {
 	it('should warn when detected root is not a devflow project', async () => {
 		const testTimestamp = Date.now();
 		const testBaseName = `test-config-warn-${testTimestamp}`;
-		const testBaseDirectory = path.resolve(testBaseName);
+		const testBaseDirectory = path.resolve(
+			temporaryDirectory,
+			testBaseName,
+		);
 		await mkdir(testBaseDirectory, { recursive: true });
 
 		const projectRootName = 'non-devflow-project';
@@ -312,7 +318,7 @@ describe('detectProjectRoot', () => {
 		console.error = originalError;
 
 		try {
-			await rm(testBaseDir, {
+			await rm(testBaseDirectory, {
 				recursive: true,
 				force: true,
 			});
