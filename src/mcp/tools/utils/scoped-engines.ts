@@ -80,11 +80,3 @@ export const getScopedEngines = async (
 
 	return scoped;
 };
-
-export const clearScopedEnginesCache = (): void => {
-	scopedEnginesCache.clear();
-};
-
-export const getScopedEnginesCacheSize = (): number => {
-	return scopedEnginesCache.size;
-};
