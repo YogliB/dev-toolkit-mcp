@@ -48,6 +48,9 @@ describe('IncrementalCache', () => {
 		await cache.updateFileMetadata(filePath);
 		expect(await cache.hasChanged(filePath)).toBe(false);
 
+		// Wait a bit to ensure file system timestamp difference
+		await new Promise((resolve) => setTimeout(resolve, 10));
+
 		await writeTestFile(
 			testProject.root,
 			'src/test.ts',
