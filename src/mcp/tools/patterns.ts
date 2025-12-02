@@ -1,9 +1,21 @@
 import path from 'node:path';
+import { readdir } from 'node:fs/promises';
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
 import { createToolDescription } from './description';
+
+function validateDirectoryPath(
+	directory: string,
+	projectRoot: string,
+): string | undefined {
+	const resolvedDirectory = path.resolve(directory);
+	if (!resolvedDirectory.startsWith(projectRoot)) {
+		return undefined;
+	}
+	return resolvedDirectory;
+}
 
 function checkSymbolForAntiPatterns(
 	symbols: Array<{ name: string; path: string; line: number }>,
@@ -110,42 +122,48 @@ export function registerPatternTools(
 			}> = [];
 
 			async function searchDirectory(directory: string): Promise<void> {
+				const validatedPath = validateDirectoryPath(
+					directory,
+					projectRoot,
+				);
+				if (!validatedPath) {
+					return;
+				}
+
+				const safeDirectory = validatedPath as string;
+				let entries;
 				try {
-					const resolvedDirectory = path.resolve(directory);
-					const entries = await readdir(resolvedDirectory, {
+					// eslint-disable-next-line security/detect-non-literal-fs-filename
+					entries = await readdir(safeDirectory, {
 						withFileTypes: true,
 					});
-					for (const entry of entries) {
-						const fullPath = path.join(
-							resolvedDirectory,
-							entry.name,
-						);
-						if (entry.isDirectory()) {
-							if (
-								!entry.name.startsWith('.') &&
-								entry.name !== 'node_modules'
-							) {
-								await searchDirectory(fullPath);
-							}
-						} else if (
-							entry.isFile() &&
-							isSupportedLanguage(fullPath)
+				} catch {
+					return;
+				}
+
+				for (const entry of entries) {
+					const fullPath = path.join(safeDirectory, entry.name);
+					if (entry.isDirectory()) {
+						if (
+							!entry.name.startsWith('.') &&
+							entry.name !== 'node_modules'
 						) {
-							try {
-								const analysis =
-									await engine.analyzeFile(fullPath);
-								const matchingPatterns =
-									analysis.patterns.filter(
-										(p) => p.type === type,
-									);
-								patterns.push(...matchingPatterns);
-							} catch {
-								// Ignore errors when analyzing files
-							}
+							await searchDirectory(fullPath);
+						}
+					} else if (
+						entry.isFile() &&
+						isSupportedLanguage(fullPath)
+					) {
+						try {
+							const analysis = await engine.analyzeFile(fullPath);
+							const matchingPatterns = analysis.patterns.filter(
+								(p) => p.type === type,
+							);
+							patterns.push(...matchingPatterns);
+						} catch {
+							// Ignore errors when analyzing files
 						}
 					}
-				} catch {
-					// Ignore errors when reading directories
 				}
 			}
 
@@ -192,36 +210,44 @@ export function registerPatternTools(
 			}> = [];
 
 			async function searchDirectory(directory: string): Promise<void> {
+				const validatedPath = validateDirectoryPath(
+					directory,
+					projectRoot,
+				);
+				if (!validatedPath) {
+					return;
+				}
+
+				const safeDirectory = validatedPath as string;
+				let entries;
 				try {
-					const resolvedDirectory = path.resolve(directory);
-					const entries = await readdir(resolvedDirectory, {
+					// eslint-disable-next-line security/detect-non-literal-fs-filename
+					entries = await readdir(safeDirectory, {
 						withFileTypes: true,
 					});
-					for (const entry of entries) {
-						const fullPath = path.join(
-							resolvedDirectory,
-							entry.name,
-						);
-						if (entry.isDirectory()) {
-							if (
-								!entry.name.startsWith('.') &&
-								entry.name !== 'node_modules'
-							) {
-								await searchDirectory(fullPath);
-							}
-						} else if (
-							entry.isFile() &&
-							isSupportedLanguage(fullPath)
-						) {
-							await analyzeFileForAntiPatterns(
-								fullPath,
-								engine,
-								antiPatterns,
-							);
-						}
-					}
 				} catch {
-					// Ignore errors when reading directories
+					return;
+				}
+
+				for (const entry of entries) {
+					const fullPath = path.join(safeDirectory, entry.name);
+					if (entry.isDirectory()) {
+						if (
+							!entry.name.startsWith('.') &&
+							entry.name !== 'node_modules'
+						) {
+							await searchDirectory(fullPath);
+						}
+					} else if (
+						entry.isFile() &&
+						isSupportedLanguage(fullPath)
+					) {
+						await analyzeFileForAntiPatterns(
+							fullPath,
+							engine,
+							antiPatterns,
+						);
+					}
 				}
 			}
 
