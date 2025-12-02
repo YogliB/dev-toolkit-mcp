@@ -9,25 +9,6 @@ import { isSupportedLanguage } from '../../core/analysis/utils/language-detector
 import { createToolDescription } from './description';
 import { getScopedEngines } from './utils/scoped-engines';
 
-const ANALYSIS_TIMEOUT_MS = 5000; // 5 seconds per file
-const MAX_FILE_SIZE_BYTES = 500 * 1024; // 500KB
-
-const DEFAULT_EXCLUDED_DIRS = new Set([
-	'node_modules',
-	'.git',
-	'.svn',
-	'.hg',
-	'dist',
-	'build',
-	'coverage',
-	'.next',
-	'.nuxt',
-	'.cache',
-	'.turbo',
-	'out',
-	'target',
-]);
-
 function validateDirectoryPath(
 	directory: string,
 	projectRoot: string,
@@ -37,34 +18,6 @@ function validateDirectoryPath(
 		return undefined;
 	}
 	return resolvedDirectory;
-}
-
-function shouldExcludeDirectory(directoryName: string): boolean {
-	return (
-		directoryName.startsWith('.') ||
-		DEFAULT_EXCLUDED_DIRS.has(directoryName)
-	);
-}
-
-async function analyzeFileWithTimeout<T>(
-	promise: Promise<T>,
-	timeoutMs: number,
-	filePath: string,
-): Promise<T> {
-	return Promise.race([
-		promise,
-		new Promise<T>((_, reject) =>
-			setTimeout(
-				() =>
-					reject(
-						new Error(
-							`Analysis timeout for ${filePath} after ${timeoutMs}ms`,
-						),
-					),
-				timeoutMs,
-			),
-		),
-	]);
 }
 
 function checkSymbolForAntiPatterns(
@@ -347,43 +300,6 @@ export function registerPatternTools(
 				path: string;
 				line: number;
 			}> = [];
-
-			const fileCount = { current: 0, total: 0 };
-
-			// First pass: count total files
-			async function countFiles(directory: string): Promise<void> {
-				const validatedDirectory = validateDirectoryPath(
-					directory,
-					resolvedProjectRoot,
-				);
-				if (!validatedDirectory) {
-					return;
-				}
-
-				const safeDirectory = validatedDirectory as string;
-				let entries;
-				try {
-					entries = await readdir(safeDirectory, {
-						withFileTypes: true,
-					});
-				} catch {
-					return;
-				}
-
-				for (const entry of entries) {
-					const fullPath = path.join(safeDirectory, entry.name);
-					if (entry.isDirectory()) {
-						if (!shouldExcludeDirectory(entry.name)) {
-							await countFiles(fullPath);
-						}
-					} else if (
-						entry.isFile() &&
-						isSupportedLanguage(fullPath)
-					) {
-						fileCount.total++;
-					}
-				}
-			}
 
 			async function searchDirectory(directory: string): Promise<void> {
 				const validatedDirectory = validateDirectoryPath(
