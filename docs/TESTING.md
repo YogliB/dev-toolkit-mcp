@@ -313,6 +313,7 @@ All tests use Vitest directly:
 - Keep tests focused on one behavior
 - Use descriptive names
 - Import from `vitest` for test utilities
+- Pass explicit paths to functions instead of using `process.chdir()`
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -337,6 +338,7 @@ describe('User Validation', () => {
 - Make real HTTP requests
 - Use slow libraries without mocking
 - Create tests that depend on execution order
+- Use `process.chdir()` in tests (breaks worker threads)
 
 ```typescript
 // Bad: Shared state
@@ -354,6 +356,118 @@ describe('Counter', () => {
 		counter++; // ✅ Isolated
 		expect(counter).toBe(1);
 	});
+});
+```
+
+## Worker Thread Compatibility
+
+### Why Avoid `process.chdir()`?
+
+Vitest runs tests in worker threads by default (`pool: 'threads'`), which provides:
+
+- Better performance than forked processes
+- Lower memory overhead
+- Faster test execution
+
+However, **`process.chdir()` does not work in worker threads** - the main process directory remains unchanged, breaking tests that depend on the current working directory.
+
+### Best Practice: Use Explicit Paths
+
+Instead of changing the working directory, pass explicit paths to functions:
+
+```typescript
+// ❌ Bad: Using process.chdir()
+import { detectProjectRoot } from '../src/core/config';
+
+it('should detect project root', async () => {
+	const testDir = '/tmp/test-project';
+	process.chdir(testDir); // ❌ Doesn't work in worker threads!
+	const result = await detectProjectRoot();
+	expect(result).toBe(testDir);
+});
+```
+
+```typescript
+// ✅ Good: Using explicit startFrom parameter
+import { detectProjectRoot } from '../src/core/config';
+
+it('should detect project root', async () => {
+	const testDir = '/tmp/test-project';
+	const result = await detectProjectRoot(testDir); // ✅ Works in worker threads
+	expect(result).toBe(testDir);
+});
+```
+
+### Function Design Guidelines
+
+When designing functions that need path context:
+
+1. **Accept optional path parameters** instead of relying on `process.cwd()`
+2. **Default to `process.cwd()`** only when no path is provided
+3. **Document the parameter** clearly in JSDoc/TypeScript
+
+```typescript
+// ✅ Good: Supports both explicit paths and CWD fallback
+export async function detectProjectRoot(startFrom?: string): Promise<string> {
+	const searchPath = startFrom ?? process.cwd();
+	// ... search logic
+}
+```
+
+### Migration Strategy
+
+If you find tests using `process.chdir()`:
+
+1. **Identify the function** being tested
+2. **Check if it accepts** a path parameter (like `startFrom`, `cwd`, `rootPath`)
+3. **Pass the test directory explicitly** instead of using `chdir`
+4. **If no path parameter exists**, refactor the function to accept one
+
+### Testing Directory Operations
+
+For tests that create temporary directories:
+
+```typescript
+import { mkdir, writeFile, rm } from 'node:fs/promises';
+import path from 'node:path';
+
+describe('File Operations', () => {
+	let testDir: string;
+
+	beforeEach(async () => {
+		testDir = path.resolve('.test-temp', `test-${Date.now()}`);
+		await mkdir(testDir, { recursive: true });
+	});
+
+	afterEach(async () => {
+		await rm(testDir, { recursive: true, force: true });
+	});
+
+	it('should process files in directory', async () => {
+		await writeFile(path.join(testDir, 'file.txt'), 'content');
+
+		// ✅ Pass testDir explicitly, don't use process.chdir()
+		const result = await processDirectory(testDir);
+
+		expect(result).toBeDefined();
+	});
+});
+```
+
+### Cleanup Best Practices
+
+- Always clean up test directories in `afterEach`
+- Use unique directory names (timestamps, random IDs) to avoid conflicts
+- Use `{ recursive: true, force: true }` for robust cleanup
+- Wrap cleanup in try-catch to prevent afterEach failures
+
+```typescript
+afterEach(async () => {
+	try {
+		await rm(testDir, { recursive: true, force: true });
+	} catch {
+		// Cleanup might fail on some systems, but that's acceptable
+	}
 });
 ```
 

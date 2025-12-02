@@ -4,12 +4,10 @@ import path from 'node:path';
 import { mkdir, writeFile, realpath, rm } from 'node:fs/promises';
 
 describe('detectProjectRoot', () => {
-	let originalCurrentDirectory: string;
 	let originalEnvironment: string | undefined;
 	let temporaryDirectory: string;
 
 	beforeEach(async () => {
-		originalCurrentDirectory = process.cwd();
 		originalEnvironment = process.env.DEVFLOW_ROOT;
 		const testBasePathLiteral = '.test-config';
 		await mkdir(testBasePathLiteral, {
@@ -27,14 +25,13 @@ describe('detectProjectRoot', () => {
 	});
 
 	afterEach(async () => {
-		process.chdir(originalCurrentDirectory);
 		delete process.env.DEVFLOW_ROOT;
 		if (originalEnvironment) {
 			process.env.DEVFLOW_ROOT = originalEnvironment;
 		}
 
 		try {
-			await rm(temporaryDirectory, { recursive: true, force: true });
+			await rm(testBaseDirectory, { recursive: true, force: true });
 		} catch {
 			// Cleanup might fail in some cases, but that's okay for tests
 		}
@@ -47,9 +44,8 @@ describe('detectProjectRoot', () => {
 		const resolvedCustomRoot = await realpath(customRoot);
 
 		process.env.DEVFLOW_ROOT = customRoot;
-		process.chdir(temporaryDirectory);
 
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(temporaryDirectory);
 		expect(result).toBe(resolvedCustomRoot);
 	});
 
@@ -61,8 +57,7 @@ describe('detectProjectRoot', () => {
 		await mkdir(gitDirectory, { recursive: true });
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(projectRoot);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(projectRoot);
 
 		expect(result).toBe(resolvedRoot);
 	});
@@ -76,8 +71,7 @@ describe('detectProjectRoot', () => {
 		await writeFile(packageJsonPath, '{}');
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(projectRoot);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(projectRoot);
 
 		expect(result).toBe(resolvedRoot);
 	});
@@ -91,8 +85,7 @@ describe('detectProjectRoot', () => {
 		await writeFile(pyProjectPath, '');
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(projectRoot);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(projectRoot);
 
 		expect(result).toBe(resolvedRoot);
 	});
@@ -109,8 +102,7 @@ describe('detectProjectRoot', () => {
 		await mkdir(subDirectory, { recursive: true });
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(subDirectory);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(subDirectory);
 
 		expect(result).toBe(resolvedRoot);
 	});
@@ -127,8 +119,7 @@ describe('detectProjectRoot', () => {
 		await writeFile(packageJsonPath, '{}');
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(subDirectory);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(subDirectory);
 
 		expect(result).toBe(resolvedRoot);
 	});
@@ -145,32 +136,33 @@ describe('detectProjectRoot', () => {
 		await writeFile(packageJsonPath, '{}');
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(projectRoot);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(projectRoot);
 
 		expect(result).toBe(resolvedRoot);
 	});
 
 	it('should fallback to cwd when no indicators found', async () => {
-		const temporaryDirectory = await import('node:os').then((os) =>
+		const osTemporaryDirectory = await import('node:os').then((os) =>
 			os.tmpdir(),
 		);
 		const isolatedTestDirectory = path.resolve(
-			temporaryDirectory,
+			osTemporaryDirectory,
 			`devflow-test-isolated-${Date.now()}`,
 		);
+		await mkdir(isolatedTestDirectory, { recursive: true });
 		const emptyDirectoryName = 'empty-project';
 		const emptyDirectory = path.resolve(
 			isolatedTestDirectory,
 			emptyDirectoryName,
 		);
 		await mkdir(emptyDirectory, { recursive: true });
-		const resolvedEmpty = await realpath(emptyDirectory);
 
-		process.chdir(emptyDirectory);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(emptyDirectory);
 
-		expect(result).toBe(resolvedEmpty);
+		// When using startFrom with no indicators, it falls back to actual process.cwd()
+		// not the startFrom directory, because it searches up and doesn't find anything
+		const actualCwd = await realpath('.');
+		expect(result).toBe(actualCwd);
 
 		try {
 			await rm(isolatedTestDirectory, { recursive: true, force: true });
@@ -190,8 +182,7 @@ describe('detectProjectRoot', () => {
 		await mkdir(gitDirectory, { recursive: true });
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(deepNested);
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(deepNested);
 
 		expect(result).toBe(resolvedRoot);
 	});
@@ -203,9 +194,8 @@ describe('detectProjectRoot', () => {
 		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
 
 		await mkdir(gitDirectory, { recursive: true });
-		process.chdir(projectRoot);
 
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(projectRoot);
 
 		expect(path.isAbsolute(result)).toBe(true);
 	});
@@ -217,9 +207,8 @@ describe('detectProjectRoot', () => {
 		const resolvedCustomRoot = await realpath(customRoot);
 
 		process.env.DEVFLOW_ROOT = `${customRoot}/`;
-		process.chdir(temporaryDirectory);
 
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(temporaryDirectory);
 
 		expect(path.isAbsolute(result)).toBe(true);
 		expect(result).toBe(resolvedCustomRoot);
@@ -233,20 +222,24 @@ describe('detectProjectRoot', () => {
 		await mkdir(gitDirectory, { recursive: true });
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(temporaryDirectory);
 		const result = await detectProjectRoot(projectRoot);
 
 		expect(result).toBe(resolvedRoot);
 	});
 
 	it('should prefer validated devflow project root', async () => {
+		const testTimestamp = Date.now();
+		const testBaseName = `test-config-sibling-${testTimestamp}`;
+		const testBaseDirectory = path.resolve(testBaseName);
+		await mkdir(testBaseDirectory, { recursive: true });
+
 		const devflowProjectName = 'devflow-project';
 		const devflowProject = path.resolve(
-			temporaryDirectory,
+			testBaseDirectory,
 			devflowProjectName,
 		);
 		const otherProjectName = 'other-project';
-		const otherProject = path.resolve(temporaryDirectory, otherProjectName);
+		const otherProject = path.resolve(testBaseDirectory, otherProjectName);
 
 		await mkdir(devflowProject, { recursive: true });
 		await mkdir(otherProject, { recursive: true });
@@ -268,16 +261,29 @@ describe('detectProjectRoot', () => {
 		);
 
 		const resolvedDevflow = await realpath(devflowProject);
-		process.chdir(otherProject);
 
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(otherProject);
 
 		expect(result).toBe(resolvedDevflow);
+
+		try {
+			await rm(testBaseDir, {
+				recursive: true,
+				force: true,
+			});
+		} catch {
+			// Cleanup might fail
+		}
 	});
 
 	it('should warn when detected root is not a devflow project', async () => {
+		const testTimestamp = Date.now();
+		const testBaseName = `test-config-warn-${testTimestamp}`;
+		const testBaseDirectory = path.resolve(testBaseName);
+		await mkdir(testBaseDirectory, { recursive: true });
+
 		const projectRootName = 'non-devflow-project';
-		const projectRoot = path.resolve(temporaryDirectory, projectRootName);
+		const projectRoot = path.resolve(testBaseDirectory, projectRootName);
 		const gitDirectoryName = '.git';
 		const gitDirectory = path.resolve(projectRoot, gitDirectoryName);
 		await mkdir(gitDirectory, { recursive: true });
@@ -289,7 +295,6 @@ describe('detectProjectRoot', () => {
 		);
 		const resolvedRoot = await realpath(projectRoot);
 
-		process.chdir(projectRoot);
 		const originalError = console.error;
 		const errorMessages: string[] = [];
 		console.error = (...arguments_: unknown[]) => {
@@ -297,7 +302,7 @@ describe('detectProjectRoot', () => {
 			originalError(...arguments_);
 		};
 
-		const result = await detectProjectRoot();
+		const result = await detectProjectRoot(projectRoot);
 
 		expect(result).toBe(resolvedRoot);
 		expect(
@@ -305,5 +310,14 @@ describe('detectProjectRoot', () => {
 		).toBe(true);
 
 		console.error = originalError;
+
+		try {
+			await rm(testBaseDir, {
+				recursive: true,
+				force: true,
+			});
+		} catch {
+			// Cleanup might fail
+		}
 	});
 });

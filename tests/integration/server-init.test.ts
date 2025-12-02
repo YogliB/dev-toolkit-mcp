@@ -5,12 +5,10 @@ import path from 'node:path';
 import { mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 
 describe('Server Initialization Integration', () => {
-	let originalCurrentDirectory: string;
 	let originalEnvironment: string | undefined;
 	let testProjectRoot: string;
 
 	beforeEach(async () => {
-		originalCurrentDirectory = process.cwd();
 		originalEnvironment = process.env.DEVFLOW_ROOT;
 		const testRootName = `devflow-init-test-${Date.now()}`;
 		testProjectRoot = path.resolve('.test-integration', testRootName);
@@ -28,11 +26,9 @@ describe('Server Initialization Integration', () => {
 		testProjectRoot = await realpath(
 			path.resolve('.test-integration', testRootName),
 		);
-		process.chdir(testProjectRoot);
 	});
 
 	afterEach(async () => {
-		process.chdir(originalCurrentDirectory);
 		delete process.env.DEVFLOW_ROOT;
 		if (originalEnvironment) {
 			process.env.DEVFLOW_ROOT = originalEnvironment;
@@ -46,7 +42,7 @@ describe('Server Initialization Integration', () => {
 	});
 
 	it('should initialize StorageEngine successfully', async () => {
-		const projectRoot = await detectProjectRoot();
+		const projectRoot = await detectProjectRoot(testProjectRoot);
 		const storageEngine = createStorageEngine({
 			rootPath: projectRoot,
 			debug: false,
@@ -56,7 +52,7 @@ describe('Server Initialization Integration', () => {
 	});
 
 	it('should work with StorageEngine to read/write files', async () => {
-		const projectRoot = await detectProjectRoot();
+		const projectRoot = await detectProjectRoot(testProjectRoot);
 		const storageEngine = createStorageEngine({
 			rootPath: projectRoot,
 			debug: false,
@@ -84,7 +80,7 @@ describe('Server Initialization Integration', () => {
 	});
 
 	it('should initialize without errors in valid project', async () => {
-		const projectRoot = await detectProjectRoot();
+		const projectRoot = await detectProjectRoot(testProjectRoot);
 		const storageEngine = createStorageEngine({
 			rootPath: projectRoot,
 			debug: false,
@@ -96,7 +92,7 @@ describe('Server Initialization Integration', () => {
 	});
 
 	it('should handle errors gracefully in StorageEngine', async () => {
-		const projectRoot = await detectProjectRoot();
+		const projectRoot = await detectProjectRoot(testProjectRoot);
 		const storageEngine = createStorageEngine({
 			rootPath: projectRoot,
 			debug: false,
@@ -111,7 +107,7 @@ describe('Server Initialization Integration', () => {
 	});
 
 	it('should initialize full server components', async () => {
-		const projectRoot = await detectProjectRoot();
+		const projectRoot = await detectProjectRoot(testProjectRoot);
 		const { AnalysisEngine } =
 			await import('../../src/core/analysis/engine');
 		const { TypeScriptPlugin } =
