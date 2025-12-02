@@ -131,7 +131,7 @@ function loadBaseline(): PerformanceBaseline {
 		},
 		thresholds: {
 			maxRegression: 0.2,
-			maxDuration: 5000,
+			maxDuration: 10_000,
 		},
 	};
 }

@@ -37,4 +37,3 @@ src/**/*.js
 
 # Bun test artifacts
 .bun-test/
-.bun-performance.json

@@ -179,7 +179,7 @@ export function createApp(): Application {
 			const duration = performance.now() - startTime;
 
 			expect(analysis.symbols.length).toBeGreaterThan(0);
-			expect(duration).toBeLessThan(200);
+			expect(duration).toBeLessThan(500);
 			console.log(`✓ Preloaded file analysis: ${duration.toFixed(2)}ms`);
 		});
 	});

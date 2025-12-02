@@ -91,6 +91,7 @@
 	},
 	"overrides": {
 		"esbuild": "^0.27.0",
-		"express": ">=5.2.0"
+		"express": ">=5.2.0",
+		"@modelcontextprotocol/sdk": ">=1.24.0"
 	}
 }

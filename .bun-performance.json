@@ -1,0 +1,135 @@
+{
+	"baseline": {
+		"totalDuration": 7226.009132000003,
+		"testCount": 160,
+		"fileCount": 22,
+		"avgPerTest": 45.16255707500002,
+		"files": {
+			"tests/integration/analysis-engine-lazy-loading.test.ts": {
+				"name": "tests/integration/analysis-engine-lazy-loading.test.ts",
+				"duration": 2171.279252,
+				"testCount": 14
+			},
+			"tests/integration/performance-benchmarks.test.ts": {
+				"name": "tests/integration/performance-benchmarks.test.ts",
+				"duration": 1838.1477469999998,
+				"testCount": 10
+			},
+			"tests/integration/server-init.test.ts": {
+				"name": "tests/integration/server-init.test.ts",
+				"duration": 623.4505,
+				"testCount": 8
+			},
+			"src/core/storage/engine.test.ts": {
+				"name": "src/core/storage/engine.test.ts",
+				"duration": 86.71083300000001,
+				"testCount": 28
+			},
+			"tests/unit/core/config.test.ts": {
+				"name": "tests/unit/core/config.test.ts",
+				"duration": 70.66967000000001,
+				"testCount": 14
+			},
+			"tests/integration/mcp-tools/architecture.test.ts": {
+				"name": "tests/integration/mcp-tools/architecture.test.ts",
+				"duration": 5.530291,
+				"testCount": 1
+			},
+			"tests/integration/mcp-tools/context.test.ts": {
+				"name": "tests/integration/mcp-tools/context.test.ts",
+				"duration": 5.705958,
+				"testCount": 1
+			},
+			"tests/integration/mcp-tools/git.test.ts": {
+				"name": "tests/integration/mcp-tools/git.test.ts",
+				"duration": 4.989541999999999,
+				"testCount": 1
+			},
+			"tests/integration/mcp-tools/graph.test.ts": {
+				"name": "tests/integration/mcp-tools/graph.test.ts",
+				"duration": 7.2972920000000006,
+				"testCount": 1
+			},
+			"tests/integration/mcp-tools/patterns.test.ts": {
+				"name": "tests/integration/mcp-tools/patterns.test.ts",
+				"duration": 5.609959,
+				"testCount": 1
+			},
+			"tests/integration/mcp-tools/project.test.ts": {
+				"name": "tests/integration/mcp-tools/project.test.ts",
+				"duration": 10.749917,
+				"testCount": 2
+			},
+			"tests/integration/mcp-tools/register.test.ts": {
+				"name": "tests/integration/mcp-tools/register.test.ts",
+				"duration": 7.117792000000001,
+				"testCount": 1
+			},
+			"tests/integration/mcp-tools/symbols.test.ts": {
+				"name": "tests/integration/mcp-tools/symbols.test.ts",
+				"duration": 6.050334,
+				"testCount": 1
+			},
+			"tests/unit/core/analysis/engine.test.ts": {
+				"name": "tests/unit/core/analysis/engine.test.ts",
+				"duration": 22.045001,
+				"testCount": 6
+			},
+			"tests/unit/core/storage/errors.test.ts": {
+				"name": "tests/unit/core/storage/errors.test.ts",
+				"duration": 0.8852500000000001,
+				"testCount": 4
+			},
+			"tests/unit/core/analysis/cache/git-aware.test.ts": {
+				"name": "tests/unit/core/analysis/cache/git-aware.test.ts",
+				"duration": 85.58549900000001,
+				"testCount": 9
+			},
+			"tests/unit/core/analysis/cache/incremental.test.ts": {
+				"name": "tests/unit/core/analysis/cache/incremental.test.ts",
+				"duration": 49.642500000000005,
+				"testCount": 9
+			},
+			"tests/unit/core/analysis/git/git-analyzer.test.ts": {
+				"name": "tests/unit/core/analysis/git/git-analyzer.test.ts",
+				"duration": 87.99879200000001,
+				"testCount": 6
+			},
+			"tests/unit/core/analysis/utils/language-detector.test.ts": {
+				"name": "tests/unit/core/analysis/utils/language-detector.test.ts",
+				"duration": 1.0370840000000001,
+				"testCount": 7
+			},
+			"tests/unit/core/analysis/plugins/registry.test.ts": {
+				"name": "tests/unit/core/analysis/plugins/registry.test.ts",
+				"duration": 1.558625,
+				"testCount": 6
+			},
+			"tests/unit/core/analysis/plugins/typescript.test.ts": {
+				"name": "tests/unit/core/analysis/plugins/typescript.test.ts",
+				"duration": 651.8917529999999,
+				"testCount": 20
+			},
+			"tests/unit/core/analysis/watcher/file-watcher.test.ts": {
+				"name": "tests/unit/core/analysis/watcher/file-watcher.test.ts",
+				"duration": 1482.0555410000002,
+				"testCount": 10
+			}
+		},
+		"timestamp": "2025-12-02T21:45:54.777Z"
+	},
+	"thresholds": {
+		"maxRegression": 0.2,
+		"maxDuration": 10000
+	},
+	"history": [
+		{
+			"totalDuration": 0,
+			"testCount": 0,
+			"fileCount": 0,
+			"avgPerTest": 0,
+			"files": {},
+			"timestamp": "2025-12-02T21:45:54.777Z"
+		}
+	]
+}
