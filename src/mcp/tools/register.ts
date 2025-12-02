@@ -16,11 +16,11 @@ export function registerAllTools(
 	storage: StorageEngine,
 	gitAnalyzer: GitAnalyzer,
 ): void {
-	registerProjectTools(server, engine, storage);
-	registerArchitectureTools(server, engine);
-	registerSymbolTools(server, engine);
-	registerPatternTools(server, engine);
-	registerGraphTools(server, engine);
-	registerGitTools(server, gitAnalyzer);
-	registerContextTools(server, engine);
+	registerProjectTools(server, engine, storage, gitAnalyzer);
+	registerArchitectureTools(server, engine, storage, gitAnalyzer);
+	registerSymbolTools(server, engine, storage, gitAnalyzer);
+	registerPatternTools(server, engine, storage, gitAnalyzer);
+	registerGraphTools(server, engine, storage, gitAnalyzer);
+	registerGitTools(server, gitAnalyzer, storage, engine);
+	registerContextTools(server, engine, storage, gitAnalyzer);
 }

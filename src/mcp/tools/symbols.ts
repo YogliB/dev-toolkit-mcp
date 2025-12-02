@@ -2,8 +2,11 @@ import path from 'node:path';
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
+import type { StorageEngine } from '../../core/storage/engine';
+import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
 import { createToolDescription } from './description';
+import { getScopedEngines } from './utils/scoped-engines';
 
 function matchesSymbol(relationship: { to: string }, symbol: string): boolean {
 	return relationship.to === symbol || relationship.to.includes(symbol);
@@ -63,6 +66,8 @@ async function analyzeFileForReferences(
 export function registerSymbolTools(
 	server: FastMCP,
 	engine: AnalysisEngine,
+	storage: StorageEngine,
+	git: GitAnalyzer,
 ): void {
 	server.addTool({
 		name: 'getSymbolsInFile',
@@ -77,6 +82,8 @@ export function registerSymbolTools(
 				],
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				path: 'Path to the file',
 				filterByType:
 					'Optional filter: class, function, interface, type, variable, enum, namespace, method, property',
@@ -91,6 +98,7 @@ export function registerSymbolTools(
 			example: {
 				scenario: 'Find all functions in a utility file',
 				params: {
+					projectRoot: '/path/to/project',
 					path: 'src/utils/helpers.ts',
 					filterByType: 'function',
 				},
@@ -98,6 +106,12 @@ export function registerSymbolTools(
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			path: z.string().describe('Path to the file'),
 			filterByType: z
 				.enum([
@@ -115,18 +129,25 @@ export function registerSymbolTools(
 				.describe('Optional symbol type filter'),
 		}),
 		execute: async ({
+			projectRoot,
 			path: filePath,
 			filterByType,
 		}: {
+			projectRoot?: string;
 			path: string;
 			filterByType?: string;
 		}) => {
-			const projectRoot = engine.getProjectRoot();
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const fullPath = path.isAbsolute(filePath)
 				? filePath
-				: path.join(projectRoot, filePath);
+				: path.join(resolvedProjectRoot, filePath);
 
-			const analysis = await engine.analyzeFile(fullPath);
+			const analysis = await engines.analysis.analyzeFile(fullPath);
 			let symbols = analysis.symbols;
 
 			if (filterByType) {
@@ -151,6 +172,8 @@ export function registerSymbolTools(
 				skipIf: 'Doing broad text search (use grep instead)',
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				symbol: 'Exact name of the symbol to find references for',
 				type: 'Optional symbol type filter for more precise results',
 			},
@@ -169,7 +192,11 @@ export function registerSymbolTools(
 			},
 			example: {
 				scenario: 'Pre-refactor impact analysis',
-				params: { symbol: 'validateUser', type: 'function' },
+				params: {
+					projectRoot: '/path/to/project',
+					symbol: 'validateUser',
+					type: 'function',
+				},
 				next: 'Determine how many files need updates',
 			},
 			antiPatterns: {
@@ -178,6 +205,12 @@ export function registerSymbolTools(
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			symbol: z
 				.string()
 				.describe('Name of the symbol to find references for'),
@@ -197,13 +230,20 @@ export function registerSymbolTools(
 				.describe('Type of the symbol'),
 		}),
 		execute: async ({
+			projectRoot,
 			symbol,
 			type,
 		}: {
+			projectRoot?: string;
 			symbol: string;
 			type?: string;
 		}) => {
-			const projectRoot = engine.getProjectRoot();
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const referencingSymbols: Array<{
 				name: string;
 				type: string;
@@ -236,7 +276,7 @@ export function registerSymbolTools(
 						) {
 							await analyzeFileForReferences(
 								fullPath,
-								engine,
+								engines.analysis,
 								symbol,
 								type,
 								referencingSymbols,
@@ -248,7 +288,7 @@ export function registerSymbolTools(
 				}
 			}
 
-			await searchDirectory(projectRoot);
+			await searchDirectory(resolvedProjectRoot);
 
 			return JSON.stringify(referencingSymbols);
 		},

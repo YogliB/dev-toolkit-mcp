@@ -2,8 +2,11 @@ import path from 'node:path';
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
+import type { StorageEngine } from '../../core/storage/engine';
+import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
 import { createToolDescription } from './description';
+import { getScopedEngines } from './utils/scoped-engines';
 
 interface SymbolGraph {
 	readonly nodes: Array<{
@@ -80,6 +83,8 @@ async function analyzeFileForGraph(
 export function registerGraphTools(
 	server: FastMCP,
 	engine: AnalysisEngine,
+	storage: StorageEngine,
+	git: GitAnalyzer,
 ): void {
 	server.addTool({
 		name: 'getSymbolGraph',
@@ -95,6 +100,8 @@ export function registerGraphTools(
 				skipIf: 'Need simple reference search (use findReferencingSymbols)',
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				scope: 'Optional directory path to limit graph scope',
 			},
 			returns:
@@ -117,16 +124,33 @@ export function registerGraphTools(
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			scope: z
 				.string()
 				.optional()
-				.describe('Optional directory scope to analyze'),
+				.describe('Optional directory scope to limit graph'),
 		}),
-		execute: async ({ scope }: { scope?: string }) => {
-			const projectRoot = engine.getProjectRoot();
+		execute: async ({
+			projectRoot,
+			scope,
+		}: {
+			projectRoot?: string;
+			scope?: string;
+		}) => {
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const targetPath = scope
-				? path.join(projectRoot, scope)
-				: projectRoot;
+				? path.join(resolvedProjectRoot, scope)
+				: resolvedProjectRoot;
 
 			const nodes = new Map<
 				string,
@@ -159,7 +183,7 @@ export function registerGraphTools(
 						) {
 							await analyzeFileForGraph(
 								fullPath,
-								engine,
+								engines.analysis,
 								nodes,
 								edges,
 							);

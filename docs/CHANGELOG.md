@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to DevFlow will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+
+### Added
+
+- **Monorepo Support**: All MCP tools now accept an optional `projectRoot` parameter that overrides `DEVFLOW_ROOT` for dynamic workspace switching
+    - Enables agents to work with multiple packages in a monorepo without server reconfiguration
+    - Scoped engines are cached for performance
+    - Path validation ensures security (must be absolute and accessible)
+    - Available on all 12 tools: `getProjectOnboarding`, `getArchitecture`, `getContextForFile`, `summarizeFile`, `getTestCoverage`, `getRecentDecisions`, `analyzeChangeVelocity`, `getSymbolGraph`, `findCodePatterns`, `detectAntiPatterns`, `getSymbolsInFile`, `findReferencingSymbols`
+- Documentation for working with monorepos in `SETUP.md` and `USAGE.md`
 
 ### Added
 

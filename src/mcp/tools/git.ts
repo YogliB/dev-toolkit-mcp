@@ -1,11 +1,16 @@
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
+import type { StorageEngine } from '../../core/storage/engine';
+import type { AnalysisEngine } from '../../core/analysis/engine';
 import { createToolDescription } from './description';
+import { getScopedEngines } from './utils/scoped-engines';
 
 export function registerGitTools(
 	server: FastMCP,
 	gitAnalyzer: GitAnalyzer,
+	storage: StorageEngine,
+	engine: AnalysisEngine,
 ): void {
 	server.addTool({
 		name: 'getRecentDecisions',
@@ -20,6 +25,8 @@ export function registerGitTools(
 				],
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				since: 'Date or time period to look back (e.g., "1 week ago", "2024-01-01")',
 				workspace: 'Optional directory path to filter commits',
 			},
@@ -33,11 +40,21 @@ export function registerGitTools(
 			},
 			example: {
 				scenario: 'Review last month of API changes',
-				params: { since: '1 month ago', workspace: 'src/api' },
+				params: {
+					projectRoot: '/path/to/project',
+					since: '1 month ago',
+					workspace: 'src/api',
+				},
 				next: 'Understand design decisions before making changes',
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			since: z
 				.string()
 				.describe(
@@ -49,13 +66,20 @@ export function registerGitTools(
 				.describe('Optional workspace/directory to filter commits'),
 		}),
 		execute: async ({
+			projectRoot,
 			since,
 			workspace,
 		}: {
+			projectRoot?: string;
 			since: string;
 			workspace?: string;
 		}) => {
-			const decisions = await gitAnalyzer.getRecentDecisions(
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git: gitAnalyzer,
+			});
+			const decisions = await engines.git.getRecentDecisions(
 				since,
 				workspace,
 			);
@@ -76,6 +100,8 @@ export function registerGitTools(
 				],
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				path: 'File or directory path to analyze',
 				since: 'Date or time period to analyze (e.g., "1 month ago")',
 			},
@@ -90,11 +116,21 @@ export function registerGitTools(
 			},
 			example: {
 				scenario: 'Identify volatile files in authentication module',
-				params: { path: 'src/auth', since: '3 months ago' },
+				params: {
+					projectRoot: '/path/to/project',
+					path: 'src/auth',
+					since: '3 months ago',
+				},
 				next: 'Prioritize refactoring for most-changed files',
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			path: z.string().describe('File or directory path to analyze'),
 			since: z
 				.string()
@@ -103,13 +139,20 @@ export function registerGitTools(
 				),
 		}),
 		execute: async ({
+			projectRoot,
 			path: filePath,
 			since,
 		}: {
+			projectRoot?: string;
 			path: string;
 			since: string;
 		}) => {
-			const velocity = await gitAnalyzer.analyzeChangeVelocity(
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git: gitAnalyzer,
+			});
+			const velocity = await engines.git.analyzeChangeVelocity(
 				filePath,
 				since,
 			);

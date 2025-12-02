@@ -2,8 +2,11 @@ import path from 'node:path';
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
+import type { StorageEngine } from '../../core/storage/engine';
+import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
 import { createToolDescription } from './description';
+import { getScopedEngines } from './utils/scoped-engines';
 
 interface Architecture {
 	readonly scope?: string;
@@ -25,6 +28,8 @@ interface Architecture {
 export function registerArchitectureTools(
 	server: FastMCP,
 	engine: AnalysisEngine,
+	storage: StorageEngine,
+	git: GitAnalyzer,
 ): void {
 	server.addTool({
 		name: 'getArchitecture',
@@ -40,6 +45,8 @@ export function registerArchitectureTools(
 				skipIf: 'Need single-file details (use getContextForFile instead)',
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				scope: 'Optional directory path (omit for entire project)',
 			},
 			returns:
@@ -53,7 +60,7 @@ export function registerArchitectureTools(
 			},
 			example: {
 				scenario: 'Understand API module structure',
-				params: { scope: 'src/api' },
+				params: { projectRoot: '/path/to/project', scope: 'src/api' },
 				next: 'Identify main controllers and patterns used',
 			},
 			antiPatterns: {
@@ -62,16 +69,33 @@ export function registerArchitectureTools(
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			scope: z
 				.string()
 				.optional()
 				.describe('Optional directory scope to analyze'),
 		}),
-		execute: async ({ scope }: { scope?: string }) => {
-			const projectRoot = engine.getProjectRoot();
+		execute: async ({
+			projectRoot,
+			scope,
+		}: {
+			projectRoot?: string;
+			scope?: string;
+		}) => {
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const targetPath = scope
-				? path.join(projectRoot, scope)
-				: projectRoot;
+				? path.join(resolvedProjectRoot, scope)
+				: resolvedProjectRoot;
 
 			const files: string[] = [];
 			const allSymbols: Array<{
@@ -117,7 +141,8 @@ export function registerArchitectureTools(
 
 			for (const filePath of files.slice(0, 100)) {
 				try {
-					const analysis = await engine.analyzeFile(filePath);
+					const analysis =
+						await engines.analysis.analyzeFile(filePath);
 					allSymbols.push(
 						...analysis.symbols
 							.filter((s) => s.exported)

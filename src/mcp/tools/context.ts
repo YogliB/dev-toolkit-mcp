@@ -2,12 +2,17 @@ import path from 'node:path';
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
+import type { StorageEngine } from '../../core/storage/engine';
+import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
 import { createToolDescription } from './description';
+import { getScopedEngines } from './utils/scoped-engines';
 
 export function registerContextTools(
 	server: FastMCP,
 	engine: AnalysisEngine,
+	storage: StorageEngine,
+	git: GitAnalyzer,
 ): void {
 	server.addTool({
 		name: 'getContextForFile',
@@ -23,6 +28,8 @@ export function registerContextTools(
 				skipIf: 'Need directory-level overview (use getArchitecture)',
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				file: 'Path to the file (relative or absolute)',
 			},
 			returns:
@@ -37,7 +44,10 @@ export function registerContextTools(
 			},
 			example: {
 				scenario: 'Pre-edit analysis of authentication module',
-				params: { file: 'src/auth/validator.ts' },
+				params: {
+					projectRoot: '/path/to/project',
+					file: 'src/auth/validator.ts',
+				},
 				next: 'Review exported functions before refactoring',
 			},
 			antiPatterns: {
@@ -46,15 +56,32 @@ export function registerContextTools(
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			file: z.string().describe('Path to the file'),
 		}),
-		execute: async ({ file }: { file: string }) => {
-			const projectRoot = engine.getProjectRoot();
+		execute: async ({
+			projectRoot,
+			file,
+		}: {
+			projectRoot?: string;
+			file: string;
+		}) => {
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const fullPath = path.isAbsolute(file)
 				? file
-				: path.join(projectRoot, file);
+				: path.join(resolvedProjectRoot, file);
 
-			const analysis = await engine.analyzeFile(fullPath);
+			const analysis = await engines.analysis.analyzeFile(fullPath);
 
 			return JSON.stringify({
 				path: fullPath,
@@ -79,6 +106,8 @@ export function registerContextTools(
 				skipIf: 'Need complete relationship mapping (use getContextForFile)',
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				path: 'Path to the file',
 				depth: 'Analysis depth: 1=shallow, 2=medium, 3=deep (default: 2)',
 			},
@@ -92,6 +121,12 @@ export function registerContextTools(
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			path: z.string().describe('Path to the file'),
 			depth: z
 				.number()
@@ -100,17 +135,24 @@ export function registerContextTools(
 				.describe('Depth of analysis (1=shallow, 2=medium, 3=deep)'),
 		}),
 		execute: async ({
+			projectRoot,
 			path: filePath,
 		}: {
+			projectRoot?: string;
 			path: string;
 			depth?: number;
 		}) => {
-			const projectRoot = engine.getProjectRoot();
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const fullPath = path.isAbsolute(filePath)
 				? filePath
-				: path.join(projectRoot, filePath);
+				: path.join(resolvedProjectRoot, filePath);
 
-			const analysis = await engine.analyzeFile(fullPath);
+			const analysis = await engines.analysis.analyzeFile(fullPath);
 
 			const exportedSymbols = analysis.symbols.filter((s) => s.exported);
 			const mainPatterns = analysis.patterns.slice(0, 5);
@@ -142,6 +184,8 @@ export function registerContextTools(
 				],
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				scope: 'Optional directory path (omit for entire project)',
 			},
 			returns: 'Test file count, source file count, coverage ratio',
@@ -153,21 +197,38 @@ export function registerContextTools(
 			},
 			example: {
 				scenario: 'Check API module test coverage',
-				params: { scope: 'src/api' },
+				params: { projectRoot: '/path/to/project', scope: 'src/api' },
 				next: 'Add tests if ratio < 0.5',
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			scope: z
 				.string()
 				.optional()
 				.describe('Optional directory scope to analyze'),
 		}),
-		execute: async ({ scope }: { scope?: string }) => {
-			const projectRoot = engine.getProjectRoot();
+		execute: async ({
+			projectRoot,
+			scope,
+		}: {
+			projectRoot?: string;
+			scope?: string;
+		}) => {
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const targetPath = scope
-				? path.join(projectRoot, scope)
-				: projectRoot;
+				? path.join(resolvedProjectRoot, scope)
+				: resolvedProjectRoot;
 
 			const testFiles: string[] = [];
 			const sourceFiles: string[] = [];

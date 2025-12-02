@@ -175,6 +175,85 @@ In MCP configuration (e.g., Cursor's `mcp.json`):
 }
 ```
 
+## Working with Monorepos
+
+DevFlow supports monorepos and workspaces through two complementary approaches:
+
+### Option 1: Runtime `projectRoot` Parameter (Recommended)
+
+All DevFlow tools accept an optional `projectRoot` parameter that overrides `DEVFLOW_ROOT` for that specific tool call. This allows agents to dynamically work with different packages in a monorepo without reconfiguring the server.
+
+**Example:**
+
+```json
+{
+	"tool": "getProjectOnboarding",
+	"input": {
+		"projectRoot": "/path/to/monorepo/packages/app"
+	}
+}
+```
+
+**Benefits:**
+
+- No server restart needed to switch between packages
+- Agent can analyze multiple workspaces in a single session
+- Ideal for tools that support monorepo workflows
+
+**Usage in different tools:**
+
+```json
+// Analyze a specific package
+{
+	"tool": "getArchitecture",
+	"input": {
+		"projectRoot": "/path/to/monorepo/packages/api",
+		"scope": "src"
+	}
+}
+
+// Get context from another workspace
+{
+	"tool": "getContextForFile",
+	"input": {
+		"projectRoot": "/path/to/monorepo/packages/shared",
+		"filePath": "src/utils/validation.ts"
+	}
+}
+```
+
+**Notes:**
+
+- `projectRoot` must be an absolute path
+- Path must exist and be accessible
+- Scoped engines are cached for performance
+
+### Option 2: Set `DEVFLOW_ROOT` to Monorepo Root
+
+For monorepos with a root-level `package.json`, you can point `DEVFLOW_ROOT` to the monorepo root:
+
+```json
+{
+	"devflow": {
+		"command": "node",
+		"args": ["/path/to/devflow/dist/server.js"],
+		"env": {
+			"DEVFLOW_ROOT": "/path/to/monorepo"
+		}
+	}
+}
+```
+
+This works if your monorepo has:
+
+```json
+{
+	"name": "my-monorepo",
+	"private": true,
+	"workspaces": ["packages/*"]
+}
+```
+
 ## Troubleshooting
 
 **Command not found: bun**

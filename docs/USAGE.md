@@ -96,6 +96,10 @@ Extracts project information from `package.json`, `README.md`, and `tsconfig.jso
 }
 ```
 
+**Parameters:**
+
+- `projectRoot` (optional) - Absolute path to project root (overrides DEVFLOW_ROOT)
+
 **Returns:**
 
 - Project type (TypeScript, JavaScript, etc.)
@@ -105,6 +109,17 @@ Extracts project information from `package.json`, `README.md`, and `tsconfig.jso
 - Description
 
 **Use case:** Quick project overview when starting work on a new codebase.
+
+**Monorepo example:**
+
+```json
+{
+	"tool": "getProjectOnboarding",
+	"input": {
+		"projectRoot": "/path/to/monorepo/packages/api"
+	}
+}
+```
 
 ---
 
@@ -125,6 +140,7 @@ Analyzes project structure, symbols, patterns, and relationships:
 
 **Parameters:**
 
+- `projectRoot` (optional) - Absolute path to project root (overrides DEVFLOW_ROOT)
 - `scope` (optional) - Directory to analyze (defaults to entire project)
 
 **Returns:**
@@ -135,6 +151,8 @@ Analyzes project structure, symbols, patterns, and relationships:
 - Relationship overview
 
 **Use case:** Understanding project architecture and structure.
+
+**Note:** All DevFlow tools support the optional `projectRoot` parameter for working with monorepos and multiple workspaces. See [Setup Guide](./SETUP.md#working-with-monorepos) for details.
 
 ---
 

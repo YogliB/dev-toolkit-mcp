@@ -1,7 +1,10 @@
+import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
 import type { StorageEngine } from '../../core/storage/engine';
+import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { createToolDescription } from './description';
+import { getScopedEngines } from './utils/scoped-engines';
 
 interface ProjectOnboarding {
 	projectType: string;
@@ -18,6 +21,7 @@ export function registerProjectTools(
 	server: FastMCP,
 	engine: AnalysisEngine,
 	storage: StorageEngine,
+	git: GitAnalyzer,
 ): void {
 	server.addTool({
 		name: 'getProjectOnboarding',
@@ -31,6 +35,10 @@ export function registerProjectTools(
 					'Finding available build/test scripts',
 				],
 			},
+			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
+			},
 			returns:
 				'Project type, build/test commands, dependencies, dev dependencies, and main packages',
 			workflow: {
@@ -43,11 +51,24 @@ export function registerProjectTools(
 			},
 			example: {
 				scenario: 'Initial project orientation',
-				params: {},
+				params: { projectRoot: '/path/to/monorepo/package-a' },
 				next: 'Run build command to verify setup',
 			},
 		}),
-		execute: async () => {
+		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
+		}),
+		execute: async ({ projectRoot }: { projectRoot?: string }) => {
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
 			const onboarding: ProjectOnboarding = {
 				projectType: 'unknown',
 				mainPackages: [],
@@ -58,7 +79,7 @@ export function registerProjectTools(
 
 			try {
 				const packageJsonContent =
-					await storage.readFile('package.json');
+					await engines.storage.readFile('package.json');
 				const packageJson = JSON.parse(packageJsonContent);
 
 				onboarding.projectType = packageJson.type || 'commonjs';
@@ -84,7 +105,7 @@ export function registerProjectTools(
 			}
 
 			try {
-				await storage.readFile('tsconfig.json');
+				await engines.storage.readFile('tsconfig.json');
 				if (onboarding.projectType === 'unknown') {
 					onboarding.projectType = 'typescript';
 				}

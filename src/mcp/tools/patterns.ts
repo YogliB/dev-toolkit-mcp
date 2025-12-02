@@ -3,8 +3,11 @@ import { readdir } from 'node:fs/promises';
 import { z } from 'zod';
 import type { FastMCP } from 'fastmcp';
 import type { AnalysisEngine } from '../../core/analysis/engine';
+import type { StorageEngine } from '../../core/storage/engine';
+import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
 import { createToolDescription } from './description';
+import { getScopedEngines } from './utils/scoped-engines';
 
 function validateDirectoryPath(
 	directory: string,
@@ -64,6 +67,8 @@ async function analyzeFileForAntiPatterns(
 export function registerPatternTools(
 	server: FastMCP,
 	engine: AnalysisEngine,
+	storage: StorageEngine,
+	git: GitAnalyzer,
 ): void {
 	server.addTool({
 		name: 'findCodePatterns',
@@ -78,6 +83,8 @@ export function registerPatternTools(
 				],
 			},
 			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
 				type: 'Pattern type to search for (e.g., middleware, controller, service, error-handler)',
 				scope: 'Optional directory path to limit search',
 			},
@@ -92,11 +99,21 @@ export function registerPatternTools(
 			},
 			example: {
 				scenario: 'Find all middleware patterns in API module',
-				params: { type: 'middleware', scope: 'src/api' },
+				params: {
+					projectRoot: '/path/to/project',
+					type: 'middleware',
+					scope: 'src/api',
+				},
 				next: 'Ensure all middleware follows the same structure',
 			},
 		}),
 		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
 			type: z
 				.string()
 				.describe(
@@ -107,11 +124,24 @@ export function registerPatternTools(
 				.optional()
 				.describe('Optional directory scope to search'),
 		}),
-		execute: async ({ type, scope }: { type: string; scope?: string }) => {
-			const projectRoot = engine.getProjectRoot();
+		execute: async ({
+			projectRoot,
+			type,
+			scope,
+		}: {
+			projectRoot?: string;
+			type: string;
+			scope?: string;
+		}) => {
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const targetPath = scope
-				? path.join(projectRoot, scope)
-				: projectRoot;
+				? path.join(resolvedProjectRoot, scope)
+				: resolvedProjectRoot;
 
 			const patterns: Array<{
 				type: string;
@@ -122,15 +152,15 @@ export function registerPatternTools(
 			}> = [];
 
 			async function searchDirectory(directory: string): Promise<void> {
-				const validatedPath = validateDirectoryPath(
+				const validatedDirectory = validateDirectoryPath(
 					directory,
-					projectRoot,
+					resolvedProjectRoot,
 				);
-				if (!validatedPath) {
+				if (!validatedDirectory) {
 					return;
 				}
 
-				const safeDirectory = validatedPath as string;
+				const safeDirectory = validatedDirectory as string;
 				let entries;
 				try {
 					entries = await readdir(safeDirectory, {
@@ -154,7 +184,8 @@ export function registerPatternTools(
 						isSupportedLanguage(fullPath)
 					) {
 						try {
-							const analysis = await engine.analyzeFile(fullPath);
+							const analysis =
+								await engines.analysis.analyzeFile(fullPath);
 							const matchingPatterns = analysis.patterns.filter(
 								(p) => p.type === type,
 							);
@@ -184,6 +215,10 @@ export function registerPatternTools(
 					'When improving codebase health',
 				],
 			},
+			parameters: {
+				projectRoot:
+					'Optional absolute path to project root (overrides DEVFLOW_ROOT)',
+			},
 			returns:
 				'Array of anti-patterns with type, description, file path, and line number',
 			workflow: {
@@ -195,12 +230,25 @@ export function registerPatternTools(
 			},
 			example: {
 				scenario: 'Pre-release quality check',
-				params: {},
+				params: { projectRoot: '/path/to/project' },
 				next: 'Address all naming issues and TODOs',
 			},
 		}),
-		execute: async () => {
-			const projectRoot = engine.getProjectRoot();
+		parameters: z.object({
+			projectRoot: z
+				.string()
+				.optional()
+				.describe(
+					'Optional absolute path to project root directory to analyze (overrides DEVFLOW_ROOT)',
+				),
+		}),
+		execute: async ({ projectRoot }: { projectRoot?: string }) => {
+			const engines = await getScopedEngines(projectRoot, {
+				storage,
+				analysis: engine,
+				git,
+			});
+			const resolvedProjectRoot = engines.analysis.getProjectRoot();
 			const antiPatterns: Array<{
 				type: string;
 				description: string;
@@ -209,15 +257,15 @@ export function registerPatternTools(
 			}> = [];
 
 			async function searchDirectory(directory: string): Promise<void> {
-				const validatedPath = validateDirectoryPath(
+				const validatedDirectory = validateDirectoryPath(
 					directory,
-					projectRoot,
+					resolvedProjectRoot,
 				);
-				if (!validatedPath) {
+				if (!validatedDirectory) {
 					return;
 				}
 
-				const safeDirectory = validatedPath as string;
+				const safeDirectory = validatedDirectory as string;
 				let entries;
 				try {
 					entries = await readdir(safeDirectory, {
@@ -242,14 +290,14 @@ export function registerPatternTools(
 					) {
 						await analyzeFileForAntiPatterns(
 							fullPath,
-							engine,
+							engines.analysis,
 							antiPatterns,
 						);
 					}
 				}
 			}
 
-			await searchDirectory(projectRoot);
+			await searchDirectory(resolvedProjectRoot);
 
 			return JSON.stringify(antiPatterns);
 		},
