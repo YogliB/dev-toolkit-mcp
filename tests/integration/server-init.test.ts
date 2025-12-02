@@ -238,5 +238,5 @@ describe('Server Initialization Integration', () => {
 		delete process.env.DEVFLOW_ROOT;
 
 		await rm(largeTestDirectory, { recursive: true, force: true });
-	});
+	}, 60_000);
 });

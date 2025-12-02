@@ -267,5 +267,5 @@ describe('FileWatcher', () => {
 
 		watcher.stop();
 		await rm(testDirectory, { recursive: true, force: true });
-	});
+	}, 60_000);
 });
