@@ -31,7 +31,7 @@ run_check "Type Check" "bun run type-check"
 
 run_check "Build" "bun run build"
 
-run_check "Verify Executable Exists" "test -f ./dist/devflow"
+run_check "Verify Executable Exists" "test -f ./dist/server.js"
 
 run_check "Test Coverage" "bun run test:coverage"
 
@@ -57,4 +57,3 @@ else
 	done
 	exit 1
 fi
-

@@ -147,13 +147,13 @@ jobs:
               run: bun run build
 
             - name: Verify executable exists
-              run: test -f ./dist/devflow
+              run: test -f ./dist/server.js
 
             - name: Upload executable artifact
               uses: actions/upload-artifact@v4
               with:
                   name: devflow-executable
-                  path: ./dist/devflow
+                  path: ./dist/server.js
                   retention-days: 7
 
     test:
