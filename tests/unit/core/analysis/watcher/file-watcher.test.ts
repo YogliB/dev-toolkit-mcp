@@ -29,18 +29,16 @@ describe('FileWatcher', () => {
 
 	it('should watch directory', async () => {
 		const watcher = new FileWatcher();
-		await expect(
-			watcher.watchDirectory(testProject.root),
-		).resolves.not.toThrow();
+		await watcher.watchDirectory(testProject.root);
+		expect(watcher).toBeDefined();
 		watcher.stop();
 	});
 
 	it('should not watch same directory twice', async () => {
 		const watcher = new FileWatcher();
 		await watcher.watchDirectory(testProject.root);
-		await expect(
-			watcher.watchDirectory(testProject.root),
-		).resolves.not.toThrow();
+		await watcher.watchDirectory(testProject.root);
+		expect(watcher).toBeDefined();
 		watcher.stop();
 	});
 
