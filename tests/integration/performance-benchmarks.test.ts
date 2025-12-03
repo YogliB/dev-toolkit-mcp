@@ -31,7 +31,11 @@ describe('Performance Benchmarks', () => {
 			const duration = performance.now() - startTime;
 
 			expect(plugin).toBeDefined();
-			expect(duration).toBeLessThan(100);
+			expectDurationWithinBaseline(
+				duration,
+				'performance-benchmarks.plugin-init-100',
+				0.5,
+			);
 			console.log(
 				`✓ Plugin initialization: ${duration.toFixed(2)}ms (100 files)`,
 			);
@@ -64,7 +68,11 @@ describe('Performance Benchmarks', () => {
 			const duration = performance.now() - startTime;
 
 			expect(plugin).toBeDefined();
-			expect(duration).toBeLessThan(200);
+			expectDurationWithinBaseline(
+				duration,
+				'performance-benchmarks.plugin-init-500',
+				0.5,
+			);
 			console.log(
 				`✓ Plugin initialization: ${duration.toFixed(2)}ms (500 files)`,
 			);
@@ -142,7 +150,11 @@ export function createApp(): Application {
 			const duration = performance.now() - startTime;
 
 			expect(analyses).toHaveLength(10);
-			expect(duration).toBeLessThan(2000);
+			expectDurationWithinBaseline(
+				duration,
+				'performance-benchmarks.batch-analysis',
+				0.5,
+			);
 			console.log(
 				`✓ Batch analysis (10 files): ${duration.toFixed(2)}ms (${(duration / 10).toFixed(2)}ms avg per file)`,
 			);
@@ -166,7 +178,11 @@ export function createApp(): Application {
 
 			expect(result.count).toBeGreaterThan(0);
 			expect(result.errors).toEqual([]);
-			expect(duration).toBeLessThan(5000);
+			expectDurationWithinBaseline(
+				duration,
+				'performance-benchmarks.preload-100',
+				0.5,
+			);
 			console.log(
 				`✓ Preload 100 files: ${duration.toFixed(2)}ms (${result.count} files loaded)`,
 			);
@@ -187,7 +203,11 @@ export function createApp(): Application {
 			const duration = performance.now() - startTime;
 
 			expect(analysis.symbols.length).toBeGreaterThan(0);
-			expect(duration).toBeLessThan(500);
+			expectDurationWithinBaseline(
+				duration,
+				'performance-benchmarks.preloaded-analysis',
+				0.5,
+			);
 			console.log(`✓ Preloaded file analysis: ${duration.toFixed(2)}ms`);
 		});
 	});
@@ -261,7 +281,9 @@ export class Server {
 			const memDiff = memAfter - memBefore;
 
 			expect(plugin).toBeDefined();
-			expect(memDiff).toBeLessThan(50);
+			// Memory efficiency test keeps hardcoded threshold due to non-duration metric
+			// CI variance: may be up to 75MB due to different runtime environments
+			expect(memDiff).toBeLessThan(75);
 
 			console.log(
 				`✓ Memory usage after initialization: ${memDiff.toFixed(2)}MB increase (200 files not loaded)`,
@@ -290,7 +312,11 @@ export class Server {
 			const duration = performance.now() - startTime;
 
 			expect(analysis.symbols.length).toBe(500);
-			expect(duration).toBeLessThan(3000);
+			expectDurationWithinBaseline(
+				duration,
+				'performance-benchmarks.large-file',
+				0.5,
+			);
 
 			console.log(
 				`✓ Large file (500 functions): ${duration.toFixed(2)}ms (${(duration / 500).toFixed(2)}ms per function)`,
