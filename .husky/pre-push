@@ -1,14 +1,8 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-# Run typecheck
 echo "Running type check..."
 bun run type-check || exit 1
 
-# Get changed files (committed, not staged)
 CHANGED_FILES=$(git diff --name-only --diff-filter=d origin/main...HEAD)
 
-# Run tests for changed files using Vitest's 'related' command
 if [ -n "$CHANGED_FILES" ]; then
   echo "Running tests related to changed files..."
   bunx vitest related $CHANGED_FILES || exit 1
