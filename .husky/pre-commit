@@ -1,1 +1,7 @@
+# Auto-generate ci.sh from ci.yml to keep them in sync
+bun run generate:ci-sh
+
+# Stage the generated file if it was modified
+git add scripts/ci.sh 2>/dev/null || true
+
 bunx lint-staged

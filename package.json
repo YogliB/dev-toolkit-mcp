@@ -19,6 +19,7 @@
 		"dev": "bun run src/server.ts",
 		"format:check": "prettier --check .",
 		"format": "prettier --write .",
+		"generate:ci-sh": "bun run scripts/generate-ci-sh.ts",
 		"knip": "knip",
 		"lint:clean": "rm -f .eslintcache",
 		"lint:fix": "eslint --fix . --max-warnings=0 --cache --cache-location .eslintcache",
@@ -33,7 +34,8 @@
 		"test:integration": "vitest run tests/integration",
 		"test:e2e": "bun test tests/e2e",
 		"type-check": "bun run tsc --noEmit",
-		"update-baseline": "bun run scripts/update-baseline.ts --update-baseline"
+		"update-baseline": "bun run scripts/update-baseline.ts --update-baseline",
+		"validate:ci-sync": "bun run scripts/validate-ci-sync.ts"
 	},
 	"keywords": [
 		"mcp",
@@ -70,6 +72,7 @@
 		"typescript": "5.9.3",
 		"typescript-eslint": "8.48.1",
 		"vitest": "4.0.14",
+		"yaml": "2.8.2",
 		"zod": "4.1.13"
 	},
 	"lint-staged": {

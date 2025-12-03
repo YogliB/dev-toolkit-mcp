@@ -51,6 +51,54 @@ git checkout -b feature/your-feature-name
 
 ---
 
+## Modifying CI Checks
+
+### CI Sync Mechanism
+
+The CI configuration is maintained in two places:
+
+- **`.github/workflows/ci.yml`** - GitHub Actions workflow (source of truth)
+- **`scripts/ci.sh`** - Local CI script (auto-generated)
+
+**Important:** `scripts/ci.sh` is automatically generated from `ci.yml`. Do not edit it manually.
+
+### How to Add/Modify CI Checks
+
+1. **Edit the YAML workflow:**
+
+```bash
+# Edit .github/workflows/ci.yml
+# Add or modify a job with the check you want
+```
+
+2. **Regenerate the shell script:**
+
+```bash
+bun run generate:ci-sh
+```
+
+3. **Verify sync:**
+
+```bash
+bun run validate:ci-sync
+```
+
+### Automatic Sync
+
+The pre-commit hook automatically regenerates `ci.sh` when you commit changes to `ci.yml`:
+
+```bash
+git add .github/workflows/ci.yml
+git commit -m "feat: Add new CI check"
+# ci.sh is automatically regenerated and staged
+```
+
+### CI Validation
+
+The CI pipeline includes a `ci-sync-check` job that ensures the files stay in sync. If they drift, the CI will fail with a clear error message.
+
+---
+
 ## Development Workflow
 
 ### Code Style
