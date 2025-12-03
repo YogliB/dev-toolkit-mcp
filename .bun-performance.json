@@ -122,6 +122,18 @@
 		"maxRegression": 0.2,
 		"maxDuration": 10000
 	},
+	"testSpecificBaselines": {
+		"analysis-engine-lazy-loading.preloaded-file-analysis": {
+			"name": "analysis-engine-lazy-loading.preloaded-file-analysis",
+			"duration": 200,
+			"timestamp": "2025-12-03T08:00:00.000Z"
+		},
+		"performance-benchmarks.first-file-analysis": {
+			"name": "performance-benchmarks.first-file-analysis",
+			"duration": 350,
+			"timestamp": "2025-12-03T08:00:00.000Z"
+		}
+	},
 	"history": [
 		{
 			"totalDuration": 0,

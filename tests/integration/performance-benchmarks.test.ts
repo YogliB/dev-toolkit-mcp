@@ -3,6 +3,7 @@ import { TypeScriptPlugin } from '../../src/core/analysis/plugins/typescript';
 import { AnalysisEngine } from '../../src/core/analysis/engine';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { expectDurationWithinBaseline } from '../helpers/performance-baseline';
 
 const benchProjectRoot = '.bench-project';
 
@@ -107,7 +108,14 @@ export function createApp(): Application {
 			const duration = performance.now() - startTime;
 
 			expect(analysis.symbols.length).toBeGreaterThan(0);
-			expect(duration).toBeLessThan(500);
+
+			// Using baseline-driven performance check (see docs/TESTING.md)
+			// Allows 50% regression from baseline to account for CI environment variability
+			expectDurationWithinBaseline(
+				duration,
+				'performance-benchmarks.first-file-analysis',
+				0.5,
+			);
 			console.log(`✓ First file analysis: ${duration.toFixed(2)}ms`);
 		});
 

@@ -211,48 +211,170 @@ Instead of verbose `(pass)` indicators, you only see:
 
 This improves readability and reduces token usage when AI agents analyze test output.
 
-## Performance Monitoring
+## Performance Testing
 
-### Baseline
+### Baseline-Driven Performance Assertions
+
+Performance tests use baseline-driven comparisons instead of hard-coded timing assertions to account for CI environment variability.
+
+**Why Baseline-Driven?**
+
+- CI environments have variable performance characteristics
+- Hard-coded thresholds (e.g., "must complete in 200ms") are flaky
+- Baseline approach detects regressions while tolerating environment variance
+
+### Writing Performance Tests
+
+Use `expectDurationWithinBaseline()` from `tests/helpers/performance-baseline.ts`:
+
+```typescript
+import { expectDurationWithinBaseline } from '../helpers/performance-baseline';
+
+it('should process files efficiently', async () => {
+	const startTime = performance.now();
+	await processFiles(files);
+	const duration = performance.now() - startTime;
+
+	// Compare against baseline with 50% regression tolerance
+	expectDurationWithinBaseline(
+		duration,
+		'my-test.process-files', // Unique test identifier
+		0.5, // 50% max regression (default)
+	);
+});
+```
+
+### Test Output
+
+Performance checks log detailed metrics:
+
+```
+📊 Performance Check: my-test.process-files
+   Actual:    220.00ms
+   Baseline:  200.00ms
+   Threshold: 300.00ms (50% max regression)
+   Change:    +10.0%
+```
+
+### Fallback Behavior
+
+When no baseline exists:
+
+1. **With fallback defined**: Uses absolute threshold with warning
+2. **Without fallback**: Skips check with warning
+
+This ensures tests don't fail during initial development.
+
+### Performance Monitoring
+
+#### Baseline Storage
 
 Performance baseline is stored in `.bun-performance.json`:
 
 ```json
 {
 	"baseline": {
-		"totalDuration": 150,
-		"testCount": 89,
-		"fileCount": 8,
-		"avgPerTest": 1.69,
+		"totalDuration": 7226.009132,
+		"testCount": 160,
+		"fileCount": 22,
+		"avgPerTest": 45.16,
 		"files": {},
-		"timestamp": "2024-01-15T10:30:00Z"
+		"timestamp": "2025-12-02T21:45:54.777Z"
 	},
 	"thresholds": {
 		"maxRegression": 0.2,
-		"maxDuration": 5000
+		"maxDuration": 10000
+	},
+	"testSpecificBaselines": {
+		"my-test.process-files": {
+			"name": "my-test.process-files",
+			"duration": 200,
+			"timestamp": "2025-12-03T08:00:00.000Z"
+		}
 	}
 }
 ```
 
-### Updating Baseline
+#### Updating Baseline
 
-When performance improvements are intentional, update the baseline:
+When intentional performance changes occur (optimizations or acceptable regressions):
 
 ```bash
 # Preview new baseline
 bun run scripts/update-baseline.ts
 
-# Actually update (use with caution)
+# Update baseline (commit the changes)
 bun run scripts/update-baseline.ts --update-baseline
+git add .bun-performance.json
+git commit -m "chore: update performance baseline after optimization"
 ```
 
-### Performance Reports
+#### Adding Test-Specific Baselines
+
+To add a baseline for a new performance test:
+
+1. **Run the test multiple times** to get average duration
+2. **Edit `.bun-performance.json`** manually
+3. **Add entry** to `testSpecificBaselines`:
+
+```json
+"testSpecificBaselines": {
+	"my-new-test.operation-name": {
+		"name": "my-new-test.operation-name",
+		"duration": 250.5,
+		"timestamp": "2025-12-03T10:00:00.000Z"
+	}
+}
+```
+
+4. **Commit the baseline** with your test
+
+#### Performance Reports
 
 CI generates performance reports automatically. Check:
 
-1. **CI Artifacts** - `performance-report` contains `results.json`
+1. **CI Artifacts** - `performance-report` contains `results.xml`
 2. **Console Output** - Performance summary printed to logs
 3. **Git History** - Baseline tracked in `.bun-performance.json`
+
+#### Interpreting Failures
+
+When a performance test fails:
+
+```
+AssertionError: expected 450.5 to be less than 300
+
+📊 Performance Check: my-test.process-files
+   Actual:    450.50ms
+   Baseline:  200.00ms
+   Threshold: 300.00ms (50% max regression)
+   Change:    +125.2%
+```
+
+**Action Steps:**
+
+1. **Verify the regression** - Is it real or environment-related?
+2. **Check recent changes** - What code changed?
+3. **Profile if needed** - Add logging to identify bottlenecks
+4. **Decide:**
+    - Fix the performance issue, OR
+    - Update baseline if regression is acceptable
+
+### Best Practices
+
+**DO:**
+
+- ✅ Use unique, descriptive test identifiers
+- ✅ Set realistic regression thresholds (50% for CI tolerance)
+- ✅ Update baselines when making intentional performance changes
+- ✅ Document why baselines changed in commit messages
+
+**DON'T:**
+
+- ❌ Use hard-coded timing assertions (e.g., `expect(duration).toBeLessThan(200)`)
+- ❌ Update baselines to "fix" failing tests without investigating
+- ❌ Set regression thresholds too tight (<30%)
+- ❌ Reuse test identifiers across different tests
 
 ## Configuration
 

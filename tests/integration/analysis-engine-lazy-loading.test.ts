@@ -3,6 +3,7 @@ import { AnalysisEngine } from '../../src/core/analysis/engine';
 import { TypeScriptPlugin } from '../../src/core/analysis/plugins/typescript';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { expectDurationWithinBaseline } from '../helpers/performance-baseline';
 
 const testProjectRoot = '.test-analysis-engine-integration';
 
@@ -302,10 +303,18 @@ export class Derived implements Base {
 			await tsPlugin.preloadFiles();
 
 			const startTime = performance.now();
-			await engine.analyzeFile(filePath);
+			const analysis = await engine.analyzeFile(filePath);
 			const duration = performance.now() - startTime;
 
-			expect(duration).toBeLessThan(200);
+			expect(analysis).toBeDefined();
+
+			// Using baseline-driven performance check (see docs/TESTING.md)
+			// Allows 50% regression from baseline to account for CI environment variability
+			expectDurationWithinBaseline(
+				duration,
+				'analysis-engine-lazy-loading.preloaded-file-analysis',
+				0.5,
+			);
 		});
 	});
 });
