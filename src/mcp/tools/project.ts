@@ -5,6 +5,9 @@ import type { StorageEngine } from '../../core/storage/engine';
 import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { createToolDescription } from './description';
 import { getScopedEngines } from './utils/scoped-engines';
+import { createLogger } from '../../core/utils/logger';
+
+const logger = createLogger('ProjectTools');
 
 interface ProjectOnboarding {
 	projectType: string;
@@ -98,9 +101,8 @@ export function registerProjectTools(
 
 				onboarding.mainPackages = mainPackages;
 			} catch (error) {
-				console.error(
-					'[getProjectOnboarding] Error reading package.json:',
-					error,
+				logger.error(
+					`Error reading package.json: ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
 

@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { GitAwareCache } from '../cache/git-aware';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('FileWatcher');
 
 export type FileChangeCallback = (filePath: string) => void | Promise<void>;
 
@@ -196,8 +199,8 @@ export class FileWatcher {
 		}
 
 		if (estimatedSize > 10_000) {
-			console.error(
-				`[FileWatcher:WARN] Large directory detected (estimated ${estimatedSize} files). ` +
+			logger.warn(
+				`Large directory detected (estimated ${estimatedSize} files). ` +
 					`Watching may impact performance.`,
 			);
 		}
@@ -329,9 +332,8 @@ export class FileWatcher {
 			try {
 				await callback(filePath);
 			} catch (error) {
-				console.error(
-					`[FileWatcher] Error in callback for ${filePath}:`,
-					error,
+				logger.error(
+					`Error in callback for ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
 		}

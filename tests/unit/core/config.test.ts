@@ -312,7 +312,7 @@ describe('detectProjectRoot', () => {
 
 		expect(result).toBe(resolvedRoot);
 		expect(
-			errorMessages.some((message) => message.includes('[DevFlow:WARN]')),
+			errorMessages.some((message) => message.includes('[Config:WARN]')),
 		).toBe(true);
 
 		console.error = originalError;

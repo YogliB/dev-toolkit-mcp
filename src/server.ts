@@ -12,6 +12,9 @@ import {
 	MAX_FILE_COUNT_THRESHOLD,
 } from './core/analysis/watcher/file-watcher';
 import { registerAllTools } from './mcp/tools';
+import { createLogger } from './core/utils/logger';
+
+const logger = createLogger('DevFlow');
 
 function parseBoolean(
 	value: string | undefined,
@@ -48,8 +51,8 @@ async function validateProjectRoot(projectRoot: string): Promise<void> {
 	}
 
 	if (estimatedSize > 10_000) {
-		console.error(
-			`[DevFlow:WARN] Large project root detected (estimated ${estimatedSize} files). ` +
+		logger.warn(
+			`Large project root detected (estimated ${estimatedSize} files). ` +
 				`File watching may impact performance. Consider setting DEVFLOW_ROOT to a more specific directory.`,
 		);
 	}
@@ -61,14 +64,14 @@ async function initializeServer(): Promise<void> {
 	try {
 		let phaseStart = performance.now();
 		const projectRoot = await detectProjectRoot();
-		console.error(
-			`[DevFlow:INFO] Project root detected: ${projectRoot} (${(performance.now() - phaseStart).toFixed(2)}ms)`,
+		logger.info(
+			`Project root detected: ${projectRoot} (${(performance.now() - phaseStart).toFixed(2)}ms)`,
 		);
 
 		phaseStart = performance.now();
 		await validateProjectRoot(projectRoot);
-		console.error(
-			`[DevFlow:INFO] Project root validated (${(performance.now() - phaseStart).toFixed(2)}ms)`,
+		logger.info(
+			`Project root validated (${(performance.now() - phaseStart).toFixed(2)}ms)`,
 		);
 
 		phaseStart = performance.now();
@@ -76,40 +79,40 @@ async function initializeServer(): Promise<void> {
 			rootPath: projectRoot,
 			debug: false,
 		});
-		console.error(
-			`[DevFlow:INFO] StorageEngine initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
+		logger.info(
+			`StorageEngine initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
 		);
 
 		phaseStart = performance.now();
 		analysisEngine = new AnalysisEngine(projectRoot);
 		tsPlugin = new TypeScriptPlugin(projectRoot);
 		analysisEngine.registerPlugin(tsPlugin);
-		console.error(
-			`[DevFlow:INFO] AnalysisEngine initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
+		logger.info(
+			`AnalysisEngine initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
 		);
 
 		phaseStart = performance.now();
 		gitAnalyzer = new GitAnalyzer(projectRoot);
-		console.error(
-			`[DevFlow:INFO] GitAnalyzer initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
+		logger.info(
+			`GitAnalyzer initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
 		);
 
 		phaseStart = performance.now();
 		cache = new GitAwareCache();
-		console.error(
-			`[DevFlow:INFO] Cache initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
+		logger.info(
+			`Cache initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
 		);
 
 		phaseStart = performance.now();
 		fileWatcher = new FileWatcher(100, cache);
 		await fileWatcher.watchDirectory(projectRoot);
-		console.error(
-			`[DevFlow:INFO] FileWatcher initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
+		logger.info(
+			`FileWatcher initialized (${(performance.now() - phaseStart).toFixed(2)}ms)`,
 		);
 
 		const totalTime = performance.now() - startTime;
-		console.error(
-			`[DevFlow:INFO] Server initialization complete (${totalTime.toFixed(2)}ms total)`,
+		logger.info(
+			`Server initialization complete (${totalTime.toFixed(2)}ms total)`,
 		);
 
 		// Background preloading (optional, non-blocking)
@@ -121,27 +124,25 @@ async function initializeServer(): Promise<void> {
 			const patterns = parsePatterns(
 				process.env.DEVFLOW_PRELOAD_PATTERNS,
 			);
-			console.error(
-				'[DevFlow:INFO] Starting background file preloading...',
-			);
+			logger.info('Starting background file preloading...');
 
 			// Don't await - let this run in background
 			tsPlugin
 				.preloadFiles(patterns)
 				.then((result) => {
 					if (result.errors.length > 0) {
-						console.error(
-							`[DevFlow:WARN] Preload completed with errors: ${result.errors.join(', ')}`,
+						logger.warn(
+							`Preload completed with errors: ${result.errors.join(', ')}`,
 						);
 					} else {
-						console.error(
-							`[DevFlow:INFO] Preload complete: ${result.count} files loaded`,
+						logger.info(
+							`Preload complete: ${result.count} files loaded`,
 						);
 					}
 				})
 				.catch((error) => {
-					console.error(
-						`[DevFlow:ERROR] Background preload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+					logger.error(
+						`Background preload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 					);
 				});
 		}
@@ -150,11 +151,9 @@ async function initializeServer(): Promise<void> {
 			error instanceof Error
 				? error.message
 				: 'Unknown error during initialization';
-		console.error(
-			`[DevFlow:ERROR] Failed to initialize server: ${errorMessage}`,
-		);
+		logger.error(`Failed to initialize server: ${errorMessage}`);
 		if (error instanceof Error && error.stack) {
-			console.error(`[DevFlow:ERROR] Stack trace: ${error.stack}`);
+			logger.error(`Stack trace: ${error.stack}`);
 		}
 		throw error;
 	}
@@ -170,20 +169,20 @@ async function main(): Promise<void> {
 
 	const toolsStart = performance.now();
 	registerAllTools(server, analysisEngine, storageEngine, gitAnalyzer);
-	console.error(
-		`[DevFlow:INFO] All MCP tools registered (${(performance.now() - toolsStart).toFixed(2)}ms)`,
+	logger.info(
+		`All MCP tools registered (${(performance.now() - toolsStart).toFixed(2)}ms)`,
 	);
 
 	await server.start({
 		transportType: 'stdio',
 	});
-	console.error('[DevFlow:INFO] DevFlow MCP Server ready on stdio');
+	logger.info('DevFlow MCP Server ready on stdio');
 }
 
 (async () => {
 	await main().catch((error) => {
-		console.error(
-			`[DevFlow:ERROR] Fatal server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+		logger.error(
+			`Fatal server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
 		);
 		process.exit(1);
 	});

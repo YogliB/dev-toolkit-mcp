@@ -1,6 +1,9 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { realpath } from 'node:fs/promises';
+import { createLogger } from './utils/logger';
+
+const logger = createLogger('Config', { debug: true });
 
 function getServerScriptDirectory(): string {
 	try {
@@ -75,8 +78,8 @@ async function handleValidatedRoot(
 		nonValidatedResult,
 	);
 	if (withinDepth) {
-		console.error(
-			`[DevFlow:DEBUG] Found validated project indicator (${indicator}) at: ${currentDirectory}`,
+		logger.debug(
+			`Found validated project indicator (${indicator}) at: ${currentDirectory}`,
 		);
 		return currentDirectory;
 	}
@@ -87,11 +90,11 @@ async function handleNonValidatedRoot(
 	currentDirectory: string,
 	indicator: string,
 ): Promise<{ result: string; parent: string }> {
-	console.error(
-		`[DevFlow:DEBUG] Found project indicator (${indicator}) at: ${currentDirectory}`,
+	logger.debug(
+		`Found project indicator (${indicator}) at: ${currentDirectory}`,
 	);
-	console.error(
-		`[DevFlow:WARN] Detected root may not be a devflow project. Consider setting DEVFLOW_ROOT environment variable.`,
+	logger.warn(
+		`Detected root may not be a devflow project. Consider setting DEVFLOW_ROOT environment variable.`,
 	);
 	return {
 		result: currentDirectory,
@@ -174,8 +177,8 @@ async function searchSiblingsForValidatedRoot(
 					const isValid =
 						await isValidDevelopmentFlowProjectRoot(siblingPath);
 					if (isValid) {
-						console.error(
-							`[DevFlow:DEBUG] Found validated project indicator (${foundIndicator}) at: ${siblingPath}`,
+						logger.debug(
+							`Found validated project indicator (${foundIndicator}) at: ${siblingPath}`,
 						);
 						return siblingPath;
 					}
@@ -357,18 +360,14 @@ function selectBestResult(
 		return validatedDevflowProjectFromSecondary;
 	}
 
-	console.error(
-		`[DevFlow:DEBUG] No project indicator found, falling back to cwd: ${cwd}`,
-	);
+	logger.debug(`No project indicator found, falling back to cwd: ${cwd}`);
 	return cwd;
 }
 
 export async function detectProjectRoot(startFrom?: string): Promise<string> {
 	const devflowRoot = process.env.DEVFLOW_ROOT;
 	if (devflowRoot) {
-		console.error(
-			`[DevFlow:DEBUG] Using DEVFLOW_ROOT override: ${devflowRoot}`,
-		);
+		logger.debug(`Using DEVFLOW_ROOT override: ${devflowRoot}`);
 		return path.resolve(devflowRoot);
 	}
 

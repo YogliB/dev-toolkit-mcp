@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { PathValidationError, FileNotFoundError, WriteError } from './errors';
+import { createLogger } from '../utils/logger';
 
 export interface StorageEngineOptions {
 	rootPath: string;
@@ -24,11 +25,7 @@ export function createStorageEngine(
 	const rootPath = path.resolve(options.rootPath);
 	const debug = options.debug ?? false;
 
-	const log = (level: 'debug' | 'warn' | 'error', message: string): void => {
-		if (debug || level !== 'debug') {
-			console.log(`[StorageEngine:${level.toUpperCase()}] ${message}`);
-		}
-	};
+	const logger = createLogger('StorageEngine', { debug });
 
 	const validatePath = (filePath: string): string => {
 		if (!filePath || typeof filePath !== 'string') {
@@ -60,12 +57,11 @@ export function createStorageEngine(
 	const readFile = async (filePath: string): Promise<string> => {
 		try {
 			const validatedPath = validatePath(filePath);
-			log('debug', `Reading file: ${filePath}`);
+			logger.debug(`Reading file: ${filePath}`);
 
 			const { readFile: fsReadFile } = await import('node:fs/promises');
 			const content = await fsReadFile(validatedPath, 'utf8');
-			log(
-				'debug',
+			logger.debug(
 				`Successfully read file: ${filePath} (${content.length} bytes)`,
 			);
 			return content;
@@ -92,7 +88,7 @@ export function createStorageEngine(
 	): Promise<void> => {
 		try {
 			const validatedPath = validatePath(filePath);
-			log('debug', `Writing file: ${filePath}`);
+			logger.debug(`Writing file: ${filePath}`);
 
 			const directory = path.dirname(validatedPath);
 
@@ -108,8 +104,7 @@ export function createStorageEngine(
 
 			const { writeFile: fsWriteFile } = await import('node:fs/promises');
 			await fsWriteFile(validatedPath, content, 'utf8');
-			log(
-				'debug',
+			logger.debug(
 				`Successfully wrote file: ${filePath} (${content.length} bytes)`,
 			);
 		} catch (error) {
@@ -144,10 +139,10 @@ export function createStorageEngine(
 	const deleteFile = async (filePath: string): Promise<void> => {
 		try {
 			const validatedPath = validatePath(filePath);
-			log('debug', `Deleting file: ${filePath}`);
+			logger.debug(`Deleting file: ${filePath}`);
 			const { unlink } = await import('node:fs/promises');
 			await unlink(validatedPath);
-			log('debug', `Successfully deleted file: ${filePath}`);
+			logger.debug(`Successfully deleted file: ${filePath}`);
 		} catch (error) {
 			if (error instanceof PathValidationError) {
 				throw error;
@@ -172,7 +167,7 @@ export function createStorageEngine(
 		try {
 			const safeDirectory = directoryPath || '.';
 			const validatedPath = validatePath(safeDirectory);
-			log('debug', `Listing files in: ${safeDirectory}`);
+			logger.debug(`Listing files in: ${safeDirectory}`);
 
 			const files: string[] = [];
 
@@ -206,8 +201,7 @@ export function createStorageEngine(
 						'code' in error &&
 						error.code === 'ENOENT'
 					) {
-						log(
-							'debug',
+						logger.debug(
 							`Directory not found: ${currentValidatedPath}`,
 						);
 					} else {

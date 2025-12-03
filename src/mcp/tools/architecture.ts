@@ -7,6 +7,9 @@ import type { GitAnalyzer } from '../../core/analysis/git/git-analyzer';
 import { isSupportedLanguage } from '../../core/analysis/utils/language-detector';
 import { createToolDescription } from './description';
 import { getScopedEngines } from './utils/scoped-engines';
+import { createLogger } from '../../core/utils/logger';
+
+const logger = createLogger('ArchitectureTools');
 
 interface Architecture {
 	readonly scope?: string;
@@ -155,9 +158,8 @@ export function registerArchitectureTools(
 					allPatterns.push(...analysis.patterns);
 					totalRelationships += analysis.relationships.length;
 				} catch (error) {
-					console.error(
-						`[getArchitecture] Error analyzing ${filePath}:`,
-						error,
+					logger.error(
+						`Error analyzing ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
 					);
 				}
 			}

@@ -371,6 +371,74 @@ export function createStorageEngine(
 - `listFiles(directoryPath, options)`: List files recursively
 - `getRootPath()`: Get configured root path
 
+### Logger Utility
+
+**Location**: `src/core/utils/logger.ts`
+
+The logger utility provides centralized, consistent logging across the entire codebase with namespace-based organization and configurable log levels.
+
+**Features**:
+
+- Namespace-based logging for component identification
+- Four log levels: `debug`, `info`, `warn`, `error`
+- Configurable debug flag to control debug log visibility
+- Consistent format: `[Namespace:LEVEL] message`
+- All output to stderr to avoid interfering with MCP stdio protocol
+
+**Usage**:
+
+```typescript
+import { createLogger } from './core/utils/logger';
+
+const logger = createLogger('MyModule', { debug: true });
+
+logger.debug('Detailed debugging information');
+logger.info('Informational message');
+logger.warn('Warning message');
+logger.error('Error message');
+```
+
+**Implementation**:
+
+```typescript
+export interface Logger {
+	debug: (message: string) => void;
+	info: (message: string) => void;
+	warn: (message: string) => void;
+	error: (message: string) => void;
+}
+
+export function createLogger(
+	namespace: string,
+	options: { debug?: boolean } = {},
+): Logger {
+	const debugEnabled = options.debug ?? false;
+
+	const log = (level: string, message: string): void => {
+		if (level === 'debug' && !debugEnabled) {
+			return;
+		}
+		console.error(`[${namespace}:${level.toUpperCase()}] ${message}`);
+	};
+
+	return {
+		debug: (message: string) => log('debug', message),
+		info: (message: string) => log('info', message),
+		warn: (message: string) => log('warn', message),
+		error: (message: string) => log('error', message),
+	};
+}
+```
+
+**Logger Instances**:
+
+- `DevFlow`: Server initialization and lifecycle
+- `StorageEngine`: File I/O operations
+- `Config`: Project root detection
+- `FileWatcher`: File watching events
+- `ArchitectureTools`: Architecture analysis tools
+- `ProjectTools`: Project metadata tools
+
 ### Analysis Engine
 
 **Location**: `src/core/analysis/engine.ts`
