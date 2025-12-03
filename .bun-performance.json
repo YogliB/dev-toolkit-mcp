@@ -125,13 +125,13 @@
 	"testSpecificBaselines": {
 		"analysis-engine-lazy-loading.preloaded-file-analysis": {
 			"name": "analysis-engine-lazy-loading.preloaded-file-analysis",
-			"duration": 200,
-			"timestamp": "2025-12-03T08:00:00.000Z"
+			"duration": 400,
+			"timestamp": "2025-12-03T08:12:00.000Z"
 		},
 		"performance-benchmarks.first-file-analysis": {
 			"name": "performance-benchmarks.first-file-analysis",
-			"duration": 350,
-			"timestamp": "2025-12-03T08:00:00.000Z"
+			"duration": 600,
+			"timestamp": "2025-12-03T08:12:00.000Z"
 		}
 	},
 	"history": [

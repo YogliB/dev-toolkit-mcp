@@ -313,7 +313,7 @@ git commit -m "chore: update performance baseline after optimization"
 
 To add a baseline for a new performance test:
 
-1. **Run the test multiple times** to get average duration
+1. **Run the test multiple times locally** to get average duration
 2. **Edit `.bun-performance.json`** manually
 3. **Add entry** to `testSpecificBaselines`:
 
@@ -327,7 +327,12 @@ To add a baseline for a new performance test:
 }
 ```
 
-4. **Commit the baseline** with your test
+4. **CRITICAL: Validate baseline in CI before committing**
+    - Push to a branch and verify CI passes
+    - CI environments are typically 2-3x slower than local machines
+    - Set baselines to CI-representative values, not best-case local performance
+    - If CI fails, increase baseline duration to accommodate environment variance
+5. **Commit the baseline** with your test after CI validation
 
 #### Performance Reports
 
