@@ -49,21 +49,27 @@ export class GitAnalyzer {
 		workspace?: string,
 	): Promise<GitDecision[]> {
 		try {
-			const arguments_ = [`--since=${since}`];
+			const arguments_ = [`--since=${since}`, '--name-only'];
 			if (workspace) {
 				arguments_.push('--', workspace);
 			}
 			const log = await this.git.log(arguments_);
 
-			return log.all.map((commit) => ({
-				commitSHA: commit.hash,
-				message: commit.message,
-				author: commit.author_name,
-				date: commit.date,
-				files: Array.isArray(commit.diff?.changed)
-					? commit.diff.changed
-					: [],
-			}));
+			return log.all.map((commit) => {
+				const files =
+					commit.diff?.files?.map((f) => f.file) ??
+					(Array.isArray(commit.diff?.changed)
+						? commit.diff.changed
+						: []);
+
+				return {
+					commitSHA: commit.hash,
+					message: commit.message,
+					author: commit.author_name,
+					date: commit.date,
+					files,
+				};
+			});
 		} catch {
 			return [];
 		}

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { FastMCP } from 'fastmcp';
 import { AnalysisEngine } from '../../../src/core/analysis/engine';
 import { createStorageEngine } from '../../../src/core/storage/engine';
+import { GitAnalyzer } from '../../../src/core/analysis/git/git-analyzer';
 import { registerProjectTools } from '../../../src/mcp/tools/project';
 import { createTestProject } from '../../setup/test-helpers';
 
@@ -10,6 +11,7 @@ describe('MCP Tools - Project', () => {
 	let server: FastMCP;
 	let engine: AnalysisEngine;
 	let storage: ReturnType<typeof createStorageEngine>;
+	let git: GitAnalyzer;
 
 	beforeEach(async () => {
 		testProject = await createTestProject({ withTsConfig: true });
@@ -19,8 +21,9 @@ describe('MCP Tools - Project', () => {
 			rootPath: testProject.root,
 			debug: false,
 		});
+		git = new GitAnalyzer(testProject.root);
 
-		registerProjectTools(server, engine, storage);
+		registerProjectTools(server, engine, storage, git);
 	});
 
 	afterEach(async () => {
@@ -29,13 +32,13 @@ describe('MCP Tools - Project', () => {
 
 	it('should register getProjectOnboarding tool', () => {
 		expect(() => {
-			registerProjectTools(server, engine, storage);
+			registerProjectTools(server, engine, storage, git);
 		}).not.toThrow();
 	});
 
 	it('should register tools without errors', () => {
 		expect(() => {
-			registerProjectTools(server, engine, storage);
+			registerProjectTools(server, engine, storage, git);
 		}).not.toThrow();
 	});
 });
