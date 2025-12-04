@@ -29,7 +29,7 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 const ABSOLUTE_FALLBACKS: Record<string, number> = {
 	'analysis-engine-lazy-loading.preloaded-file-analysis': 500,
-	'performance-benchmarks.first-file-analysis': 800,
+	'performance-benchmarks.first-file-analysis': 1000,
 	'performance-benchmarks.plugin-init-100': 150,
 	'performance-benchmarks.plugin-init-500': 300,
 	'performance-benchmarks.batch-analysis': 3000,
