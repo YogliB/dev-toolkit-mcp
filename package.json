@@ -27,7 +27,9 @@
 		"build": "bun run --filter devflow-mcp build && bun run --filter dashboard build",
 		"dev:core": "bun run --filter devflow-mcp dev",
 		"dev:dashboard": "bun run --filter dashboard dev",
-		"ci": "bun run lint && bun run test && bun run build"
+		"ci": "bun run lint && bun run test && bun run build",
+		"generate:ci-sh": "bun run scripts/generate-ci-sh.ts",
+		"validate:ci-sync": "bun run scripts/validate-ci-sync.ts"
 	},
 	"prettier": {
 		"singleQuote": true,
@@ -47,6 +49,7 @@
 		"eslint-plugin-unicorn": "62.0.0",
 		"prettier": "3.7.3",
 		"typescript": "5.9.3",
-		"typescript-eslint": "8.48.1"
+		"typescript-eslint": "8.48.1",
+		"yaml": "2.8.2"
 	}
 }
