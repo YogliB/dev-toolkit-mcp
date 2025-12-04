@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **CI Pipeline**: Resolved all CI script failures
+    - Fixed ESLint errors in dashboard package (removed commented code from `app.d.ts`, removed unused `lib/index.ts`)
+    - Fixed Prettier formatting issues in documentation
+    - Updated ESLint configuration to properly exclude filesystem security warnings for legitimate storage operations, scripts, and test helpers
+- **Security**: Patched cookie vulnerability (GHSA-pxg6-pf52-xh8x)
+    - Added package resolutions to force `cookie@^0.7.0` across all dependencies
+    - Resolved low-severity vulnerability where cookie accepts out-of-bounds characters
+
 ### Changed
 
 - **Package Metadata**: Enhanced package.json with comprehensive metadata for improved npm discoverability

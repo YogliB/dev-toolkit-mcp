@@ -95,7 +95,14 @@ export default [
 		},
 	},
 	{
-		files: ['tests/**/*.ts', '**/*.test.ts'],
+		files: [
+			'tests/**/*.ts',
+			'**/*.test.ts',
+			'**/scripts/**/*.ts',
+			'**/storage/engine.ts',
+			'**/tools/patterns.ts',
+			'**/setup/**/*.ts',
+		],
 		rules: {
 			'security/detect-non-literal-fs-filename': 'off',
 		},

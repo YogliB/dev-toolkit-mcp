@@ -22,6 +22,7 @@ Convert devflow into a native Bun monorepo using workspace support, eliminating 
 ## Changes Made
 
 ### Directory Structure
+
 ```
 devflow/
 ├── packages/
@@ -47,6 +48,7 @@ devflow/
 ### Workspace Configuration
 
 **Root bunfig.toml:**
+
 ```toml
 [install]
 exact = true
@@ -59,21 +61,24 @@ maxConcurrency = 20
 ```
 
 **Root package.json:**
+
 - Marked as private: `"private": true`
 - Added workspaces array: `"workspaces": ["packages/core", "packages/dashboard"]`
 - Root scripts use Bun's `--filter` for workspace targeting:
-  - `lint`, `format` — run across all packages
-  - `test` — runs `devflow-mcp` (core) tests
-  - `build` — builds both `devflow-mcp` (core) and `dashboard`
-  - `dev:core` / `dev:dashboard` — develop individual packages
+    - `lint`, `format` — run across all packages
+    - `test` — runs `devflow-mcp` (core) tests
+    - `build` — builds both `devflow-mcp` (core) and `dashboard`
+    - `dev:core` / `dev:dashboard` — develop individual packages
 
 ### Config Consolidation
 
 **Shared Root Configs:**
+
 1. `eslint.config.mjs` — base ESLint rules (ES, TypeScript, import, unicorn, prettier, sonarjs, security)
 2. `tsconfig.json` — shared compiler options (ESNext, strict mode, bundler resolution)
 
 **Package-Specific Configs:**
+
 - `packages/core/eslint.config.mjs` — extends root + Node.js globals + MCP-specific rules
 - `packages/core/tsconfig.json` — extends root + Bun types + path aliases
 - `packages/dashboard/eslint.config.js` — extends root + Svelte + Storybook rules
@@ -82,6 +87,7 @@ maxConcurrency = 20
 ### CI/CD Updates
 
 **Updated `.github/workflows/ci.yml`:**
+
 - Build step now verifies both `packages/core/dist/server.js` and `packages/dashboard/.svelte-kit/output`
 - Test coverage now references `packages/core/coverage/`
 - Removed obsolete jobs: `ci-sync-check`, `knip` (not compatible with workspace setup yet)
@@ -131,11 +137,13 @@ maxConcurrency = 20
 ## Rollback Instructions
 
 If needed, revert to single-package structure:
+
 ```bash
 git revert <migration-commit>
 ```
 
 Or manually:
+
 1. Move `packages/core/src`, `packages/core/scripts`, `packages/core/tests` back to root
 2. Remove `workspaces` from `bunfig.toml`
 3. Restore original root `package.json`, `eslint.config.mjs`, `tsconfig.json`
