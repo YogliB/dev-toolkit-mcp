@@ -253,6 +253,7 @@ export default [
 	},
 	{
 		// Svelte file-specific parser configuration with TypeScript support
+		// This MUST come after svelte.configs.recommended to merge parserOptions
 		files: [
 			'packages/dashboard/**/*.svelte',
 			'packages/dashboard/**/*.svelte.ts',
