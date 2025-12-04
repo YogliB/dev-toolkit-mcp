@@ -1,8 +1,16 @@
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { createLogger } from '../core/utils/logger';
+import { findAvailablePort } from './port-finder';
+import { openBrowser } from './browser-launcher';
 
 const logger = createLogger('Dashboard');
+
+export interface DashboardServerConfig {
+	port?: number;
+	buildDirectory: string;
+	autoOpen?: boolean;
+}
 
 const MIME_TYPES: Record<string, string> = {
 	'.html': 'text/html; charset=utf-8',
@@ -37,12 +45,21 @@ const normalizePath = (pathname: string): string => {
 	return normalized;
 };
 
-export const startDashboardServer = (port: number, buildDirectory: string) => {
+export const startDashboardServer = async (config: DashboardServerConfig) => {
 	// eslint-disable-next-line security/detect-non-literal-fs-filename
-	if (!existsSync(buildDirectory)) {
+	if (!existsSync(config.buildDirectory)) {
 		throw new Error(
-			`Dashboard build directory not found: ${buildDirectory}. Run 'bun run --filter dashboard build' first.`,
+			`Dashboard build directory not found: ${config.buildDirectory}. Run 'bun run --filter dashboard build' first.`,
 		);
+	}
+
+	const portResult = await findAvailablePort(config.port);
+	const { port, wasAutoDetected } = portResult;
+
+	if (wasAutoDetected) {
+		logger.info(`Auto-detected available port: ${port}`);
+	} else {
+		logger.info(`Using configured port: ${port}`);
 	}
 
 	const server = Bun.serve({
@@ -52,7 +69,7 @@ export const startDashboardServer = (port: number, buildDirectory: string) => {
 			const url = new URL(request.url);
 			const pathname = normalizePath(url.pathname);
 
-			const filePath = path.join(buildDirectory, pathname);
+			const filePath = path.join(config.buildDirectory, pathname);
 
 			const file = Bun.file(filePath);
 			const exists = await file.exists();
@@ -65,7 +82,9 @@ export const startDashboardServer = (port: number, buildDirectory: string) => {
 				});
 			}
 
-			const indexFile = Bun.file(path.join(buildDirectory, 'index.html'));
+			const indexFile = Bun.file(
+				path.join(config.buildDirectory, 'index.html'),
+			);
 			const indexExists = await indexFile.exists();
 
 			if (indexExists) {
@@ -80,7 +99,13 @@ export const startDashboardServer = (port: number, buildDirectory: string) => {
 		},
 	});
 
-	logger.info(`Dashboard server started at http://localhost:${server.port}`);
+	const dashboardUrl = `http://localhost:${server.port}`;
+	logger.info(`Dashboard server started at ${dashboardUrl}`);
+
+	if (config.autoOpen) {
+		logger.info('Auto-opening browser...');
+		void openBrowser(dashboardUrl);
+	}
 
 	return server;
 };

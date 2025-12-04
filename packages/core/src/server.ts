@@ -34,14 +34,14 @@ function parsePatterns(value: string | undefined): string[] | undefined {
 		.filter(Boolean);
 }
 
-function parsePort(value: string | undefined, defaultPort: number): number {
-	if (!value) return defaultPort;
+function parsePort(value: string | undefined): number | undefined {
+	if (!value) return undefined;
 	const port = Number.parseInt(value, 10);
 	if (Number.isNaN(port) || port < 1 || port > 65_535) {
 		logger.warn(
-			`Invalid port number "${value}", using default ${defaultPort}`,
+			`Invalid port number "${value}", will auto-detect available port`,
 		);
-		return defaultPort;
+		return undefined;
 	}
 	return port;
 }
@@ -186,7 +186,11 @@ async function startDashboard(
 		return undefined;
 	}
 
-	const dashboardPort = parsePort(process.env.DEVFLOW_DASHBOARD_PORT, 3000);
+	const dashboardPort = parsePort(process.env.DEVFLOW_DASHBOARD_PORT);
+	const autoOpen = parseBoolean(
+		process.env.DEVFLOW_DASHBOARD_AUTO_OPEN,
+		false,
+	);
 	const dashboardBuildDirectory = path.join(
 		projectRoot,
 		'packages/dashboard/build',
@@ -195,10 +199,11 @@ async function startDashboard(
 	const dashboardStart = performance.now();
 
 	try {
-		const dashboardServer = startDashboardServer(
-			dashboardPort,
-			dashboardBuildDirectory,
-		);
+		const dashboardServer = await startDashboardServer({
+			port: dashboardPort,
+			buildDirectory: dashboardBuildDirectory,
+			autoOpen,
+		});
 		logger.info(
 			`Dashboard server initialization complete (${(performance.now() - dashboardStart).toFixed(2)}ms)`,
 		);

@@ -31,7 +31,7 @@ npm install -g devflow-mcp
 # - detectPatterns
 ```
 
-**🌐 Dashboard:** When the MCP server runs, access the web dashboard at `http://localhost:3000`
+**🌐 Dashboard:** When the MCP server runs, the dashboard automatically finds an available port and is accessible in your browser. Use `DEVFLOW_DASHBOARD_AUTO_OPEN=true` to launch it automatically!
 
 **📚 [Documentation Index](./docs/README.md)** - Complete documentation
 

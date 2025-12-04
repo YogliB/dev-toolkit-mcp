@@ -129,35 +129,57 @@ DevFlow supports the following environment variables for configuration:
     export DEVFLOW_DASHBOARD_ENABLED=true
     ```
 
-- **`DEVFLOW_DASHBOARD_PORT`** (number, default: `3000`)
-    - Set the port for the dashboard HTTP server
+- **`DEVFLOW_DASHBOARD_PORT`** (number, optional)
+    - Set a specific port for the dashboard HTTP server
     - Valid range: 1-65535
-    - Useful when port 3000 is already in use
+    - If not specified, automatically finds an available port (range: 3000-3100)
+    - Useful when you need a predictable port number
 
     ```bash
     export DEVFLOW_DASHBOARD_PORT=8080
     ```
 
-**Example: Accessing the Dashboard**
+- **`DEVFLOW_DASHBOARD_AUTO_OPEN`** (boolean, default: `false`)
+    - Automatically open the dashboard in your default browser when server starts
+    - Useful for development workflow
+    - Browser launch is platform-specific (macOS, Linux, Windows)
 
-When the MCP server starts, the dashboard is automatically available:
+    ```bash
+    export DEVFLOW_DASHBOARD_AUTO_OPEN=true
+    ```
+
+**Example: Auto Port Detection**
+
+When no port is specified, the dashboard automatically finds an available port:
 
 ```bash
-# Start MCP server (dashboard starts on port 3000 by default)
+# Start MCP server (dashboard auto-detects available port)
 bun run dev:core
+# Output: [Dashboard:INFO] Auto-detected available port: 3001
 
-# In another terminal, open the dashboard
-open http://localhost:3000
+# The actual port is logged in the output
 ```
 
-**Example: Custom Port**
+**Example: Explicit Port**
 
 ```bash
-# Use a different port
+# Use a specific port
 DEVFLOW_DASHBOARD_PORT=8080 bun run dev:core
+# Output: [Dashboard:INFO] Using configured port: 8080
 
-# Access dashboard on custom port
+# Access dashboard on configured port
 open http://localhost:8080
+```
+
+**Example: Auto-Open Browser**
+
+```bash
+# Start server and automatically open browser
+DEVFLOW_DASHBOARD_AUTO_OPEN=true bun run dev:core
+# Browser opens automatically at http://localhost:<detected-port>
+
+# Combine with specific port
+DEVFLOW_DASHBOARD_PORT=3000 DEVFLOW_DASHBOARD_AUTO_OPEN=true bun run dev:core
 ```
 
 **Example: Disable Dashboard**

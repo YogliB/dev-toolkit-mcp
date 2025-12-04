@@ -210,7 +210,20 @@ DevFlow embeds a web dashboard that automatically starts when the MCP server run
   - Serves static files from `packages/dashboard/build/`
   - Handles SPA routing with `index.html` fallback
   - Automatic MIME type detection for assets
-  - Configurable port via `DEVFLOW_DASHBOARD_PORT` (default: 3000)
+  - Automatic port detection when port not specified (range: 3000-3100)
+  - Optional browser auto-launch on startup
+
+- **Port Finder Module** (`packages/core/src/dashboard/port-finder.ts`)
+  - Implements `findAvailablePort()` for automatic port detection
+  - Tests port availability using Bun's TCP socket check
+  - Retry logic with configurable range (default: 3000-3100)
+  - Returns port number and auto-detection status
+
+- **Browser Launcher Module** (`packages/core/src/dashboard/browser-launcher.ts`)
+  - Implements `openBrowser()` for cross-platform browser launch
+  - Platform-specific commands (macOS: `open`, Linux: `xdg-open`, Windows: `start`)
+  - Graceful error handling (logs warning, doesn't crash server)
+  - 1-second delay after server start before launching
 
 - **Static Build** (`packages/dashboard/`)
   - SvelteKit app configured with `@sveltejs/adapter-static`
@@ -229,14 +242,38 @@ The dashboard uses static build + native Bun HTTP server (not `adapter-node`) be
 **Startup Sequence:**
 
 1. MCP server initializes (stdio transport for Model Context Protocol)
-2. Dashboard server starts asynchronously on separate HTTP port
-3. Both run in same process, non-blocking
-4. Dashboard accessible at http://localhost:3000 (configurable)
+2. Dashboard port is determined:
+   - If `DEVFLOW_DASHBOARD_PORT` is set, use that port
+   - Otherwise, auto-detect available port (range: 3000-3100)
+3. Dashboard server starts asynchronously on determined port
+4. If `DEVFLOW_DASHBOARD_AUTO_OPEN` is true, browser launches automatically
+5. Both MCP and dashboard run in same process, non-blocking
+
+**Port Selection Algorithm:**
+
+1. Check if `DEVFLOW_DASHBOARD_PORT` environment variable is set
+2. If set and valid, attempt to use that port
+3. If not set, call `findAvailablePort()`:
+   - Start at port 3000
+   - Test port availability using Bun.serve() socket check
+   - If busy, try next port in range (3001, 3002, etc.)
+   - Continue until port 3100 or available port found
+4. If all ports busy, throw error with clear message
+5. Log whether port was explicit or auto-detected
+
+**Browser Launch Implementation:**
+
+1. After server starts successfully, check `autoOpen` config
+2. If enabled, detect platform (macOS/Linux/Windows)
+3. Wait 1 second for server to be fully ready
+4. Execute platform-specific command using `Bun.spawn()`
+5. Log success/failure without blocking server operation
 
 **Environment Variables:**
 
-- `DEVFLOW_DASHBOARD_ENABLED` - Enable/disable dashboard (default: true)
-- `DEVFLOW_DASHBOARD_PORT` - HTTP port for dashboard (default: 3000)
+- `DEVFLOW_DASHBOARD_ENABLED` - Enable/disable dashboard (default: `true`)
+- `DEVFLOW_DASHBOARD_PORT` - Explicit port number (optional, auto-detects if not set)
+- `DEVFLOW_DASHBOARD_AUTO_OPEN` - Auto-launch browser on startup (default: `false`)
 
 ### Architecture Style
 
