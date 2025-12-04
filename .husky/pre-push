@@ -1,7 +1,7 @@
 echo "Running type check..."
 bun run type-check || exit 1
 
-CHANGED_FILES=$(git diff --name-only --diff-filter=d origin/main...HEAD | grep -v "^packages/dashboard/")
+CHANGED_FILES=$(git diff --name-only --diff-filter=d origin/main...HEAD | grep -v "^packages/dashboard/" || true)
 
 if [ -n "$CHANGED_FILES" ]; then
   echo "Running tests related to changed files..."
