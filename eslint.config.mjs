@@ -1,13 +1,51 @@
 // @ts-check
 
+/**
+ * Root ESLint Configuration - Monorepo Hierarchical Pattern
+ *
+ * This configuration uses ESLint flat config's file-based overrides pattern to establish
+ * a hierarchy where:
+ * 1. Universal rules (ESLint, TypeScript, Prettier) apply to ALL packages
+ * 2. Package-specific rules are scoped using file patterns (packages/core/**, packages/dashboard/**)
+ *
+ * Package-specific configurations:
+ * - packages/core: Node.js/MCP server tooling (unicorn, sonarjs, security, import)
+ * - packages/dashboard: Svelte/UI tooling (svelte, storybook, browser globals)
+ *
+ * Why all plugins are in root:
+ * - ESLint flat config requires plugins to be loaded where rules are defined
+ * - Running `eslint packages/core packages/dashboard` from root uses THIS config
+ * - File patterns scope rules to specific packages while keeping plugins centralized
+ * - Inline disable comments work because plugins are available in the config
+ *
+ * When to add rules:
+ * - Universal (all packages): Add to the base configs (eslint, typescript-eslint, prettier)
+ * - Core-specific (Node.js/backend): Add to the packages/core/** override section
+ * - Dashboard-specific (Svelte/frontend): Add to the packages/dashboard/** override section
+ */
+
+import { fileURLToPath } from 'node:url';
 import eslint from '@eslint/js';
+import ts from 'typescript-eslint';
 import { configs as tsConfigs } from 'typescript-eslint';
 import sonarjs from 'eslint-plugin-sonarjs';
 import security from 'eslint-plugin-security';
 import prettier from 'eslint-plugin-prettier/recommended';
 import importPlugin from 'eslint-plugin-import';
 import unicorn from 'eslint-plugin-unicorn';
+import globals from 'globals';
+import svelte from 'eslint-plugin-svelte';
+import { configs as storybookConfigs } from 'eslint-plugin-storybook';
 
+// Import dashboard svelte config for parser configuration
+const dashboardSvelteConfigPath = fileURLToPath(
+	new URL('./packages/dashboard/svelte.config.js', import.meta.url),
+);
+const svelteConfig = await import(dashboardSvelteConfigPath).then(
+	(m) => m.default,
+);
+
+// Custom plugin: Enforces that index files only contain re-exports
 const indexExportsOnlyPlugin = {
 	rules: {
 		'index-exports-only': {
@@ -52,6 +90,9 @@ const indexExportsOnlyPlugin = {
 };
 
 export default [
+	// ============================================================================
+	// Global Ignores - Apply to All Packages
+	// ============================================================================
 	{
 		ignores: [
 			'packages/**/node_modules/**',
@@ -67,15 +108,43 @@ export default [
 			'**/*.d.ts.map',
 		],
 	},
+
+	// ============================================================================
+	// Universal Rules - Apply to All Packages
+	// ============================================================================
+	// Base ESLint recommended rules - universal JavaScript best practices
 	eslint.configs.recommended,
+	// TypeScript ESLint recommended rules - universal TypeScript best practices
 	...tsConfigs.recommended,
-	sonarjs.configs.recommended,
-	security.configs.recommended,
-	importPlugin.flatConfigs.recommended,
-	importPlugin.flatConfigs.typescript,
-	unicorn.configs.recommended,
+	// Prettier integration - ensures consistent formatting across all packages
+	prettier,
+
+	// ============================================================================
+	// Core Package - Node.js/MCP Server Specific Rules
+	// ============================================================================
 	{
-		files: ['**/index.ts', '**/index.js'],
+		files: ['packages/core/**/*.ts', 'packages/core/**/*.js'],
+		...sonarjs.configs.recommended,
+	},
+	{
+		files: ['packages/core/**/*.ts', 'packages/core/**/*.js'],
+		...security.configs.recommended,
+	},
+	{
+		files: ['packages/core/**/*.ts', 'packages/core/**/*.js'],
+		...importPlugin.flatConfigs.recommended,
+	},
+	{
+		files: ['packages/core/**/*.ts', 'packages/core/**/*.js'],
+		...importPlugin.flatConfigs.typescript,
+	},
+	{
+		files: ['packages/core/**/*.ts', 'packages/core/**/*.js'],
+		...unicorn.configs.recommended,
+	},
+	{
+		// Enforce index-exports-only rule on core package index files
+		files: ['packages/core/**/index.ts', 'packages/core/**/index.js'],
 		plugins: {
 			'index-exports': indexExportsOnlyPlugin,
 		},
@@ -84,6 +153,8 @@ export default [
 		},
 	},
 	{
+		// Import resolver configuration for core package
+		files: ['packages/core/**/*.ts', 'packages/core/**/*.js'],
 		settings: {
 			'import/resolver': {
 				typescript: true,
@@ -95,17 +166,93 @@ export default [
 		},
 	},
 	{
+		// Relax security rules for test files and scripts in core package
 		files: [
-			'tests/**/*.ts',
-			'**/*.test.ts',
-			'**/scripts/**/*.ts',
-			'**/storage/engine.ts',
-			'**/tools/patterns.ts',
-			'**/setup/**/*.ts',
+			'packages/core/tests/**/*.ts',
+			'packages/core/**/*.test.ts',
+			'packages/core/**/scripts/**/*.ts',
+			'packages/core/**/storage/engine.ts',
+			'packages/core/**/tools/patterns.ts',
+			'packages/core/**/setup/**/*.ts',
 		],
 		rules: {
 			'security/detect-non-literal-fs-filename': 'off',
 		},
 	},
-	prettier,
+	{
+		// Server-specific rule overrides for long-running process
+		files: ['packages/core/src/server.ts'],
+		rules: {
+			'unicorn/prefer-top-level-await': 'off',
+			'unicorn/no-process-exit': 'off',
+		},
+	},
+
+	// ============================================================================
+	// Dashboard Package - Svelte/UI Specific Rules
+	// ============================================================================
+	// Svelte recommended rules - scoped to dashboard package
+	...svelte.configs.recommended.map((config) => ({
+		...config,
+		files: config.files
+			? config.files.map((pattern) => `packages/dashboard/${pattern}`)
+			: [
+					'packages/dashboard/**/*.js',
+					'packages/dashboard/**/*.ts',
+					'packages/dashboard/**/*.svelte',
+				],
+	})),
+	// Svelte prettier integration - scoped to dashboard package
+	...svelte.configs.prettier.map((config) => ({
+		...config,
+		files: config.files
+			? config.files.map((pattern) => `packages/dashboard/${pattern}`)
+			: [
+					'packages/dashboard/**/*.js',
+					'packages/dashboard/**/*.ts',
+					'packages/dashboard/**/*.svelte',
+				],
+	})),
+	// Storybook recommended rules - scoped to dashboard package
+	...storybookConfigs['flat/recommended'].map((config) => ({
+		...config,
+		files: config.files
+			? config.files.map((pattern) => `packages/dashboard/${pattern}`)
+			: [
+					'packages/dashboard/**/*.js',
+					'packages/dashboard/**/*.ts',
+					'packages/dashboard/**/*.svelte',
+				],
+	})),
+	{
+		// Browser and Node.js globals for dashboard package
+		files: [
+			'packages/dashboard/**/*.js',
+			'packages/dashboard/**/*.ts',
+			'packages/dashboard/**/*.svelte',
+		],
+		languageOptions: {
+			globals: { ...globals.browser, ...globals.node },
+		},
+		rules: {
+			// Svelte compiler handles variable checking, disable base ESLint no-undef
+			'no-undef': 'off',
+		},
+	},
+	{
+		// Svelte file-specific parser configuration with TypeScript support
+		files: [
+			'packages/dashboard/**/*.svelte',
+			'packages/dashboard/**/*.svelte.ts',
+			'packages/dashboard/**/*.svelte.js',
+		],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				extraFileExtensions: ['.svelte'],
+				parser: ts.parser,
+				svelteConfig,
+			},
+		},
+	},
 ];

@@ -1,5 +1,21 @@
 // @ts-check
 
+/**
+ * Core Package ESLint Configuration
+ *
+ * This package config is intentionally minimal - most rules are defined in the root
+ * eslint.config.mjs using file-based overrides (packages/core/**).
+ *
+ * This file only contains:
+ * - Local ignore patterns (gitignore integration)
+ * - Node.js globals for the runtime environment
+ * - Extension of root config for consistency
+ *
+ * All core-specific linting rules (unicorn, sonarjs, security, import, custom rules)
+ * are defined in the root config and scoped to packages/core/** using file patterns.
+ * This is the correct ESLint flat config pattern for monorepos.
+ */
+
 import { fileURLToPath } from 'node:url';
 import { includeIgnoreFile } from '@eslint/compat';
 import globals from 'globals';
@@ -9,25 +25,17 @@ const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 
 export default [
 	{
+		// Local ignore patterns for core package
 		ignores: ['dist/**', 'node_modules/**', 'coverage/**', '**/*.d.ts.map'],
 	},
+	// Integrate .gitignore patterns
 	includeIgnoreFile(gitignorePath),
+	// Inherit all rules from root (includes universal + core-specific via file patterns)
 	...rootConfig,
 	{
+		// Node.js runtime globals
 		languageOptions: {
 			globals: globals.node,
-		},
-	},
-	{
-		files: ['src/server.ts'],
-		rules: {
-			'unicorn/prefer-top-level-await': 'off',
-			'unicorn/no-process-exit': 'off',
-		},
-	},
-	{
-		settings: {
-			'import/core-modules': ['bun:test'],
 		},
 	},
 ];
