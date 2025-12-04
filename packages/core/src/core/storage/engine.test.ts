@@ -4,18 +4,21 @@ import { createStorageEngine, type StorageEngine } from './engine';
 import { PathValidationError, FileNotFoundError } from './errors';
 
 const baseTestDirectory = '.test-storage';
-const testStorageDirectory = '.test-storage/engine-storage';
+let testCounter = 0;
 
 describe('StorageEngine', () => {
 	let engine: StorageEngine;
+	let testStorageDirectory: string;
 
 	beforeEach(async () => {
+		testCounter += 1;
+		testStorageDirectory = `${baseTestDirectory}/engine-${process.pid}-${testCounter}`;
 		await mkdir(testStorageDirectory, { recursive: true });
 		engine = createStorageEngine({ rootPath: testStorageDirectory });
 	});
 
 	afterEach(async () => {
-		await rm(baseTestDirectory, { recursive: true, force: true });
+		await rm(testStorageDirectory, { recursive: true, force: true });
 	});
 
 	describe('validatePath', () => {
@@ -223,7 +226,7 @@ describe('StorageEngine', () => {
 
 	describe('getRootPath', () => {
 		it('should return the root path', () => {
-			expect(engine.getRootPath()).toContain('engine-storage');
+			expect(engine.getRootPath()).toContain('.test-storage/engine-');
 		});
 	});
 
