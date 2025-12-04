@@ -38,21 +38,17 @@ run_check "Run security audit" "bun audit" "false"
 
 run_check "Type check with TypeScript" "bun run type-check" "false"
 
-run_check "Build executable" "bun run build" "false"
+run_check "Build packages" "bun run build" "false"
 
-run_check "Verify executable exists" "test -f ./dist/server.js" "false"
+run_check "Verify core executable exists" "test -f packages/core/dist/server.js" "false"
 
-run_check "Run tests with coverage" "bun run test" "false"
+run_check "Verify dashboard build exists" "test -d packages/dashboard/.svelte-kit/output" "false"
 
-run_check "Create test results directory" "mkdir -p .bun-test" "false"
+run_check "Run tests" "bun run test" "false"
 
-run_check "Check test performance" "bun run test:perf" "false"
+run_check "Run test coverage" "bun run test:coverage" "false"
 
-run_check "Validate CI sync" "bun run validate:ci-sync" "false"
-
-run_check "Check for circular dependencies" "bun run check:circular:ci" "false"
-
-run_check "Check for unused dependencies" "bun run knip" "false"
+run_check "Check for circular dependencies" "bun run --filter devflow-mcp check:circular:ci" "false"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
