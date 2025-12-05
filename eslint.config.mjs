@@ -173,7 +173,7 @@ export default [
 			'packages/core/**/scripts/**/*.ts',
 			'packages/core/**/storage/engine.ts',
 			'packages/core/**/tools/patterns.ts',
-			'packages/core/**/setup/**/*.ts',
+			'packages/core/**/helpers/**/*.ts',
 			'packages/core/**/analytics/**/*.ts',
 		],
 		rules: {

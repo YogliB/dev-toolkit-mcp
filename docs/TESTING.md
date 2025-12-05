@@ -51,11 +51,8 @@ bun run test:integration
 # Analytics tests only (uses better-sqlite3)
 bun run test:analytics
 
-# Performance tests only (database-free analysis benchmarks)
-bun run test:performance
-
-# Database performance tests
-bun run test:integration:perf
+# Performance tests (now part of integration tests)
+# All tests run with: bun run test
 
 # AI agent mode (quiet output, only failures shown)
 bun run test:ai
@@ -678,23 +675,16 @@ export default defineConfig({
 Run test suites separately in CI for better isolation and performance:
 
 ```bash
-# Main test suite (unit + integration)
-bun run test:unit
-bun run test:integration
+# Main test suite (unit + integration + performance)
+bun run test
 
-# Performance benchmarks (database-free, fast, blocking)
-bun run test:performance
-
-# Database performance tests (with database, informational)
-bun run test:integration:perf
-
-# Analytics tests
-bun run test:analytics
+# Analytics tests (if separated)
+# bun run test -- tests/unit/analytics
 ```
 
 ### Performance Test Guidelines
 
-**When to add to `tests/performance/analysis-engine.test.ts`**:
+**When to add to `tests/integration/analysis-engine.test.ts`**:
 - Testing TypeScript plugin initialization
 - Testing file analysis performance
 - Testing cache efficiency
@@ -877,11 +867,8 @@ The FileWatcher threshold tests (`file-watcher.test.ts` and `server-init.test.ts
 
 | Script                     | Purpose                                     |
 | -------------------------- | ------------------------------------------- |
-| `bun test`                 | Run all tests (with concurrent execution)   |
-| `bun run test:unit`        | Unit tests only                             |
-| `bun run test:integration` | Integration tests only                      |
+| `bun run test`             | Run all tests (with concurrent execution)   |
+| `bun run test:core`        | Run core tests                              |
+| `bun run test:dashboard`   | Run dashboard tests                         |
 | `bun test --watch`         | Watch mode (re-runs on file changes)        |
-| `bun run test:coverage`    | Run tests with coverage                     |
-| `bun run test:ai`          | AI agent mode (quiet output, only failures) |
-| `bun run test:perf`        | Performance tracking with baseline          |
 | `bun run update-baseline`  | Update performance baseline                 |
