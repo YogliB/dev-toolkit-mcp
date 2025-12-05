@@ -307,6 +307,10 @@ describe('Database Performance', () => {
 			database.insert(toolCalls).values(toolCallsData).run();
 
 			const startTime = performance.now();
+			database
+				.delete(toolCalls)
+				.where(eq(toolCalls.sessionId, sessionId))
+				.run();
 			database.delete(sessions).where(eq(sessions.id, sessionId)).run();
 			const duration = performance.now() - startTime;
 

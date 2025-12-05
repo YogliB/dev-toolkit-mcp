@@ -19,7 +19,7 @@ All tests use Vitest directly, ensuring consistent test execution across both Bu
 ```
 tests/
 ├── unit/              # Fast, mocked tests (<10ms each)
-│   ├── analytics/     # Analytics database tests (Bun test runner)
+│   ├── analytics/     # Analytics database tests (Vitest/Node.js)
 │   └── examples.test.ts
 ├── integration/       # Real dependencies (<100ms each)
 │   ├── database-performance.test.ts  # Database performance benchmarks
@@ -48,7 +48,7 @@ bun run test:unit
 # Integration tests only
 bun run test:integration
 
-# Analytics tests only (uses Bun's native SQLite)
+# Analytics tests only (uses better-sqlite3)
 bun run test:analytics
 
 # Performance tests only (database-free analysis benchmarks)
@@ -579,20 +579,20 @@ describe('Counter', () => {
 
 The analytics database uses **lazy initialization** with a singleton pattern to eliminate overhead in code paths that don't require analytics. This design allows performance tests to run without any database initialization cost.
 
-The database uses Bun's native SQLite (`bun:sqlite`) which is not compatible with Node.js-based test runners like Vitest. Therefore, analytics and database performance tests must be run with Bun's test runner.
+The database uses `better-sqlite3`, a Node.js-compatible SQLite library that works with both Bun and Node.js runtimes. This ensures analytics tests run successfully with Vitest (the project's test runner) and enables cross-runtime compatibility.
 
 ### Running Analytics Tests
 
 ```bash
-# Run analytics tests in isolation
+# Run analytics tests in isolation (uses Vitest)
 bun run test:analytics
 
-# Run database performance tests
+# Run database performance tests (uses Vitest)
 bun run test:integration:perf
 
-# Or directly with Bun
-bun test tests/unit/analytics
-bun test tests/integration/database-performance.test.ts
+# Or run with the main test suite
+bun run test -- tests/unit/analytics
+bun run test -- tests/integration/database-performance.test.ts
 ```
 
 ### Test Isolation and Lazy Initialization
@@ -661,9 +661,9 @@ The project separates tests into three categories for optimal CI performance:
 
 1. **Unit & Integration Tests** (Vitest): Fast tests without database dependencies
 2. **Performance Tests** (Vitest): Database-free analysis engine benchmarks
-3. **Analytics & Database Performance Tests** (Bun): Tests requiring `bun:sqlite`
+3. **Analytics & Database Performance Tests** (Vitest): Tests using `better-sqlite3`
 
-Analytics and database performance tests are excluded from the main Vitest test suite (see `vitest.config.ts`):
+Analytics and database performance tests run with Vitest as part of the main test suite:
 
 ```typescript
 export default defineConfig({

@@ -1,9 +1,10 @@
-import { Database } from 'bun:sqlite';
-import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
+import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { existsSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as schema from './schema.js';
 
 export type AnalyticsDatabase = ReturnType<typeof createAnalyticsDatabase>;
@@ -33,8 +34,9 @@ const createAnalyticsDatabase = () => {
 
 	const database = drizzle(sqlite, { schema });
 
+	const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 	migrate(database, {
-		migrationsFolder: path.join(import.meta.dir, 'migrations'),
+		migrationsFolder: path.join(currentDirectory, 'migrations'),
 	});
 
 	return database;

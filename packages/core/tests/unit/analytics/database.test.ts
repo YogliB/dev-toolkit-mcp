@@ -1,6 +1,6 @@
-import { Database } from 'bun:sqlite';
+import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -35,8 +35,7 @@ describe('Analytics Database', () => {
 				'.devflow',
 				'analytics.db',
 			);
-			const databaseFile = Bun.file(databasePath);
-			expect(databaseFile.size).toBe(0);
+			expect(existsSync(databasePath)).toBe(false);
 		});
 
 		test('creates database on first getAnalyticsDatabase call', () => {
@@ -46,14 +45,14 @@ describe('Analytics Database', () => {
 				'analytics.db',
 			);
 
-			const databaseBefore = Bun.file(databasePath);
-			expect(databaseBefore.size).toBe(0);
+			expect(existsSync(databasePath)).toBe(false);
 
 			const database = getAnalyticsDatabase();
 			expect(database).toBeDefined();
 
-			const databaseAfter = Bun.file(databasePath);
-			expect(databaseAfter.size).toBeGreaterThan(0);
+			expect(existsSync(databasePath)).toBe(true);
+			const stats = statSync(databasePath);
+			expect(stats.size).toBeGreaterThan(0);
 		});
 
 		test('returns same instance on multiple calls', () => {
@@ -83,17 +82,16 @@ describe('Analytics Database', () => {
 				'.devflow',
 				'analytics.db',
 			);
-			const databaseFile = Bun.file(databasePath);
-			expect(databaseFile.size).toBeGreaterThan(0);
+			expect(existsSync(databasePath)).toBe(true);
+			const stats = statSync(databasePath);
+			expect(stats.size).toBeGreaterThan(0);
 		});
 
 		test("creates .devflow directory if it doesn't exist", () => {
 			getAnalyticsDatabase();
 
 			const devflowDirectory = path.join(temporaryDirectory, '.devflow');
-			const directoryExists =
-				Bun.file(devflowDirectory).size !== undefined;
-			expect(directoryExists).toBe(true);
+			expect(existsSync(devflowDirectory)).toBe(true);
 		});
 
 		test('reuses existing .devflow directory', () => {
@@ -104,8 +102,9 @@ describe('Analytics Database', () => {
 			expect(database).toBeDefined();
 
 			const databasePath = path.join(devflowDirectory, 'analytics.db');
-			const databaseFile = Bun.file(databasePath);
-			expect(databaseFile.size).toBeGreaterThan(0);
+			expect(existsSync(databasePath)).toBe(true);
+			const stats = statSync(databasePath);
+			expect(stats.size).toBeGreaterThan(0);
 		});
 	});
 
@@ -120,7 +119,7 @@ describe('Analytics Database', () => {
 			);
 			const sqlite = new Database(databasePath);
 
-			const result = sqlite.query('PRAGMA journal_mode;').get() as {
+			const result = sqlite.prepare('PRAGMA journal_mode;').get() as {
 				journal_mode: string;
 			};
 
@@ -146,7 +145,7 @@ describe('Analytics Database', () => {
 			const sqlite = new Database(databasePath);
 
 			const tables = sqlite
-				.query(
+				.prepare(
 					"SELECT name FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations';",
 				)
 				.all() as Array<{ name: string }>;
@@ -169,7 +168,7 @@ describe('Analytics Database', () => {
 			const sqlite = new Database(databasePath);
 
 			const columns = sqlite
-				.query('PRAGMA table_info(sessions);')
+				.prepare('PRAGMA table_info(sessions);')
 				.all() as Array<{
 				name: string;
 				type: string;
@@ -202,7 +201,7 @@ describe('Analytics Database', () => {
 			const sqlite = new Database(databasePath);
 
 			const columns = sqlite
-				.query('PRAGMA table_info(tool_calls);')
+				.prepare('PRAGMA table_info(tool_calls);')
 				.all() as Array<{
 				name: string;
 				type: string;
@@ -234,7 +233,7 @@ describe('Analytics Database', () => {
 			const sqlite = new Database(databasePath);
 
 			const indexes = sqlite
-				.query(
+				.prepare(
 					"SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='tool_calls';",
 				)
 				.all() as Array<{ name: string }>;
@@ -258,7 +257,7 @@ describe('Analytics Database', () => {
 			const sqlite = new Database(databasePath);
 
 			const foreignKeys = sqlite
-				.query('PRAGMA foreign_key_list(tool_calls);')
+				.prepare('PRAGMA foreign_key_list(tool_calls);')
 				.all() as Array<{ table: string; from: string; to: string }>;
 
 			expect(foreignKeys.length).toBe(1);
@@ -391,6 +390,10 @@ describe('Analytics Database', () => {
 
 			database.insert(toolCalls).values(newToolCall).run();
 
+			database
+				.delete(toolCalls)
+				.where(eq(toolCalls.sessionId, sessionId))
+				.run();
 			database.delete(sessions).where(eq(sessions.id, sessionId)).run();
 
 			const deletedSessions = database
@@ -399,6 +402,13 @@ describe('Analytics Database', () => {
 				.where(eq(sessions.id, sessionId))
 				.all();
 			expect(deletedSessions.length).toBe(0);
+
+			const deletedToolCalls = database
+				.select()
+				.from(toolCalls)
+				.where(eq(toolCalls.sessionId, sessionId))
+				.all();
+			expect(deletedToolCalls.length).toBe(0);
 		});
 
 		test('inserts multiple tool calls for same session', () => {

@@ -777,7 +777,16 @@ export class AnalysisEngine {
 
 **Location**: `src/analytics/`
 
-The analytics database provides persistent storage for MCP tool call metrics and session data using SQLite with Drizzle ORM:
+The analytics database provides persistent storage for MCP tool call metrics and session data using SQLite with Drizzle ORM.
+
+**SQLite Implementation**: Uses `better-sqlite3` for cross-runtime compatibility:
+
+- **Library Choice**: `better-sqlite3` instead of `bun:sqlite` to ensure analytics works in both Bun and Node.js environments
+- **Cross-Runtime**: Enables vitest (Node.js) to run all analytics tests alongside the MCP server (Bun runtime)
+- **Performance**: Comparable performance to `bun:sqlite` - no significant regression in benchmarks
+- **Native Bindings**: Requires native module compilation (automatic with `bun install`)
+- **Drizzle Integration**: Full support via `drizzle-orm/better-sqlite3` adapter
+
 
 #### Database Location
 
@@ -829,7 +838,7 @@ const database = getAnalyticsDatabase();
 - **Lazy Loading**: Database is created only when `getAnalyticsDatabase()` is first called, not on module import
 - **Singleton Pattern**: Multiple calls to `getAnalyticsDatabase()` return the same instance
 - **Zero Overhead**: Performance tests and non-analytics code paths have no database initialization cost
-- **Thread Safety**: Bun is single-threaded, so no locking is required
+- **Runtime Agnostic**: Works in both Bun and Node.js environments
 
 **Testing Support**:
 
