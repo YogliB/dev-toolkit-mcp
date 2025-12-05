@@ -733,7 +733,7 @@ it('should detect project root', async () => {
 	const result = await detectProjectRoot();
 	expect(result).toBe(testDir);
 });
-````
+```
 
 ```typescript
 // ✅ Good: Using explicit startFrom parameter
