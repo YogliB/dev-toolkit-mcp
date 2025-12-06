@@ -275,11 +275,11 @@ describe('TelemetryService', () => {
 				sessionId: 'session-1',
 			});
 
-			expect(service['flushTimer']).not.toBeNull();
+			expect(service['flushTimer']).not.toBeUndefined();
 
 			await service.flush();
 
-			expect(service['flushTimer']).toBeNull();
+			expect(service['flushTimer']).toBeUndefined();
 		});
 
 		test('re-queues batch on database error', async () => {
@@ -323,7 +323,7 @@ describe('TelemetryService', () => {
 			await service.shutdown();
 
 			expect(mockDatabase.insert).toHaveBeenCalledTimes(1);
-			expect(service['flushTimer']).toBeNull();
+			expect(service['flushTimer']).toBeUndefined();
 		});
 
 		test('handles flush errors gracefully', async () => {
