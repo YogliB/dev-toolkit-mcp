@@ -207,29 +207,29 @@ DevFlow embeds a web dashboard that automatically starts when the MCP server run
 
 - **Dashboard Server Module** (`packages/core/src/dashboard/server.ts`)
     - Implements `startDashboardServer()` using `Bun.serve()`
-    - Serves static files from `packages/dashboard/build/`
-    - Handles SPA routing with `index.html` fallback
-    - Automatic MIME type detection for assets
-    - Automatic port detection when port not specified (range: 3000-3100)
-    - Optional browser auto-launch on startup
+  - Serves static files from `packages/dashboard/build/`
+  - Handles SPA routing with `index.html` fallback
+  - Automatic MIME type detection for assets
+  - Automatic port detection when port not specified (range: 3000-3100)
+  - Optional browser auto-launch on startup
 
 - **Port Finder Module** (`packages/core/src/dashboard/port-finder.ts`)
-    - Implements `findAvailablePort()` for automatic port detection
-    - Tests port availability using Bun's TCP socket check
-    - Retry logic with configurable range (default: 3000-3100)
-    - Returns port number and auto-detection status
+  - Implements `findAvailablePort()` for automatic port detection
+  - Tests port availability using Bun's TCP socket check
+  - Retry logic with configurable range (default: 3000-3100)
+  - Returns port number and auto-detection status
 
 - **Browser Launcher Module** (`packages/core/src/dashboard/browser-launcher.ts`)
-    - Implements `openBrowser()` for cross-platform browser launch
-    - Platform-specific commands (macOS: `open`, Linux: `xdg-open`, Windows: `start`)
-    - Graceful error handling (logs warning, doesn't crash server)
-    - 1-second delay after server start before launching
+  - Implements `openBrowser()` for cross-platform browser launch
+  - Platform-specific commands (macOS: `open`, Linux: `xdg-open`, Windows: `start`)
+  - Graceful error handling (logs warning, doesn't crash server)
+  - 1-second delay after server start before launching
 
 - **Static Build** (`packages/dashboard/`)
-    - SvelteKit app configured with `@sveltejs/adapter-static`
-    - Builds to static HTML/JS/CSS files
-    - No SSR or server-side routes (client-side only)
-    - Backend logic handled by MCP tools, not SvelteKit API routes
+  - SvelteKit app configured with `@sveltejs/adapter-static`
+  - Builds to static HTML/JS/CSS files
+  - No SSR or server-side routes (client-side only)
+  - Backend logic handled by MCP tools, not SvelteKit API routes
 
 **Architecture Decision:**
 
