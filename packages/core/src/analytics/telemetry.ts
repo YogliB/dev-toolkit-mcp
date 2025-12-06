@@ -56,11 +56,14 @@ export class TelemetryService {
 
 	async startSession(sessionId: string): Promise<void> {
 		try {
-			await this.db.insert(sessions).values({
-				id: sessionId,
-				startedAt: new Date(),
-				toolCount: 0,
-			});
+			await this.db
+				.insert(sessions)
+				.values({
+					id: sessionId,
+					startedAt: new Date(),
+					toolCount: 0,
+				})
+				.run();
 			console.log(`Session ${sessionId} started`);
 		} catch (error) {
 			console.error(`Failed to start session ${sessionId}:`, error);
@@ -76,7 +79,8 @@ export class TelemetryService {
 					endedAt: new Date(),
 					toolCount,
 				})
-				.where(eq(sessions.id, sessionId));
+				.where(eq(sessions.id, sessionId))
+				.run();
 			this.sessionToolCounts.delete(sessionId);
 			console.log(
 				`Session ${sessionId} ended with ${toolCount} tool calls`,
@@ -95,7 +99,7 @@ export class TelemetryService {
 			this.flushTimer = undefined;
 		}
 		try {
-			await this.db.insert(toolCalls).values(batch);
+			await this.db.insert(toolCalls).values(batch).run();
 			console.log(`Flushed ${batch.length} tool calls`);
 		} catch (error) {
 			console.error('Failed to flush tool calls:', error);
