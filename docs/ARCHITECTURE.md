@@ -877,7 +877,6 @@ import { sessions, toolCalls } from './analytics/schema.js';
 import { eq } from 'drizzle-orm';
 
 const database = getAnalyticsDatabase();
-```
 
 // Insert session
 const session = database
