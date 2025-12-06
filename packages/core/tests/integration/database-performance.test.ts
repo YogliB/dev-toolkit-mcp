@@ -337,10 +337,7 @@ describe('Database Performance', () => {
 			closeAnalyticsDatabase();
 
 			const databaseDirectory = path.join(temporaryDirectory, '.devflow');
-			if (!mkdirSync(databaseDirectory, { recursive: true })) {
-				rmSync(databaseDirectory, { recursive: true, force: true });
-				mkdirSync(databaseDirectory, { recursive: true });
-			}
+			mkdirSync(databaseDirectory, { recursive: true });
 
 			const startTime = performance.now();
 			const database = getAnalyticsDatabase();
